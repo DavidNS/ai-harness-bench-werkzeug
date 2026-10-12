@@ -1,0 +1,482 @@
+..................................FFFFFFFFFFFFFF........................ [ 53%]
+.......................................FF......................          [100%]
+================================== FAILURES ===================================
+_____________________________ test_etag_response ______________________________
+
+    def test_etag_response():
+        response = wrappers.Response("Hello World")
+        assert response.etag is None
+        response.add_etag()
+        assert response.etag.value == "4Wf2jWVj11uyXzqknCnvYS1BNS3ABgbefL1jC7JmX1E"
+        assert not response.cache_control
+        response.cache_control.must_revalidate = True
+        response.cache_control.max_age = 60
+        response.headers["Content-Length"] = len(response.get_data())
+        assert response.headers["Cache-Control"] in (
+            "must-revalidate, max-age=60",
+            "max-age=60, must-revalidate",
+        )
+    
+        assert "Date" not in response.headers
+        env = create_environ()
+        env.update(
+            {"REQUEST_METHOD": "GET", "HTTP_IF_NONE_MATCH": response.headers["ETag"]}
+        )
+>       _make_conditional(response, env)
+
+tests\test_wrappers.py:537: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response 11 bytes [304 Not Modified]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+___________________________ test_etag_response_412 ____________________________
+
+    def test_etag_response_412():
+        response = wrappers.Response("Hello World")
+        assert response.etag is None
+        response.add_etag()
+        assert response.etag.value == "4Wf2jWVj11uyXzqknCnvYS1BNS3ABgbefL1jC7JmX1E"
+        assert not response.cache_control
+        response.cache_control.must_revalidate = True
+        response.cache_control.max_age = 60
+        response.headers["Content-Length"] = len(response.get_data())
+        assert response.headers["Cache-Control"] in (
+            "must-revalidate, max-age=60",
+            "max-age=60, must-revalidate",
+        )
+    
+        assert "Date" not in response.headers
+        env = create_environ()
+        env.update({"REQUEST_METHOD": "GET", "HTTP_IF_MATCH": '"xyz"'})
+>       _make_conditional(response, env)
+
+tests\test_wrappers.py:578: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response 11 bytes [412 Precondition Failed]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+________________________ test_advertise_accept_ranges _________________________
+
+    def test_advertise_accept_ranges() -> None:
+        env = create_environ()
+        response = wrappers.Response()
+>       _make_conditional(response, env, accept_ranges=True)
+
+tests\test_wrappers.py:606: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response 0 bytes [200 OK]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': True}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+__________________________ test_range_request_basic ___________________________
+
+    def test_range_request_basic():
+        env = create_environ()
+        response = wrappers.Response("Hello World")
+        env["HTTP_RANGE"] = "bytes=0-4"
+>       _make_conditional(response, env, accept_ranges=True, complete_length=11)
+
+tests\test_wrappers.py:616: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response streamed [206 Partial Content]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': True, 'complete_length': 11}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+_______________________ test_range_request_out_of_bound _______________________
+
+    def test_range_request_out_of_bound():
+        env = create_environ()
+        response = wrappers.Response("Hello World")
+        env["HTTP_RANGE"] = "bytes=6-666"
+>       _make_conditional(response, env, accept_ranges=True, complete_length=11)
+
+tests\test_wrappers.py:628: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response streamed [206 Partial Content]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': True, 'complete_length': 11}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+________________________ test_range_request_with_file _________________________
+
+    def test_range_request_with_file():
+        env = create_environ()
+        resources = os.path.join(os.path.dirname(__file__), "res")
+        fname = os.path.join(resources, "test.txt")
+        with open(fname, "rb") as f:
+            fcontent = f.read()
+        with open(fname, "rb") as f:
+            response = wrappers.Response(f)
+            env["HTTP_RANGE"] = "bytes=0-0"
+>           _make_conditional(
+                response, env, accept_ranges=True, complete_length=len(fcontent)
+            )
+
+tests\test_wrappers.py:645: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response streamed [206 Partial Content]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': True, 'complete_length': 6}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+____________________ test_range_request_with_complete_file ____________________
+
+    def test_range_request_with_complete_file():
+        env = create_environ()
+        resources = os.path.join(os.path.dirname(__file__), "res")
+        fname = os.path.join(resources, "test.txt")
+        with open(fname, "rb") as f:
+            fcontent = f.read()
+        with open(fname, "rb") as f:
+            fsize = os.path.getsize(fname)
+            response = wrappers.Response(f)
+            env["HTTP_RANGE"] = f"bytes=0-{fsize - 1}"
+>           _make_conditional(response, env, accept_ranges=True, complete_length=fsize)
+
+tests\test_wrappers.py:665: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response streamed [206 Partial Content]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': True, 'complete_length': 6}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+______________ test_range_request_without_complete_length[None] _______________
+
+value = None
+
+    @pytest.mark.parametrize("value", [None, 0])
+    def test_range_request_without_complete_length(value):
+        env = create_environ(headers={"Range": "bytes=0-10"})
+        response = wrappers.Response("Hello World")
+>       _make_conditional(response, env, accept_ranges=True, complete_length=value)
+
+tests\test_wrappers.py:677: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response 11 bytes [200 OK]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': True, 'complete_length': None}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+________________ test_range_request_without_complete_length[0] ________________
+
+value = 0
+
+    @pytest.mark.parametrize("value", [None, 0])
+    def test_range_request_without_complete_length(value):
+        env = create_environ(headers={"Range": "bytes=0-10"})
+        response = wrappers.Response("Hello World")
+>       _make_conditional(response, env, accept_ranges=True, complete_length=value)
+
+tests\test_wrappers.py:677: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response 11 bytes [200 OK]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': True, 'complete_length': 0}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+_________________________ test_invalid_range_request __________________________
+
+response = <Response 11 bytes [200 OK]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': True, 'complete_length': 11}
+
+    def _make_conditional(response, *args, **kwargs):
+        with pytest.deprecated_call():
+>           return response.make_conditional(*args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_wrappers.py:515: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\wrappers\response.py:902: in make_conditional
+    is206 = self._process_range_request(environ, complete_length, accept_ranges)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 11 bytes [200 OK]>
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+complete_length = 11, accept_ranges = 'bytes'
+
+    def _process_range_request(
+        self,
+        environ: WSGIEnvironment,
+        complete_length: int | None,
+        accept_ranges: bool | str,
+    ) -> bool:
+        """Handle Range Request related headers (RFC7233).  If `Accept-Ranges`
+        header is valid, and Range Request is processable, we set the headers
+        as described by the RFC, and wrap the underlying response in a
+        RangeWrapper.
+    
+        Returns ``True`` if Range Request can be fulfilled, ``False`` otherwise.
+    
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Returns ``False`` if the length is 0.
+        """
+        from ..exceptions import RequestedRangeNotSatisfiable
+    
+        if not accept_ranges:
+            return False
+    
+        if accept_ranges is True:
+            accept_ranges = "bytes"
+    
+        self.accept_ranges = accept_ranges
+    
+        if not (complete_length and self._is_range_request_processable(environ)):
+            return False
+    
+        parsed_range = Range.from_header(environ.get("HTTP_RANGE"))
+    
+        if parsed_range is None:
+>           raise RequestedRangeNotSatisfiable(complete_length)
+E           werkzeug.exceptions.RequestedRangeNotSatisfiable: 416 Requested Range Not Satisfiable: The server cannot provide the requested range.
+
+src\werkzeug\wrappers\response.py:712: RequestedRangeNotSatisfiable
+
+During handling of the above exception, another exception occurred:
+
+    def test_invalid_range_request():
+        env = create_environ()
+        response = wrappers.Response("Hello World")
+        env["HTTP_RANGE"] = "bytes=-"
+        with pytest.raises(RequestedRangeNotSatisfiable):
+>           _make_conditional(response, env, accept_ranges=True, complete_length=11)
+
+tests\test_wrappers.py:687: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response 11 bytes [200 OK]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': True, 'complete_length': 11}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+______________________ test_make_conditional_deprecated _______________________
+
+    def test_make_conditional_deprecated():
+        response = wrappers.Response("Hello World")
+    
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:693: Failed
+___________________ test_make_conditional_if_range_mismatch ___________________
+
+    def test_make_conditional_if_range_mismatch():
+        env = create_environ(headers={"Range": "bytes=0-4", "If-Range": '"other"'})
+        response = wrappers.Response("Hello World")
+        response.etag = ETag("abc")
+>       _make_conditional(response, env, accept_ranges=True, complete_length=11)
+
+tests\test_wrappers.py:701: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response 11 bytes [200 OK]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': True, 'complete_length': 11}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+________________ test_make_conditional_range_after_etag_match _________________
+
+    def test_make_conditional_range_after_etag_match():
+        # a satisfied If-None-Match takes precedence over Range
+        env = create_environ(headers={"Range": "bytes=0-4", "If-None-Match": '"abc"'})
+        response = wrappers.Response("Hello World")
+        response.etag = ETag("abc")
+>       _make_conditional(response, env, accept_ranges="bytes", complete_length=11)
+
+tests\test_wrappers.py:720: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response streamed [206 Partial Content]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {'accept_ranges': 'bytes', 'complete_length': 11}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+________________ test_make_conditional_restores_accept_ranges _________________
+
+    def test_make_conditional_restores_accept_ranges():
+        env = create_environ()
+        response = wrappers.Response("Hello World")
+        response.headers["Accept-Ranges"] = "none"
+>       _make_conditional(response, env)
+
+tests\test_wrappers.py:728: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response 11 bytes [200 OK]>
+args = ({'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...},)
+kwargs = {}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+_________________________ test_stream_content_length __________________________
+
+    def test_stream_content_length():
+        resp = wrappers.Response()
+        resp.stream.writelines(["foo", "bar", "baz"])
+        assert resp.get_wsgi_headers({})["Content-Length"] == "9"
+    
+        resp = wrappers.Response()
+>       _make_conditional(resp, {"REQUEST_METHOD": "GET"})
+
+tests\test_wrappers.py:1428: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <Response 0 bytes [200 OK]>, args = ({'REQUEST_METHOD': 'GET'},)
+kwargs = {}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+______________________ test_disabled_auto_content_length ______________________
+
+    def test_disabled_auto_content_length():
+        class MyResponse(wrappers.Response):
+            automatically_set_content_length = False
+    
+        resp = MyResponse("Hello World!")
+        assert resp.content_length is None
+    
+        resp = MyResponse(["Hello World!"])
+        assert resp.content_length is None
+        assert "Content-Length" not in resp.get_wsgi_headers({})
+    
+        resp = MyResponse()
+>       _make_conditional(resp, {"REQUEST_METHOD": "GET"})
+
+tests\test_wrappers.py:1449: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+response = <MyResponse 0 bytes [200 OK]>, args = ({'REQUEST_METHOD': 'GET'},)
+kwargs = {}
+
+    def _make_conditional(response, *args, **kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:514: Failed
+=========================== short test summary info ===========================
+FAILED tests/test_wrappers.py::test_etag_response - Failed: DID NOT WARN. No ...
+FAILED tests/test_wrappers.py::test_etag_response_412 - Failed: DID NOT WARN....
+FAILED tests/test_wrappers.py::test_advertise_accept_ranges - Failed: DID NOT...
+FAILED tests/test_wrappers.py::test_range_request_basic - Failed: DID NOT WAR...
+FAILED tests/test_wrappers.py::test_range_request_out_of_bound - Failed: DID ...
+FAILED tests/test_wrappers.py::test_range_request_with_file - Failed: DID NOT...
+FAILED tests/test_wrappers.py::test_range_request_with_complete_file - Failed...
+FAILED tests/test_wrappers.py::test_range_request_without_complete_length[None]
+FAILED tests/test_wrappers.py::test_range_request_without_complete_length[0]
+FAILED tests/test_wrappers.py::test_invalid_range_request - Failed: DID NOT W...
+FAILED tests/test_wrappers.py::test_make_conditional_deprecated - Failed: DID...
+FAILED tests/test_wrappers.py::test_make_conditional_if_range_mismatch - Fail...
+FAILED tests/test_wrappers.py::test_make_conditional_range_after_etag_match
+FAILED tests/test_wrappers.py::test_make_conditional_restores_accept_ranges
+FAILED tests/test_wrappers.py::test_stream_content_length - Failed: DID NOT W...
+FAILED tests/test_wrappers.py::test_disabled_auto_content_length - Failed: DI...
+16 failed, 119 passed in 0.98s

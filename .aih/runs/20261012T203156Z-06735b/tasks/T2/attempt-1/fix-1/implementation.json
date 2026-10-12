@@ -1,0 +1,26 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC4",
+      "note": "test_apply_conditions_if_match (parametrized over methods), test_apply_conditions_if_unmodified_since, test_apply_conditions_if_match_overrides_if_unmodified_since, test_apply_conditions_order."
+    },
+    {
+      "criterion": "ACC5",
+      "note": "test_apply_conditions_if_none_match_304, test_apply_conditions_if_modified_since, test_apply_conditions_if_none_match_other_methods. test_apply_range_skipped_after_304 checks the 304 stays a 304 when a Range header is also present."
+    },
+    {
+      "criterion": "ACC6",
+      "note": "test_apply_conditions_if_match_star and test_apply_conditions_if_none_match_star."
+    },
+    {
+      "criterion": "ACC7",
+      "note": "test_apply_range_basic, test_apply_range_first_range_only, test_apply_range_clamps_stop, test_apply_range_clamps_suffix, test_apply_range_if_range_etag, test_apply_range_if_range_date."
+    },
+    {
+      "criterion": "ACC8",
+      "note": "test_apply_range_unsatisfiable and test_apply_range_other_units_ignored."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Fixed the finding: apply_range now returns early unless the status is 200, so a 304 from apply_conditions is no longer turned into a 206. Added test_apply_range_skipped_after_304, which runs apply_conditions then apply_range on the same request. Nothing was run, since I had no command access."
+}

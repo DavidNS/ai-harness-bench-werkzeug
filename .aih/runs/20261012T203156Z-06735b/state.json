@@ -1,0 +1,127 @@
+{
+  "attempts_total": 6,
+  "base_ref": "main",
+  "base_sha": "671537e0e5c7dcec4ac61ffc755dbd8936cefcfb",
+  "baseline_green": true,
+  "created_at": "2026-10-12T20:31:56+00:00",
+  "head": "a4b8278231900ad6885233017d91b1783c79cebb",
+  "plan_version": 1,
+  "repo": "C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\targets\\20261012T203153Z-werkzeug-apply-conditions-range-gated-1",
+  "run_id": "20261012T203156Z-06735b",
+  "status": "implemented",
+  "tasks": {
+    "T1": {
+      "advisories": [
+        {
+          "file": "tests/test_datastructures.py",
+          "line": 1159,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "ACC2 says Range.from_header and ContentRange.from_header validate their own values, but this task adds no test for that (for example a ContentRange with stop >= length, or a Range with begin >= end); they may be covered elsewhere."
+        },
+        {
+          "file": "src/werkzeug/datastructures/etag.py",
+          "line": 301,
+          "pass": 1,
+          "severity": "advisory",
+          "text": "ACC3 required no production change, because ETagSet.from_header already discards invalid items. The new test only locks in that existing behavior, and the declared etag.py is untouched."
+        }
+      ],
+      "attempts": 1,
+      "commit": "b90dee1ca003f42d1dbbb1f8905b9ec32eadee19",
+      "status": "committed"
+    },
+    "T2": {
+      "advisories": [
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 790,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test covers If-Match or If-None-Match against a response with no etag set, or an If-None-Match list with several tags."
+        },
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 956,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "apply_range tests for a zero-length body and for a direct_passthrough iterable with a known Content-Length only assert headers, not that the sliced body data is correct."
+        }
+      ],
+      "attempts": 1,
+      "commit": "23f5685d7567c7d6c85381caa97b4d1284d2479d",
+      "review_rounds": 1,
+      "status": "committed"
+    },
+    "T3": {
+      "advisories": [
+        {
+          "file": "tests/test_send_file.py",
+          "line": 0,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test sends a real file with a `Range` header and an `If-Range` header, or a file-like with a mtime and `If-Modified-Since`. Also untested: a non-seekable file-like, where the new unconditional `file.seek(0)` now raises instead of sending the stream."
+        },
+        {
+          "file": "src/werkzeug/utils.py",
+          "line": 536,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "`except Exception` is broader than the old `except RequestedRangeNotSatisfiable`. It is needed to close the file on `PreconditionFailed`, but it also covers unrelated errors; `except BaseException` or a `try/finally` would be the more conventional choice."
+        }
+      ],
+      "attempts": 1,
+      "commit": "9323dd3c17a75c923a704df2289a8aad37b578a9",
+      "status": "committed"
+    },
+    "T4": {
+      "advisories": [
+        {
+          "file": "tests/middleware/test_shared_data.py",
+          "line": 0,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test sends If-Modified-Since or a HEAD request, and none checks that cache=False ignores conditional headers (no 304 even with a matching If-None-Match); only the If-None-Match 304 path is covered."
+        }
+      ],
+      "attempts": 1,
+      "commit": "84689c09db5541011b93af3580d18fedf8bf6b00",
+      "status": "committed"
+    },
+    "T5": {
+      "advisories": [
+        {
+          "file": "src/werkzeug/wrappers/response.py",
+          "line": 866,
+          "pass": 1,
+          "severity": "advisory",
+          "text": "make_conditional now raises 416 for an unparseable Range header before the If-Range check, whereas the old code skipped range handling when If-Range did not match, so \"behaves as before\" does not hold for that combination."
+        },
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 687,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test covers an invalid or non-bytes Range header together with a mismatching If-Range via make_conditional, which is the case where the new ordering differs from the old."
+        },
+        {
+          "file": "src/werkzeug/wrappers/response.py",
+          "line": 850,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "The save and restore of Accept-Ranges and Content-Length around apply_conditions/apply_range is verbose; it exists only to keep the old make_conditional behaviour, so a short comment saying so would help."
+        }
+      ],
+      "attempts": 1,
+      "commit": "e22bee1c18b75b0ff97d8b84b5305a842ebf879f",
+      "status": "committed"
+    },
+    "T6": {
+      "attempts": 1,
+      "commit": "a4b8278231900ad6885233017d91b1783c79cebb",
+      "status": "committed"
+    }
+  },
+  "updated_at": "2026-10-12T20:43:14+00:00",
+  "worktree": "C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\results\\arms\\detail\\20261012T203153Z-werkzeug-apply-conditions-range-gated-1\\aih-data\\worktrees\\20261012T203156Z-06735b"
+}

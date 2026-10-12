@@ -1,0 +1,10 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC9",
+      "note": "Covered by tests/test_send_file.py: test_object_detects_name_size_mtime, test_object_without_fileno, test_object_seeks_to_start, test_object_range, test_range_not_satisfiable_closes_file, test_precondition_failed_closes_file, test_not_modified_etag, test_object_without_mimetype (octet-stream default), test_etag (one '-' in the ETag, no path hash). Not run."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Refactored send_file onto apply_conditions/apply_range with file-like name/size/mtime detection, seek(0), path-hash-free ETag and octet-stream default; updated and added tests in test_send_file.py. Not run (no command access)."
+}

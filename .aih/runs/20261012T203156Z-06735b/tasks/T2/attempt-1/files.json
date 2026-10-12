@@ -1,0 +1,12 @@
+[
+  {
+    "action": "modify",
+    "path": "src/werkzeug/wrappers/response.py",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "tests/test_wrappers.py",
+    "role": "test"
+  }
+]

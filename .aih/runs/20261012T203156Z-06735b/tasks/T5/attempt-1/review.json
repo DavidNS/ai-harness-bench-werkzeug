@@ -1,0 +1,27 @@
+{
+  "findings": [
+    {
+      "file": "src/werkzeug/wrappers/response.py",
+      "line": 866,
+      "pass": 1,
+      "severity": "advisory",
+      "text": "make_conditional now raises 416 for an unparseable Range header before the If-Range check, whereas the old code skipped range handling when If-Range did not match, so \"behaves as before\" does not hold for that combination."
+    },
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 687,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "No test covers an invalid or non-bytes Range header together with a mismatching If-Range via make_conditional, which is the case where the new ordering differs from the old."
+    },
+    {
+      "file": "src/werkzeug/wrappers/response.py",
+      "line": 850,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "The save and restore of Accept-Ranges and Content-Length around apply_conditions/apply_range is verbose; it exists only to keep the old make_conditional behaviour, so a short comment saying so would help."
+    }
+  ],
+  "summary": "No blocking problems. One small behaviour difference in make_conditional is untested, and the Accept-Ranges and Content-Length restore code is heavy but needed.",
+  "verdict": "approve"
+}

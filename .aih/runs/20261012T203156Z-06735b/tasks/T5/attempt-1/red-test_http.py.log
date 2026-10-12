@@ -1,0 +1,29 @@
+...................................................................FF... [ 58%]
+....................................................                     [100%]
+================================== FAILURES ===================================
+____________ TestHTTPUtility.test_is_resource_modified_deprecated _____________
+
+self = <test_http.TestHTTPUtility object at 0x000002032CA030E0>
+
+    def test_is_resource_modified_deprecated(self):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:407: Failed
+_____________ TestHTTPUtility.test_is_byte_range_valid_deprecated _____________
+
+self = <test_http.TestHTTPUtility object at 0x000002032CA033B0>
+
+    def test_is_byte_range_valid_deprecated(self):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:411: Failed
+=========================== short test summary info ===========================
+FAILED tests/test_http.py::TestHTTPUtility::test_is_resource_modified_deprecated
+FAILED tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated
+2 failed, 122 passed in 0.63s
