@@ -1,0 +1,18 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC1",
+      "note": "IfRange.check is in range.py. It accepts an ETag or str, compares dates after truncating microseconds, and an empty IfRange never matches. Proven by TestRange.test_if_range_check in tests/test_http.py."
+    },
+    {
+      "criterion": "ACC2",
+      "note": "Range._private_range_for_length now clamps a too-large stop and suffix, uses only the first range, and returns None when unsatisfiable. Proven by TestRange.test_make_content_range and test_make_content_range_does_not_use_is_byte_range_valid in tests/test_http.py. The latter patches http.is_byte_range_valid to raise. Range.from_header and ContentRange.from_header already rejected invalid values, and the existing parsing tests cover them, so I left them unchanged."
+    },
+    {
+      "criterion": "ACC3",
+      "note": "The existing ETagSet.from_header already discards invalid unquoted values, so I made no production change. I added test_etag_set_from_header_discards_invalid in tests/test_datastructures.py, and it will probably also pass on the base commit, so the base-commit check may not count it. I found no input that fails on the base code."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Added IfRange.check. Range.make_content_range now validates and clamps itself and no longer imports http.is_byte_range_valid. ETagSet.from_header needed no production change. I couldn't run tests here."
+}

@@ -1,0 +1,54 @@
+F.FF..                                                                   [100%]
+================================== FAILURES ===================================
+_________________________ test_conditional_and_range __________________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-193/test_conditional_and_range0')
+
+    def test_conditional_and_range(tmp_path):
+        app = _make_app(tmp_path)
+        status, headers, data = _run(app, "/s/data.txt")
+        assert status == "200 OK"
+        assert data == b"0123456789"
+>       assert "max-age" not in headers["Cache-Control"]
+E       AssertionError: assert 'max-age' not in 'max-age=43200, public'
+E         
+E         'max-age' is contained here:
+E           max-age=43200, public
+E         ? +++++++
+
+tests\middleware\test_shared_data.py:31: AssertionError
+_____________________ test_deprecated_parameters[kwargs0] _____________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-193/test_deprecated_parameters_kwa0')
+kwargs = {'cache': False}
+
+    @pytest.mark.parametrize(
+        "kwargs", [{"cache": False}, {"fallback_mimetype": "text/plain"}]
+    )
+    def test_deprecated_parameters(tmp_path, kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\middleware\test_shared_data.py:57: Failed
+_____________________ test_deprecated_parameters[kwargs1] _____________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-193/test_deprecated_parameters_kwa1')
+kwargs = {'fallback_mimetype': 'text/plain'}
+
+    @pytest.mark.parametrize(
+        "kwargs", [{"cache": False}, {"fallback_mimetype": "text/plain"}]
+    )
+    def test_deprecated_parameters(tmp_path, kwargs):
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\middleware\test_shared_data.py:57: Failed
+=========================== short test summary info ===========================
+FAILED tests/middleware/test_shared_data.py::test_conditional_and_range - Ass...
+FAILED tests/middleware/test_shared_data.py::test_deprecated_parameters[kwargs0]
+FAILED tests/middleware/test_shared_data.py::test_deprecated_parameters[kwargs1]
+3 failed, 3 passed in 0.55s

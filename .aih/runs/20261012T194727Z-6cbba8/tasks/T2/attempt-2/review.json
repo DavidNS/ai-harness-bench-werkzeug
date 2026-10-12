@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 930,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "No test runs apply_range on a streamed response whose length is unknown, or on a file-wrapper or direct_passthrough response, which is the path send_file will use. The `calculate_content_length()` returning None branch is untested."
+    },
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 790,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "Several edge cases have no test: a weak ETag in If-Range, a last_modified with microseconds (the `replace(microsecond=0)` normalisation), and malformed date headers."
+    }
+  ],
+  "summary": "The implementation matches ACC4\u2013ACC9 and the RFC 9110 ordering, and the tests cover each criterion. No existing test was weakened; the diff only adds an import and new tests. The remaining gaps are advisory.",
+  "verdict": "approve"
+}

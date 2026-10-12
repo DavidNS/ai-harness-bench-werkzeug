@@ -1,0 +1,70 @@
+............FF.........................                                  [100%]
+================================== FAILURES ===================================
+___________________________ test_object_unseekable ____________________________
+
+    def test_object_unseekable():
+        with send_file(_Unseekable(b"test"), environ) as rv:
+            assert rv.mimetype == "application/octet-stream"
+            assert rv.status_code == 200
+            assert "Content-Length" not in rv.headers
+            assert "ETag" not in rv.headers
+            rv.direct_passthrough = False
+>           assert rv.data == b"test"
+                   ^^^^^^^
+
+tests\test_send_file.py:131: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\wrappers\response.py:286: in get_data
+    self._ensure_sequence()
+src\werkzeug\wrappers\response.py:344: in _ensure_sequence
+    self.make_sequence()
+src\werkzeug\wrappers\response.py:359: in make_sequence
+    self.response = list(self.iter_encoded())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+iterable = <test_send_file._Unseekable object at 0x0000015111754140>
+
+    def _iter_encoded(iterable: t.Iterable[str | bytes]) -> t.Iterator[bytes]:
+>       for item in iterable:
+                    ^^^^^^^^
+E       TypeError: '_Unseekable' object is not iterable
+
+src\werkzeug\wrappers\response.py:33: TypeError
+____________________ test_object_unseekable_range_ignored _____________________
+
+    def test_object_unseekable_range_ignored():
+        # The complete length is unknown, so the range can't be applied and the
+        # whole body is sent instead of failing.
+        range_environ = create_environ(headers={"Range": "bytes=1-2"})
+    
+        with send_file(_Unseekable(b"test"), range_environ) as rv:
+            assert rv.status_code == 200
+            assert "Content-Range" not in rv.headers
+            rv.direct_passthrough = False
+>           assert rv.data == b"test"
+                   ^^^^^^^
+
+tests\test_send_file.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\wrappers\response.py:286: in get_data
+    self._ensure_sequence()
+src\werkzeug\wrappers\response.py:344: in _ensure_sequence
+    self.make_sequence()
+src\werkzeug\wrappers\response.py:359: in make_sequence
+    self.response = list(self.iter_encoded())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+iterable = <test_send_file._Unseekable object at 0x0000015111755D30>
+
+    def _iter_encoded(iterable: t.Iterable[str | bytes]) -> t.Iterator[bytes]:
+>       for item in iterable:
+                    ^^^^^^^^
+E       TypeError: '_Unseekable' object is not iterable
+
+src\werkzeug\wrappers\response.py:33: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_send_file.py::test_object_unseekable - TypeError: '_Unseeka...
+FAILED tests/test_send_file.py::test_object_unseekable_range_ignored - TypeEr...
+2 failed, 37 passed in 0.33s

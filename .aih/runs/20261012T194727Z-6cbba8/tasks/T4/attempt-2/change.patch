@@ -1,0 +1,242 @@
+diff --git a/src/werkzeug/middleware/shared_data.py b/src/werkzeug/middleware/shared_data.py
+index c2810a01..96ea2871 100644
+--- a/src/werkzeug/middleware/shared_data.py
++++ b/src/werkzeug/middleware/shared_data.py
+@@ -17,18 +17,16 @@ import mimetypes
+ import os
+ import posixpath
+ import typing as t
++import warnings
+ from datetime import datetime
+ from datetime import timezone
+ from io import BytesIO
+-from time import time
+ from zlib import adler32
+ 
+-from ..http import http_date
+-from ..http import is_resource_modified
++from ..exceptions import HTTPException
+ from ..security import safe_join
+-from ..utils import get_content_type
++from ..utils import send_file
+ from ..wsgi import get_path_info
+-from ..wsgi import wrap_file
+ 
+ _TOpener = t.Callable[[], tuple[t.IO[bytes], datetime, int]]
+ _TLoader = t.Callable[[str | None], tuple[str | None, _TOpener | None]]
+@@ -68,8 +66,7 @@ class SharedDataMiddleware:
+     Python package.
+ 
+     The optional `disallow` parameter can be a list of :func:`~fnmatch.fnmatch`
+-    rules for files that are not accessible from the web.  If `cache` is set to
+-    `False` no caching headers are sent.
++    rules for files that are not accessible from the web.
+ 
+     Currently the middleware does not support non-ASCII filenames. If the
+     encoding on the file system happens to match the encoding of the URI it may
+@@ -77,16 +74,22 @@ class SharedDataMiddleware:
+     only file names for static files.
+ 
+     The middleware will guess the mimetype using the Python `mimetype`
+-    module.  If it's unable to figure out the charset it will fall back
+-    to `fallback_mimetype`.
++    module.  Files are served with :func:`~werkzeug.utils.send_file`, so
++    conditional and range requests are supported.
+ 
+     :param app: the application to wrap.  If you don't want to wrap an
+                 application you can pass it :exc:`NotFound`.
+     :param exports: a list or dict of exported files and folders.
+     :param disallow: a list of :func:`~fnmatch.fnmatch` rules.
+-    :param cache: enable or disable caching headers.
++    :param cache: Deprecated. Enable or disable caching headers.
+     :param cache_timeout: the cache timeout in seconds for the headers.
+-    :param fallback_mimetype: The fallback mimetype for unknown files.
++        Not set by default, so clients revalidate using conditional requests.
++    :param fallback_mimetype: Deprecated. The fallback mimetype for
++        unknown files.
++
++    .. versionchanged:: 3.2
++        Files are served using ``send_file``. ``cache_timeout`` is not set
++        by default. ``cache`` and ``fallback_mimetype`` are deprecated.
+ 
+     .. versionchanged:: 1.0
+         The default ``fallback_mimetype`` is
+@@ -108,10 +111,27 @@ class SharedDataMiddleware:
+             | t.Iterable[tuple[str, str | tuple[str, str]]]
+         ),
+         disallow: None = None,
+-        cache: bool = True,
+-        cache_timeout: int = 60 * 60 * 12,
+-        fallback_mimetype: str = "application/octet-stream",
++        cache: bool | None = None,
++        cache_timeout: int | None = None,
++        fallback_mimetype: str | None = None,
+     ) -> None:
++        if cache is not None:
++            warnings.warn(
++                "The 'cache' parameter is deprecated and will be removed in"
++                " Werkzeug 3.3. Conditional caching is always enabled.",
++                DeprecationWarning,
++                stacklevel=2,
++            )
++
++        if fallback_mimetype is not None:
++            warnings.warn(
++                "The 'fallback_mimetype' parameter is deprecated and will be"
++                " removed in Werkzeug 3.3. Unknown types use"
++                " 'application/octet-stream'.",
++                DeprecationWarning,
++                stacklevel=2,
++            )
++
+         self.app = app
+         self.exports: list[tuple[str, _TLoader]] = []
+         self.cache = cache
+@@ -256,37 +276,30 @@ class SharedDataMiddleware:
+         if file_loader is None or not self.is_allowed(real_filename):
+             return self.app(environ, start_response)
+ 
+-        guessed_type = (
+-            mimetypes.guess_type(real_filename) if real_filename else (None, None)
+-        )
+-        mime_type = get_content_type(guessed_type[0] or self.fallback_mimetype, "utf-8")
+         f, mtime, file_size = file_loader()
+-
+-        headers = [("Date", http_date())]
+-
+-        if self.cache:
+-            timeout = self.cache_timeout
+-            etag = f'"{self.generate_etag(mtime, file_size, real_filename)}"'
+-            headers += [
+-                ("ETag", etag),
+-                ("Cache-Control", f"max-age={timeout}, public"),
+-            ]
+-
+-            if not is_resource_modified(environ, etag, last_modified=mtime):
+-                f.close()
+-                start_response("304 Not Modified", headers)
+-                return []
+-
+-            headers.append(("Expires", http_date(time() + timeout)))
+-        else:
+-            headers.append(("Cache-Control", "public"))
+-
+-        headers.extend(
+-            (
+-                ("Content-Type", mime_type),
+-                ("Content-Length", str(file_size)),
+-                ("Last-Modified", http_date(mtime)),
++        mimetype: str | None = None
++
++        if self.fallback_mimetype is not None and (
++            not real_filename or mimetypes.guess_type(real_filename)[0] is None
++        ):
++            mimetype = self.fallback_mimetype
++
++        try:
++            response = send_file(
++                f,
++                environ,
++                mimetype=mimetype,
++                download_name=real_filename,
++                etag=(
++                    self.generate_etag(mtime, file_size, real_filename)
++                    if self.cache is not False
++                    else False
++                ),
++                last_modified=mtime,
++                max_age=self.cache_timeout,
+             )
+-        )
+-        start_response("200 OK", headers)
+-        return wrap_file(environ, f)
++        except HTTPException as e:
++            # send_file closes the file when a precondition or range fails.
++            return e(environ, start_response)
++
++        return response(environ, start_response)
+diff --git a/tests/middleware/test_shared_data.py b/tests/middleware/test_shared_data.py
+index 26e64645..11fe7a20 100644
+--- a/tests/middleware/test_shared_data.py
++++ b/tests/middleware/test_shared_data.py
+@@ -1,11 +1,80 @@
+ import os
+ from contextlib import closing
+ 
++import pytest
++
++from werkzeug.datastructures import Headers
+ from werkzeug.middleware.shared_data import SharedDataMiddleware
+ from werkzeug.test import create_environ
+ from werkzeug.test import run_wsgi_app
+ 
+ 
++def _serve(tmp_path, headers=None, path="/f/data.txt"):
++    data_file = tmp_path / "data.txt"
++
++    # Don't rewrite the file between calls, the ETag depends on its mtime.
++    if not data_file.exists():
++        data_file.write_bytes(b"0123456789")
++
++    app = SharedDataMiddleware(None, {"/f": str(tmp_path)})
++    environ = create_environ(path, headers=headers)
++    app_iter, status, response_headers = run_wsgi_app(app, environ)
++
++    with closing(app_iter):
++        body = b"".join(app_iter)
++
++    return status, Headers(response_headers), body
++
++
++def test_no_default_max_age(tmp_path):
++    status, headers, body = _serve(tmp_path)
++    assert status == "200 OK"
++    assert body == b"0123456789"
++    assert "max-age" not in headers["Cache-Control"]
++    assert "ETag" in headers
++    assert "Last-Modified" in headers
++
++
++def test_cache_timeout(tmp_path):
++    (tmp_path / "data.txt").write_bytes(b"x")
++    app = SharedDataMiddleware(None, {"/f": str(tmp_path)}, cache_timeout=60)
++    app_iter, status, headers = run_wsgi_app(app, create_environ("/f/data.txt"))
++    app_iter.close()
++    assert "max-age=60" in Headers(headers)["Cache-Control"]
++
++
++def test_not_modified(tmp_path):
++    _, headers, _ = _serve(tmp_path)
++    status, _, body = _serve(tmp_path, {"If-None-Match": headers["ETag"]})
++    assert status.startswith("304")
++    assert body == b""
++
++
++def test_range(tmp_path):
++    status, headers, body = _serve(tmp_path, {"Range": "bytes=2-4"})
++    assert status.startswith("206")
++    assert body == b"234"
++    assert headers["Content-Range"] == "bytes 2-4/10"
++
++
++def test_range_not_satisfiable(tmp_path):
++    status, _, _ = _serve(tmp_path, {"Range": "bytes=50-60"})
++    assert status.startswith("416")
++
++
++def test_precondition_failed(tmp_path):
++    status, _, _ = _serve(tmp_path, {"If-Match": '"nope"'})
++    assert status.startswith("412")
++
++
++def test_deprecated_parameters():
++    with pytest.deprecated_call():
++        SharedDataMiddleware(None, {}, cache=False)
++
++    with pytest.deprecated_call():
++        SharedDataMiddleware(None, {}, fallback_mimetype="text/plain")
++
++
+ def test_get_file_loader():
+     app = SharedDataMiddleware(None, {})
+     assert callable(app.get_file_loader("foo"))

@@ -1,0 +1,27 @@
+{
+  "findings": [
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 857,
+      "pass": 2,
+      "severity": "blocking",
+      "text": "No test covers apply_range's early returns for status != 200 (e.g. a response already turned 304 by apply_conditions) or for methods other than GET (HEAD/POST), though the docstring promises this behaviour."
+    },
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 857,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "Untested: an empty body (the `if not length: return` path), a Content-Length that takes precedence over the computed length, and a weak ETag with If-Range."
+    },
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 780,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "`_range_response` is identical to `_conditional_response`, so one helper would do."
+    }
+  ],
+  "summary": "The implementation meets ACC4\u2013ACC9. One relevant case is untested: the guards that make apply_range skip non-200 responses and non-GET requests. The other findings are minor.",
+  "verdict": "request_changes"
+}

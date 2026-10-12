@@ -1,0 +1,2422 @@
+............................................FFFFFFFFFFFFFFFFFFFFFFFFFFFF [ 38%]
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF..... [ 77%]
+...........................................                              [100%]
+================================== FAILURES ===================================
+______________________ test_apply_conditions_no_headers _______________________
+
+    def test_apply_conditions_no_headers():
+        request, response = _conditional_pair()
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:701: AttributeError
+______________ test_apply_conditions_if_match[headers0-True-GET] ______________
+
+method = 'GET', headers = {'If-Match': '"abc"'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers0-True-HEAD] ______________
+
+method = 'HEAD', headers = {'If-Match': '"abc"'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers0-True-POST] ______________
+
+method = 'POST', headers = {'If-Match': '"abc"'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+______________ test_apply_conditions_if_match[headers0-True-PUT] ______________
+
+method = 'PUT', headers = {'If-Match': '"abc"'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+____________ test_apply_conditions_if_match[headers0-True-DELETE] _____________
+
+method = 'DELETE', headers = {'If-Match': '"abc"'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+______________ test_apply_conditions_if_match[headers1-True-GET] ______________
+
+method = 'GET', headers = {'If-Match': '"x", "abc"'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers1-True-HEAD] ______________
+
+method = 'HEAD', headers = {'If-Match': '"x", "abc"'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers1-True-POST] ______________
+
+method = 'POST', headers = {'If-Match': '"x", "abc"'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+______________ test_apply_conditions_if_match[headers1-True-PUT] ______________
+
+method = 'PUT', headers = {'If-Match': '"x", "abc"'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+____________ test_apply_conditions_if_match[headers1-True-DELETE] _____________
+
+method = 'DELETE', headers = {'If-Match': '"x", "abc"'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers2-False-GET] ______________
+
+method = 'GET', headers = {'If-Match': '"x"'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers2-False-HEAD] _____________
+
+method = 'HEAD', headers = {'If-Match': '"x"'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers2-False-POST] _____________
+
+method = 'POST', headers = {'If-Match': '"x"'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers2-False-PUT] ______________
+
+method = 'PUT', headers = {'If-Match': '"x"'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+____________ test_apply_conditions_if_match[headers2-False-DELETE] ____________
+
+method = 'DELETE', headers = {'If-Match': '"x"'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers3-False-GET] ______________
+
+method = 'GET', headers = {'If-Match': 'W/"abc"'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers3-False-HEAD] _____________
+
+method = 'HEAD', headers = {'If-Match': 'W/"abc"'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers3-False-POST] _____________
+
+method = 'POST', headers = {'If-Match': 'W/"abc"'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers3-False-PUT] ______________
+
+method = 'PUT', headers = {'If-Match': 'W/"abc"'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+____________ test_apply_conditions_if_match[headers3-False-DELETE] ____________
+
+method = 'DELETE', headers = {'If-Match': 'W/"abc"'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+______________ test_apply_conditions_if_match[headers4-True-GET] ______________
+
+method = 'GET'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 12:00:00 GMT'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers4-True-HEAD] ______________
+
+method = 'HEAD'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 12:00:00 GMT'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers4-True-POST] ______________
+
+method = 'POST'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 12:00:00 GMT'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+______________ test_apply_conditions_if_match[headers4-True-PUT] ______________
+
+method = 'PUT'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 12:00:00 GMT'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+____________ test_apply_conditions_if_match[headers4-True-DELETE] _____________
+
+method = 'DELETE'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 12:00:00 GMT'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+______________ test_apply_conditions_if_match[headers5-True-GET] ______________
+
+method = 'GET'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers5-True-HEAD] ______________
+
+method = 'HEAD'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers5-True-POST] ______________
+
+method = 'POST'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+______________ test_apply_conditions_if_match[headers5-True-PUT] ______________
+
+method = 'PUT'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+____________ test_apply_conditions_if_match[headers5-True-DELETE] _____________
+
+method = 'DELETE'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers6-False-GET] ______________
+
+method = 'GET'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers6-False-HEAD] _____________
+
+method = 'HEAD'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers6-False-POST] _____________
+
+method = 'POST'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers6-False-PUT] ______________
+
+method = 'PUT'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+____________ test_apply_conditions_if_match[headers6-False-DELETE] ____________
+
+method = 'DELETE'
+headers = {'If-Unmodified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+______________ test_apply_conditions_if_match[headers7-True-GET] ______________
+
+method = 'GET'
+headers = {'If-Match': '"abc"', 'If-Unmodified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}
+ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers7-True-HEAD] ______________
+
+method = 'HEAD'
+headers = {'If-Match': '"abc"', 'If-Unmodified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}
+ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers7-True-POST] ______________
+
+method = 'POST'
+headers = {'If-Match': '"abc"', 'If-Unmodified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}
+ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+______________ test_apply_conditions_if_match[headers7-True-PUT] ______________
+
+method = 'PUT'
+headers = {'If-Match': '"abc"', 'If-Unmodified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}
+ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+____________ test_apply_conditions_if_match[headers7-True-DELETE] _____________
+
+method = 'DELETE'
+headers = {'If-Match': '"abc"', 'If-Unmodified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}
+ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:727: AttributeError
+_____________ test_apply_conditions_if_match[headers8-False-GET] ______________
+
+method = 'GET'
+headers = {'If-Match': '"x"', 'If-Unmodified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}
+ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers8-False-HEAD] _____________
+
+method = 'HEAD'
+headers = {'If-Match': '"x"', 'If-Unmodified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}
+ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers8-False-POST] _____________
+
+method = 'POST'
+headers = {'If-Match': '"x"', 'If-Unmodified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}
+ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+_____________ test_apply_conditions_if_match[headers8-False-PUT] ______________
+
+method = 'PUT'
+headers = {'If-Match': '"x"', 'If-Unmodified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}
+ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+____________ test_apply_conditions_if_match[headers8-False-DELETE] ____________
+
+method = 'DELETE'
+headers = {'If-Match': '"x"', 'If-Unmodified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}
+ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    @pytest.mark.parametrize(
+        ("headers", "ok"),
+        [
+            ({"If-Match": '"abc"'}, True),
+            ({"If-Match": '"x", "abc"'}, True),
+            ({"If-Match": '"x"'}, False),
+            ({"If-Match": 'W/"abc"'}, False),
+            ({"If-Unmodified-Since": _EXACT}, True),
+            ({"If-Unmodified-Since": _AFTER}, True),
+            ({"If-Unmodified-Since": _BEFORE}, False),
+            # If-Match takes precedence over If-Unmodified-Since.
+            ({"If-Match": '"abc"', "If-Unmodified-Since": _BEFORE}, True),
+            ({"If-Match": '"x"', "If-Unmodified-Since": _AFTER}, False),
+        ],
+    )
+    def test_apply_conditions_if_match(method, headers, ok):
+        request, response = _conditional_pair(method, **headers)
+    
+        if ok:
+            response.apply_conditions(request)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:731: AttributeError
+____________ test_apply_conditions_not_modified[headers0-True-GET] ____________
+
+method = 'GET', headers = {'If-None-Match': '"abc"'}, not_modified = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers0-True-HEAD] ____________
+
+method = 'HEAD', headers = {'If-None-Match': '"abc"'}, not_modified = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+____________ test_apply_conditions_not_modified[headers1-True-GET] ____________
+
+method = 'GET', headers = {'If-None-Match': 'W/"abc"'}, not_modified = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers1-True-HEAD] ____________
+
+method = 'HEAD', headers = {'If-None-Match': 'W/"abc"'}, not_modified = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers2-False-GET] ____________
+
+method = 'GET', headers = {'If-None-Match': '"x"'}, not_modified = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers2-False-HEAD] ___________
+
+method = 'HEAD', headers = {'If-None-Match': '"x"'}, not_modified = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+____________ test_apply_conditions_not_modified[headers3-True-GET] ____________
+
+method = 'GET', headers = {'If-Modified-Since': 'Mon, 01 Jan 2024 12:00:00 GMT'}
+not_modified = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers3-True-HEAD] ____________
+
+method = 'HEAD'
+headers = {'If-Modified-Since': 'Mon, 01 Jan 2024 12:00:00 GMT'}
+not_modified = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+____________ test_apply_conditions_not_modified[headers4-True-GET] ____________
+
+method = 'GET', headers = {'If-Modified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}
+not_modified = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers4-True-HEAD] ____________
+
+method = 'HEAD'
+headers = {'If-Modified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}
+not_modified = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers5-False-GET] ____________
+
+method = 'GET', headers = {'If-Modified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}
+not_modified = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers5-False-HEAD] ___________
+
+method = 'HEAD'
+headers = {'If-Modified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}
+not_modified = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers6-False-GET] ____________
+
+method = 'GET'
+headers = {'If-None-Match': '"x"', 'If-Modified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}
+not_modified = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers6-False-HEAD] ___________
+
+method = 'HEAD'
+headers = {'If-None-Match': '"x"', 'If-Modified-Since': 'Mon, 01 Jan 2024 13:00:00 GMT'}
+not_modified = False
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+____________ test_apply_conditions_not_modified[headers7-True-GET] ____________
+
+method = 'GET'
+headers = {'If-None-Match': '"abc"', 'If-Modified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}
+not_modified = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_not_modified[headers7-True-HEAD] ____________
+
+method = 'HEAD'
+headers = {'If-None-Match': '"abc"', 'If-Modified-Since': 'Mon, 01 Jan 2024 11:00:00 GMT'}
+not_modified = True
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    @pytest.mark.parametrize(
+        ("headers", "not_modified"),
+        [
+            ({"If-None-Match": '"abc"'}, True),
+            ({"If-None-Match": 'W/"abc"'}, True),
+            ({"If-None-Match": '"x"'}, False),
+            ({"If-Modified-Since": _EXACT}, True),
+            ({"If-Modified-Since": _AFTER}, True),
+            ({"If-Modified-Since": _BEFORE}, False),
+            # If-None-Match takes precedence over If-Modified-Since.
+            ({"If-None-Match": '"x"', "If-Modified-Since": _AFTER}, False),
+            ({"If-None-Match": '"abc"', "If-Modified-Since": _BEFORE}, True),
+        ],
+    )
+    def test_apply_conditions_not_modified(method, headers, not_modified):
+        request, response = _conditional_pair(method, **headers)
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:751: AttributeError
+___________ test_apply_conditions_if_none_match_other_methods[POST] ___________
+
+method = 'POST'
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE", "PATCH"])
+    def test_apply_conditions_if_none_match_other_methods(method):
+        request, response = _conditional_pair(method, **{"If-None-Match": '"abc"'})
+    
+        with pytest.raises(PreconditionFailed):
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:768: AttributeError
+___________ test_apply_conditions_if_none_match_other_methods[PUT] ____________
+
+method = 'PUT'
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE", "PATCH"])
+    def test_apply_conditions_if_none_match_other_methods(method):
+        request, response = _conditional_pair(method, **{"If-None-Match": '"abc"'})
+    
+        with pytest.raises(PreconditionFailed):
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:768: AttributeError
+__________ test_apply_conditions_if_none_match_other_methods[DELETE] __________
+
+method = 'DELETE'
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE", "PATCH"])
+    def test_apply_conditions_if_none_match_other_methods(method):
+        request, response = _conditional_pair(method, **{"If-None-Match": '"abc"'})
+    
+        with pytest.raises(PreconditionFailed):
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:768: AttributeError
+__________ test_apply_conditions_if_none_match_other_methods[PATCH] ___________
+
+method = 'PATCH'
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE", "PATCH"])
+    def test_apply_conditions_if_none_match_other_methods(method):
+        request, response = _conditional_pair(method, **{"If-None-Match": '"abc"'})
+    
+        with pytest.raises(PreconditionFailed):
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:768: AttributeError
+_________ test_apply_conditions_if_modified_since_other_methods[POST] _________
+
+method = 'POST'
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_modified_since_other_methods(method):
+        request, response = _conditional_pair(method, **{"If-Modified-Since": _AFTER})
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:778: AttributeError
+_________ test_apply_conditions_if_modified_since_other_methods[PUT] __________
+
+method = 'PUT'
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_modified_since_other_methods(method):
+        request, response = _conditional_pair(method, **{"If-Modified-Since": _AFTER})
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:778: AttributeError
+________ test_apply_conditions_if_modified_since_other_methods[DELETE] ________
+
+method = 'DELETE'
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_modified_since_other_methods(method):
+        request, response = _conditional_pair(method, **{"If-Modified-Since": _AFTER})
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:778: AttributeError
+__________________ test_apply_conditions_star_if_match[GET] ___________________
+
+method = 'GET'
+
+    @pytest.mark.parametrize("method", ["GET", "POST"])
+    def test_apply_conditions_star_if_match(method):
+        request, response = _conditional_pair(method, **{"If-Match": "*"})
+>       response.apply_conditions(request, exists=True)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:785: AttributeError
+__________________ test_apply_conditions_star_if_match[POST] __________________
+
+method = 'POST'
+
+    @pytest.mark.parametrize("method", ["GET", "POST"])
+    def test_apply_conditions_star_if_match(method):
+        request, response = _conditional_pair(method, **{"If-Match": "*"})
+>       response.apply_conditions(request, exists=True)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:785: AttributeError
+________________ test_apply_conditions_star_if_none_match_get _________________
+
+    def test_apply_conditions_star_if_none_match_get():
+        request, response = _conditional_pair(**{"If-None-Match": "*"})
+>       response.apply_conditions(request, exists=True)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:794: AttributeError
+________________ test_apply_conditions_star_if_none_match_put _________________
+
+    def test_apply_conditions_star_if_none_match_put():
+        request, response = _conditional_pair("PUT", **{"If-None-Match": "*"})
+    
+        with pytest.raises(PreconditionFailed):
+>           response.apply_conditions(request, exists=True)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:806: AttributeError
+______________ test_apply_conditions_without_response_validators ______________
+
+    def test_apply_conditions_without_response_validators():
+        request = wrappers.Request(
+            create_environ(headers={"If-Match": '"abc"', "If-Modified-Since": _AFTER})
+        )
+        response = wrappers.Response("Hello World")
+    
+        with pytest.raises(PreconditionFailed):
+>           response.apply_conditions(request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:819: AttributeError
+___________________________ test_apply_range_basic ____________________________
+
+    def test_apply_range_basic():
+        request, response = _range_pair("bytes=0-4")
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:834: AttributeError
+___ test_apply_range_clamp_and_first_only[bytes=6-666-bytes 6-10/11-World] ____
+
+value = 'bytes=6-666', expect_range = 'bytes 6-10/11', expect_data = b'World'
+
+    @pytest.mark.parametrize(
+        ("value", "expect_range", "expect_data"),
+        [
+            ("bytes=6-666", "bytes 6-10/11", b"World"),
+            ("bytes=0-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=-5", "bytes 6-10/11", b"World"),
+            ("bytes=-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=6-", "bytes 6-10/11", b"World"),
+            ("bytes=0-0,6-10", "bytes 0-0/11", b"H"),
+        ],
+    )
+    def test_apply_range_clamp_and_first_only(value, expect_range, expect_data):
+        request, response = _range_pair(value)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:854: AttributeError
+_ test_apply_range_clamp_and_first_only[bytes=0-666-bytes 0-10/11-Hello World] _
+
+value = 'bytes=0-666', expect_range = 'bytes 0-10/11'
+expect_data = b'Hello World'
+
+    @pytest.mark.parametrize(
+        ("value", "expect_range", "expect_data"),
+        [
+            ("bytes=6-666", "bytes 6-10/11", b"World"),
+            ("bytes=0-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=-5", "bytes 6-10/11", b"World"),
+            ("bytes=-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=6-", "bytes 6-10/11", b"World"),
+            ("bytes=0-0,6-10", "bytes 0-0/11", b"H"),
+        ],
+    )
+    def test_apply_range_clamp_and_first_only(value, expect_range, expect_data):
+        request, response = _range_pair(value)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:854: AttributeError
+_____ test_apply_range_clamp_and_first_only[bytes=-5-bytes 6-10/11-World] _____
+
+value = 'bytes=-5', expect_range = 'bytes 6-10/11', expect_data = b'World'
+
+    @pytest.mark.parametrize(
+        ("value", "expect_range", "expect_data"),
+        [
+            ("bytes=6-666", "bytes 6-10/11", b"World"),
+            ("bytes=0-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=-5", "bytes 6-10/11", b"World"),
+            ("bytes=-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=6-", "bytes 6-10/11", b"World"),
+            ("bytes=0-0,6-10", "bytes 0-0/11", b"H"),
+        ],
+    )
+    def test_apply_range_clamp_and_first_only(value, expect_range, expect_data):
+        request, response = _range_pair(value)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:854: AttributeError
+_ test_apply_range_clamp_and_first_only[bytes=-666-bytes 0-10/11-Hello World] _
+
+value = 'bytes=-666', expect_range = 'bytes 0-10/11'
+expect_data = b'Hello World'
+
+    @pytest.mark.parametrize(
+        ("value", "expect_range", "expect_data"),
+        [
+            ("bytes=6-666", "bytes 6-10/11", b"World"),
+            ("bytes=0-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=-5", "bytes 6-10/11", b"World"),
+            ("bytes=-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=6-", "bytes 6-10/11", b"World"),
+            ("bytes=0-0,6-10", "bytes 0-0/11", b"H"),
+        ],
+    )
+    def test_apply_range_clamp_and_first_only(value, expect_range, expect_data):
+        request, response = _range_pair(value)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:854: AttributeError
+_____ test_apply_range_clamp_and_first_only[bytes=6--bytes 6-10/11-World] _____
+
+value = 'bytes=6-', expect_range = 'bytes 6-10/11', expect_data = b'World'
+
+    @pytest.mark.parametrize(
+        ("value", "expect_range", "expect_data"),
+        [
+            ("bytes=6-666", "bytes 6-10/11", b"World"),
+            ("bytes=0-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=-5", "bytes 6-10/11", b"World"),
+            ("bytes=-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=6-", "bytes 6-10/11", b"World"),
+            ("bytes=0-0,6-10", "bytes 0-0/11", b"H"),
+        ],
+    )
+    def test_apply_range_clamp_and_first_only(value, expect_range, expect_data):
+        request, response = _range_pair(value)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:854: AttributeError
+____ test_apply_range_clamp_and_first_only[bytes=0-0,6-10-bytes 0-0/11-H] _____
+
+value = 'bytes=0-0,6-10', expect_range = 'bytes 0-0/11', expect_data = b'H'
+
+    @pytest.mark.parametrize(
+        ("value", "expect_range", "expect_data"),
+        [
+            ("bytes=6-666", "bytes 6-10/11", b"World"),
+            ("bytes=0-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=-5", "bytes 6-10/11", b"World"),
+            ("bytes=-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=6-", "bytes 6-10/11", b"World"),
+            ("bytes=0-0,6-10", "bytes 0-0/11", b"H"),
+        ],
+    )
+    def test_apply_range_clamp_and_first_only(value, expect_range, expect_data):
+        request, response = _range_pair(value)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:854: AttributeError
+__________________ test_apply_range_unsatisfiable[bytes=11-] __________________
+
+value = 'bytes=11-'
+
+    @pytest.mark.parametrize("value", ["bytes=11-", "bytes=20-30", "bytes=11-12"])
+    def test_apply_range_unsatisfiable(value):
+        request, response = _range_pair(value)
+    
+        with pytest.raises(RequestedRangeNotSatisfiable) as exc_info:
+>           response.apply_range(request)
+            ^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:866: AttributeError
+_________________ test_apply_range_unsatisfiable[bytes=20-30] _________________
+
+value = 'bytes=20-30'
+
+    @pytest.mark.parametrize("value", ["bytes=11-", "bytes=20-30", "bytes=11-12"])
+    def test_apply_range_unsatisfiable(value):
+        request, response = _range_pair(value)
+    
+        with pytest.raises(RequestedRangeNotSatisfiable) as exc_info:
+>           response.apply_range(request)
+            ^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:866: AttributeError
+_________________ test_apply_range_unsatisfiable[bytes=11-12] _________________
+
+value = 'bytes=11-12'
+
+    @pytest.mark.parametrize("value", ["bytes=11-", "bytes=20-30", "bytes=11-12"])
+    def test_apply_range_unsatisfiable(value):
+        request, response = _range_pair(value)
+    
+        with pytest.raises(RequestedRangeNotSatisfiable) as exc_info:
+>           response.apply_range(request)
+            ^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:866: AttributeError
+_____________________ test_apply_range_ignored[items=0-4] _____________________
+
+value = 'items=0-4'
+
+    @pytest.mark.parametrize("value", ["items=0-4", "bytes=-", "nonsense"])
+    def test_apply_range_ignored(value):
+        request, response = _range_pair(value)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:874: AttributeError
+______________________ test_apply_range_ignored[bytes=-] ______________________
+
+value = 'bytes=-'
+
+    @pytest.mark.parametrize("value", ["items=0-4", "bytes=-", "nonsense"])
+    def test_apply_range_ignored(value):
+        request, response = _range_pair(value)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:874: AttributeError
+_____________________ test_apply_range_ignored[nonsense] ______________________
+
+value = 'nonsense'
+
+    @pytest.mark.parametrize("value", ["items=0-4", "bytes=-", "nonsense"])
+    def test_apply_range_ignored(value):
+        request, response = _range_pair(value)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:874: AttributeError
+_________________________ test_apply_range_no_header __________________________
+
+    def test_apply_range_no_header():
+        request = wrappers.Request(create_environ())
+        response = wrappers.Response("Hello World")
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:883: AttributeError
+_________________________ test_apply_range_empty_body _________________________
+
+    def test_apply_range_empty_body():
+        request, response = _range_pair("bytes=0-4")
+        response.set_data(b"")
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:890: AttributeError
+__________________________ test_apply_range_if_range __________________________
+
+    def test_apply_range_if_range():
+        request, response = _range_pair("bytes=0-4", **{"If-Range": '"abc"'})
+        response.etag = "abc"
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:897: AttributeError
+____________________ test_apply_range_skipped_when_not_200 ____________________
+
+    def test_apply_range_skipped_when_not_200():
+        # a response already turned into 304 by apply_conditions is left alone,
+        # even if the range would be unsatisfiable
+        request, response = _range_pair("bytes=0-4")
+        response.status_code = 304
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:923: AttributeError
+______________ test_apply_range_skipped_for_other_methods[HEAD] _______________
+
+method = 'HEAD'
+
+    @pytest.mark.parametrize("method", ["HEAD", "POST", "PUT"])
+    def test_apply_range_skipped_for_other_methods(method):
+        request, response = _range_pair("bytes=0-4", method)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:936: AttributeError
+______________ test_apply_range_skipped_for_other_methods[POST] _______________
+
+method = 'POST'
+
+    @pytest.mark.parametrize("method", ["HEAD", "POST", "PUT"])
+    def test_apply_range_skipped_for_other_methods(method):
+        request, response = _range_pair("bytes=0-4", method)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:936: AttributeError
+_______________ test_apply_range_skipped_for_other_methods[PUT] _______________
+
+method = 'PUT'
+
+    @pytest.mark.parametrize("method", ["HEAD", "POST", "PUT"])
+    def test_apply_range_skipped_for_other_methods(method):
+        request, response = _range_pair("bytes=0-4", method)
+>       response.apply_range(request)
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:936: AttributeError
+________________ test_apply_conditions_then_range_not_modified ________________
+
+    def test_apply_conditions_then_range_not_modified():
+        request, response = _range_pair("bytes=0-4", **{"If-None-Match": '"abc"'})
+        response.etag = "abc"
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:950: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/test_wrappers.py::test_apply_conditions_no_headers - AttributeEr...
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers0-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers0-True-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers0-True-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers0-True-PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers0-True-DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers1-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers1-True-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers1-True-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers1-True-PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers1-True-DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers2-False-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers2-False-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers2-False-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers2-False-PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers2-False-DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers3-False-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers3-False-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers3-False-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers3-False-PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers3-False-DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers4-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers4-True-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers4-True-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers4-True-PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers4-True-DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers5-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers5-True-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers5-True-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers5-True-PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers5-True-DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers6-False-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers6-False-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers6-False-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers6-False-PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers6-False-DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers7-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers7-True-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers7-True-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers7-True-PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers7-True-DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers8-False-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers8-False-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers8-False-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers8-False-PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[headers8-False-DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers0-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers0-True-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers1-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers1-True-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers2-False-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers2-False-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers3-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers3-True-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers4-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers4-True-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers5-False-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers5-False-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers6-False-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers6-False-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers7-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_not_modified[headers7-True-HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_other_methods[POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_other_methods[PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_other_methods[DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_other_methods[PATCH]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_modified_since_other_methods[POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_modified_since_other_methods[PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_modified_since_other_methods[DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_star_if_match[GET] - Att...
+FAILED tests/test_wrappers.py::test_apply_conditions_star_if_match[POST] - At...
+FAILED tests/test_wrappers.py::test_apply_conditions_star_if_none_match_get
+FAILED tests/test_wrappers.py::test_apply_conditions_star_if_none_match_put
+FAILED tests/test_wrappers.py::test_apply_conditions_without_response_validators
+FAILED tests/test_wrappers.py::test_apply_range_basic - AttributeError: 'Resp...
+FAILED tests/test_wrappers.py::test_apply_range_clamp_and_first_only[bytes=6-666-bytes 6-10/11-World]
+FAILED tests/test_wrappers.py::test_apply_range_clamp_and_first_only[bytes=0-666-bytes 0-10/11-Hello World]
+FAILED tests/test_wrappers.py::test_apply_range_clamp_and_first_only[bytes=-5-bytes 6-10/11-World]
+FAILED tests/test_wrappers.py::test_apply_range_clamp_and_first_only[bytes=-666-bytes 0-10/11-Hello World]
+FAILED tests/test_wrappers.py::test_apply_range_clamp_and_first_only[bytes=6--bytes 6-10/11-World]
+FAILED tests/test_wrappers.py::test_apply_range_clamp_and_first_only[bytes=0-0,6-10-bytes 0-0/11-H]
+FAILED tests/test_wrappers.py::test_apply_range_unsatisfiable[bytes=11-] - At...
+FAILED tests/test_wrappers.py::test_apply_range_unsatisfiable[bytes=20-30] - ...
+FAILED tests/test_wrappers.py::test_apply_range_unsatisfiable[bytes=11-12] - ...
+FAILED tests/test_wrappers.py::test_apply_range_ignored[items=0-4] - Attribut...
+FAILED tests/test_wrappers.py::test_apply_range_ignored[bytes=-] - AttributeE...
+FAILED tests/test_wrappers.py::test_apply_range_ignored[nonsense] - Attribute...
+FAILED tests/test_wrappers.py::test_apply_range_no_header - AttributeError: '...
+FAILED tests/test_wrappers.py::test_apply_range_empty_body - AttributeError: ...
+FAILED tests/test_wrappers.py::test_apply_range_if_range - AttributeError: 'R...
+FAILED tests/test_wrappers.py::test_apply_range_skipped_when_not_200 - Attrib...
+FAILED tests/test_wrappers.py::test_apply_range_skipped_for_other_methods[HEAD]
+FAILED tests/test_wrappers.py::test_apply_range_skipped_for_other_methods[POST]
+FAILED tests/test_wrappers.py::test_apply_range_skipped_for_other_methods[PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_then_range_not_modified
+95 failed, 92 passed in 3.55s

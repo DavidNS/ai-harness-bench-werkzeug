@@ -1,0 +1,30 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC4",
+      "note": "test_apply_conditions_if_match (all methods; If-Match/If-Unmodified-Since precedence and 412), test_apply_conditions_if_none_match_other_methods, test_apply_conditions_without_response_validators."
+    },
+    {
+      "criterion": "ACC5",
+      "note": "test_apply_conditions_not_modified checks 304 on GET/HEAD with entity headers removed via run_wsgi_app; test_apply_conditions_if_none_match_other_methods checks 412 on other methods."
+    },
+    {
+      "criterion": "ACC6",
+      "note": "test_apply_conditions_star_if_match, test_apply_conditions_star_if_none_match_get, test_apply_conditions_star_if_none_match_put cover exists=True/False."
+    },
+    {
+      "criterion": "ACC7",
+      "note": "test_apply_conditions_no_headers and test_apply_conditions_not_modified assert Accept-Ranges: bytes."
+    },
+    {
+      "criterion": "ACC8",
+      "note": "test_apply_range_basic and test_apply_range_clamp_and_first_only check 206, data, Content-Length, Content-Range, clamping, first range only."
+    },
+    {
+      "criterion": "ACC9",
+      "note": "test_apply_range_unsatisfiable (416), test_apply_range_ignored (non-bytes/invalid), test_apply_range_if_range (IfRange.check mismatch leaves 200), test_apply_range_skipped_when_not_200, test_apply_range_skipped_for_other_methods."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Added Response.apply_conditions and Response.apply_range in wrappers/response.py (make_conditional untouched) and tests in tests/test_wrappers.py, including the reviewer-requested coverage of apply_range's early returns for status != 200 and non-GET methods. Nothing was run in this session."
+}

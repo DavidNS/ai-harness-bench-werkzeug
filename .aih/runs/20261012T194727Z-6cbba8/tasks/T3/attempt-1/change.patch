@@ -1,0 +1,187 @@
+diff --git a/src/werkzeug/utils.py b/src/werkzeug/utils.py
+index df4f7232..800d0b3c 100644
+--- a/src/werkzeug/utils.py
++++ b/src/werkzeug/utils.py
+@@ -12,13 +12,13 @@ from datetime import datetime
+ from functools import update_wrapper
+ from time import time
+ from urllib.parse import quote
+-from zlib import adler32
+ 
+ from markupsafe import escape
+ 
+ from ._internal import _missing
+ from .datastructures.headers import Headers
+ from .exceptions import NotFound
++from .exceptions import PreconditionFailed
+ from .exceptions import RequestedRangeNotSatisfiable
+ from .security import _windows_device_files
+ from .security import safe_join
+@@ -415,26 +415,47 @@ def send_file(
+     else:
+         file = path_or_file
+ 
++        if isinstance(file, io.TextIOBase):
++            raise ValueError("Files must be opened in binary mode or use BytesIO.")
++
++        if download_name is None:
++            file_name = getattr(file, "name", None)
++
++            if isinstance(file_name, (os.PathLike, str)) or hasattr(
++                file_name, "__fspath__"
++            ):
++                download_name = os.path.basename(os.fspath(file_name))
++
++        try:
++            mtime = os.fstat(file.fileno()).st_mtime
++        except (AttributeError, OSError, ValueError):
++            pass
++
++        # Always start from the beginning so the size, ranges, and an
++        # already read file are all correct.
++        try:
++            file.seek(0, io.SEEK_END)
++            size = file.tell()
++            file.seek(0)
++        except (AttributeError, OSError, ValueError):
++            pass
++
+     if download_name is None and path is not None:
+         download_name = os.path.basename(path)
+ 
+     if mimetype is None:
+         if download_name is None:
+-            raise TypeError(
+-                "Unable to detect the MIME type because a file name is"
+-                " not available. Either set 'download_name', pass a"
+-                " path instead of a file, or set 'mimetype'."
+-            )
+-
+-        mimetype, encoding = mimetypes.guess_type(download_name)
+-
+-        if mimetype is None:
+             mimetype = "application/octet-stream"
++        else:
++            mimetype, encoding = mimetypes.guess_type(download_name)
+ 
+-        # Don't send encoding for attachments, it causes browsers to
+-        # save decompress tar.gz files.
+-        if encoding is not None and not as_attachment:
+-            headers.set("Content-Encoding", encoding)
++            if mimetype is None:
++                mimetype = "application/octet-stream"
++
++            # Don't send encoding for attachments, it causes browsers to
++            # save decompress tar.gz files.
++            if encoding is not None and not as_attachment:
++                headers.set("Content-Encoding", encoding)
+ 
+     if download_name is not None:
+         try:
+@@ -462,10 +483,6 @@ def send_file(
+     else:
+         if file is None:
+             file = open(path, "rb")  # type: ignore[arg-type]
+-        elif isinstance(file, io.BytesIO):
+-            size = file.getbuffer().nbytes
+-        elif isinstance(file, io.TextIOBase):
+-            raise ValueError("Files must be opened in binary mode or use BytesIO.")
+ 
+         data = wrap_file(environ, file)
+ 
+@@ -498,14 +515,18 @@ def send_file(
+ 
+     if isinstance(etag, str):
+         rv.etag = etag
+-    elif etag and path is not None:
+-        check = adler32(path.encode()) & 0xFFFFFFFF
+-        rv.etag = f"{mtime}-{size}-{check}"
++    elif etag and mtime is not None and size is not None:
++        rv.etag = f"{mtime}-{size}"
+ 
+     if conditional:
++        from .wrappers import Request
++
++        request = Request(environ)
++
+         try:
+-            rv = rv.make_conditional(environ, accept_ranges=True, complete_length=size)
+-        except RequestedRangeNotSatisfiable:
++            rv.apply_conditions(request)
++            rv.apply_range(request)
++        except (PreconditionFailed, RequestedRangeNotSatisfiable):
+             if file is not None:
+                 file.close()
+ 
+diff --git a/tests/test_send_file.py b/tests/test_send_file.py
+index 6143e0ed..4c37be57 100644
+--- a/tests/test_send_file.py
++++ b/tests/test_send_file.py
+@@ -5,6 +5,7 @@ import pathlib
+ import pytest
+ 
+ from werkzeug.exceptions import NotFound
++from werkzeug.exceptions import PreconditionFailed
+ from werkzeug.http import http_date
+ from werkzeug.test import create_environ
+ from werkzeug.utils import send_file
+@@ -52,8 +53,47 @@ def test_object(file_factory):
+ 
+ 
+ def test_object_without_mimetype():
+-    with pytest.raises(TypeError, match="detect the MIME type"):
+-        send_file(io.BytesIO(b"test"), environ)
++    with send_file(io.BytesIO(b"test"), environ) as rv:
++        assert rv.mimetype == "application/octet-stream"
++
++
++def test_object_detects_name_size_mtime():
++    with txt_path.open("rb") as f, send_file(f, environ) as rv:
++        assert rv.mimetype == "text/plain"
++        assert rv.headers["Content-Disposition"] == "inline; filename=test.txt"
++        assert rv.content_length == txt_path.stat().st_size
++        assert rv.last_modified is not None
++        assert rv.etag is not None
++
++
++def test_object_seeks_to_start():
++    f = io.BytesIO(b"test data")
++    f.read()
++
++    with send_file(f, environ) as rv:
++        assert rv.content_length == 9
++        rv.direct_passthrough = False
++        assert rv.data == b"test data"
++
++
++def test_object_range():
++    f = io.BytesIO(b"0123456789")
++    f.read()
++    env = create_environ(headers={"Range": "bytes=2-5"})
++
++    with send_file(f, env) as rv:
++        assert rv.status_code == 206
++        assert rv.headers["Content-Range"] == "bytes 2-5/10"
++        assert rv.content_length == 4
++        rv.direct_passthrough = False
++        assert rv.data == b"2345"
++
++
++def test_precondition_failed():
++    env = create_environ(method="PUT", headers={"If-None-Match": "*"})
++
++    with pytest.raises(PreconditionFailed):
++        send_file(txt_path, env)
+ 
+ 
+ def test_object_mimetype_from_name():
+@@ -146,7 +186,8 @@ def test_max_age(value, public):
+ 
+ def test_etag():
+     with send_file(txt_path, environ) as rv:
+-        assert rv.headers["ETag"].count("-") == 2
++        stat = txt_path.stat()
++        assert rv.headers["ETag"] == f'"{stat.st_mtime}-{stat.st_size}"'
+ 
+     with send_file(txt_path, environ, etag=False) as rv:
+         assert "ETag" not in rv.headers

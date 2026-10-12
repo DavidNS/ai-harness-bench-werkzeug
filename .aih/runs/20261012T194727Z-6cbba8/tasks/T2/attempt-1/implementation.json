@@ -1,0 +1,30 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC4",
+      "note": "test_apply_conditions_if_match, _if_unmodified_since, _if_match_precedes_unmodified_since, _if_none_match_412, _if_none_match_precedes_modified_since cover order, all methods and PreconditionFailed."
+    },
+    {
+      "criterion": "ACC5",
+      "note": "test_apply_conditions_if_none_match_304 (entity headers removed), test_apply_conditions_if_modified_since, test_apply_conditions_if_none_match_412 for non-GET."
+    },
+    {
+      "criterion": "ACC6",
+      "note": "test_apply_conditions_star_if_match and test_apply_conditions_star_if_none_match with exists True/False."
+    },
+    {
+      "criterion": "ACC7",
+      "note": "test_apply_conditions_no_headers asserts Accept-Ranges: bytes."
+    },
+    {
+      "criterion": "ACC8",
+      "note": "test_apply_range_basic, _first_only, _clamped, _file check 206, data, Content-Length, Content-Range."
+    },
+    {
+      "criterion": "ACC9",
+      "note": "test_apply_range_unsatisfiable, _ignores_other_units, _if_range (mismatch leaves 200)."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Added Response.apply_conditions (RFC 9110 order, star ETag via exists, 304/412, sets Accept-Ranges) and Response.apply_range (bytes only, first range, clamping, 416, 206 with Content-Range, If-Range via IfRange.check) in wrappers/response.py, plus tests in tests/test_wrappers.py. make_conditional is untouched. Tests have not been run (no command execution available)."
+}

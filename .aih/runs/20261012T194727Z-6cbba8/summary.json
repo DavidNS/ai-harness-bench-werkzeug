@@ -1,0 +1,247 @@
+{
+  "attempts_total": 8,
+  "base_sha": "671537e0e5c7dcec4ac61ffc755dbd8936cefcfb",
+  "delivery": null,
+  "error": {
+    "code": "run.aborted",
+    "message": "review.changes_requested: the reviewer requests changes:"
+  },
+  "gate_failures": [
+    {
+      "attempt": 1,
+      "codes": [
+        "tests.red_not_proven"
+      ],
+      "gate": "tests.red_proven",
+      "task": "T1"
+    },
+    {
+      "attempt": 1,
+      "codes": [
+        "review.changes_requested"
+      ],
+      "gate": "review.approved",
+      "task": "T2"
+    },
+    {
+      "attempt": 1,
+      "codes": [
+        "review.changes_requested"
+      ],
+      "gate": "review.approved",
+      "task": "T3"
+    },
+    {
+      "attempt": 1,
+      "codes": [
+        "review.changes_requested"
+      ],
+      "gate": "review.approved",
+      "task": "T4"
+    },
+    {
+      "attempt": 2,
+      "codes": [
+        "review.changes_requested"
+      ],
+      "gate": "review.approved",
+      "task": "T4"
+    }
+  ],
+  "head": null,
+  "human_decisions": [
+    {
+      "actor": "policy",
+      "decision": "approve",
+      "gate": "human.plan_approved"
+    },
+    {
+      "actor": "policy",
+      "decision": "abort",
+      "gate": "human.escalation"
+    }
+  ],
+  "models": [
+    "claude-sonnet-5-5"
+  ],
+  "plan_tasks": [
+    {
+      "files": [
+        "src/werkzeug/datastructures/range.py",
+        "src/werkzeug/datastructures/etag.py",
+        "tests/test_http.py",
+        "tests/test_datastructures.py"
+      ],
+      "id": "T1",
+      "key": "T1_datastructures",
+      "tests": [
+        "tests/test_http.py",
+        "tests/test_datastructures.py"
+      ]
+    },
+    {
+      "files": [
+        "src/werkzeug/wrappers/response.py",
+        "tests/test_wrappers.py"
+      ],
+      "id": "T2",
+      "key": "T2_response_methods",
+      "tests": [
+        "tests/test_wrappers.py"
+      ]
+    },
+    {
+      "files": [
+        "src/werkzeug/utils.py",
+        "tests/test_send_file.py"
+      ],
+      "id": "T3",
+      "key": "T3_send_file",
+      "tests": [
+        "tests/test_send_file.py"
+      ]
+    },
+    {
+      "files": [
+        "src/werkzeug/middleware/shared_data.py",
+        "tests/middleware/test_shared_data.py"
+      ],
+      "id": "T4",
+      "key": "T4_shared_data",
+      "tests": [
+        "tests/middleware/test_shared_data.py"
+      ]
+    },
+    {
+      "files": [
+        "src/werkzeug/wrappers/response.py",
+        "src/werkzeug/http.py",
+        "tests/test_http.py",
+        "tests/test_wrappers.py"
+      ],
+      "id": "T5",
+      "key": "T5_deprecate_old",
+      "tests": [
+        "tests/test_http.py",
+        "tests/test_wrappers.py"
+      ]
+    },
+    {
+      "files": [
+        "docs/quickstart.rst",
+        "CHANGES.rst"
+      ],
+      "id": "T6",
+      "key": "T6_docs",
+      "tests": []
+    }
+  ],
+  "plan_version": 1,
+  "run_dir": "C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\results\\arms\\detail\\20261012T194722Z-werkzeug-apply-conditions-range-gated-1\\aih-data\\runs\\20261012T194727Z-6cbba8",
+  "run_id": "20261012T194727Z-6cbba8",
+  "schema_version": 1,
+  "sessions": 20,
+  "status": "aborted",
+  "tasks": [
+    {
+      "advisories": [
+        {
+          "file": "tests/test_http.py",
+          "line": 825,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "The `test_content_range_invalid_int` parametrize line was rewritten without a space after a comma (`\"*/\ud83e\udff1\ud83e\udff2\ud83e\udff3\",\"1-+2/3\"`), which is formatting noise that `ruff format` would reject; restore the original line."
+        },
+        {
+          "file": "tests/test_datastructures.py",
+          "line": 1,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test covers `IfRange.check` with a naive `last_modified` datetime (assumed UTC) or with a non-bytes unit passed to `make_content_range`."
+        }
+      ],
+      "attempts": 2,
+      "commit": "6896bf8a8265b3eb42aecf4e54933e0c067e0299",
+      "id": "T1",
+      "status": "committed"
+    },
+    {
+      "advisories": [
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 930,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test runs apply_range on a streamed response whose length is unknown, or on a file-wrapper or direct_passthrough response, which is the path send_file will use. The `calculate_content_length()` returning None branch is untested."
+        },
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 790,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "Several edge cases have no test: a weak ETag in If-Range, a last_modified with microseconds (the `replace(microsecond=0)` normalisation), and malformed date headers."
+        }
+      ],
+      "attempts": 2,
+      "commit": "bb7c6287d643dac32c51ac38124055e38900dc8a",
+      "id": "T2",
+      "review_rounds": 1,
+      "status": "committed"
+    },
+    {
+      "advisories": [
+        {
+          "file": "src/werkzeug/utils.py",
+          "line": 455,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "The `size = None` in the except branch of the seek-to-end fallback is redundant if `size` is already initialised to None earlier in the function. The size-detection ladder could also be a small helper."
+        },
+        {
+          "file": "tests/test_send_file.py",
+          "line": 0,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test covers a file-like object that has a `fileno` but is not a regular file, such as a pipe. The `S_ISREG` guard and the seek-based size fallback are therefore unexercised for it."
+        }
+      ],
+      "attempts": 2,
+      "commit": "4d4b28a357089b1e8de3ac962e9544303115d754",
+      "id": "T3",
+      "review_rounds": 1,
+      "status": "committed"
+    },
+    {
+      "advisories": [
+        {
+          "file": "tests/middleware/test_shared_data.py",
+          "line": 43,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "There is no test for If-Modified-Since / Last-Modified revalidation, for HEAD requests, or for a file served from a package loader (`generate_etag` and the BytesIO opener). Only the filesystem If-None-Match path is covered."
+        },
+        {
+          "file": "src/werkzeug/middleware/shared_data.py",
+          "line": 293,
+          "pass": 1,
+          "severity": "advisory",
+          "text": "With `cache=False`, `etag=False` still lets send_file set Last-Modified and apply conditions. The old code sent only `Cache-Control: public` and never returned 304. The new behavior is arguably fine for a deprecated option, but it is untested."
+        }
+      ],
+      "attempts": 2,
+      "id": "T4",
+      "review_rounds": 2,
+      "status": "in_progress"
+    }
+  ],
+  "usage": {
+    "cache_creation_input_tokens": 349882,
+    "cache_read_input_tokens": 2186147,
+    "cost_usd": 3.045794,
+    "duration_ms": 642983,
+    "input_tokens": 200,
+    "num_turns": 193,
+    "output_tokens": 88385
+  },
+  "worktree": "C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\results\\arms\\detail\\20261012T194722Z-werkzeug-apply-conditions-range-gated-1\\aih-data\\worktrees\\20261012T194727Z-6cbba8"
+}

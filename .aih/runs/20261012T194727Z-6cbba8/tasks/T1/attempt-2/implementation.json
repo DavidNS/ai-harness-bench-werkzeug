@@ -1,0 +1,18 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC1",
+      "note": "`IfRange.check` is in `range.py`. It returns True for a strong ETag equal to `etag` or a date equal to `last_modified` (microseconds ignored, naive treated as UTC). Weak, differing, None and empty cases return False. Tests: `test_if_range_check` in `tests/test_datastructures.py` and `tests/test_http.py`. These fail at base because the method doesn't exist."
+    },
+    {
+      "criterion": "ACC2",
+      "note": "`make_content_range` now computes bounds inline and clamps `stop` and suffix length. It uses only the first range and returns None when unsatisfiable. The `is_byte_range_valid` import is removed. Tests: `test_range_make_content_range`, `test_range_does_not_import_is_byte_range_valid`, `test_range_make_content_range_clamps_and_uses_first` and `test_content_range_invalid_values`. The clamped-suffix and import tests fail at base. `Range.from_header` and `ContentRange.from_header` already rejected invalid values, so I left them unchanged and covered them with existing and new tests."
+    },
+    {
+      "criterion": "ACC3",
+      "note": "`ETagSet.from_header` already discarded invalid unquoted values and kept quoted and weak tags, so I made no production change. `test_etag_set_from_header_discards_invalid` covers this. It passes at base too, so it doesn't prove a change. The red proof for `tests/test_datastructures.py` comes from the IfRange and make_content_range tests."
+    }
+  ],
+  "replan_request": null,
+  "summary": "I added `IfRange.check`, made `Range.make_content_range` self-validating, and added tests. I couldn't run anything here, so none of it has been run. `ETagSet.from_header` needed no production change."
+}

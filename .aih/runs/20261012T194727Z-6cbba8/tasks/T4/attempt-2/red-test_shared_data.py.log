@@ -1,0 +1,108 @@
+F.FFFFF..                                                                [100%]
+================================== FAILURES ===================================
+___________________________ test_no_default_max_age ___________________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-198/test_no_default_max_age0')
+
+    def test_no_default_max_age(tmp_path):
+        status, headers, body = _serve(tmp_path)
+        assert status == "200 OK"
+        assert body == b"0123456789"
+>       assert "max-age" not in headers["Cache-Control"]
+E       AssertionError: assert 'max-age' not in 'max-age=43200, public'
+E         
+E         'max-age' is contained here:
+E           max-age=43200, public
+E         ? +++++++
+
+tests\middleware\test_shared_data.py:33: AssertionError
+______________________________ test_not_modified ______________________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-198/test_not_modified0')
+
+    def test_not_modified(tmp_path):
+        _, headers, _ = _serve(tmp_path)
+>       status, _, body = _serve(tmp_path, {"If-None-Match": headers["ETag"]})
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\middleware\test_shared_data.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\middleware\test_shared_data.py:23: in _serve
+    with closing(app_iter):
+         ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <contextlib.closing object at 0x000001E9573187D0>
+exc_info = (None, None, None)
+
+    def __exit__(self, *exc_info):
+>       self.thing.close()
+        ^^^^^^^^^^^^^^^^
+E       AttributeError: 'list_iterator' object has no attribute 'close'
+
+C:\Users\david\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:360: AttributeError
+_________________________________ test_range __________________________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-198/test_range0')
+
+    def test_range(tmp_path):
+        status, headers, body = _serve(tmp_path, {"Range": "bytes=2-4"})
+>       assert status.startswith("206")
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of str object at 0x000001E9573456B0>('206')
+E        +    where <built-in method startswith of str object at 0x000001E9573456B0> = '200 OK'.startswith
+
+tests\middleware\test_shared_data.py:55: AssertionError
+_________________________ test_range_not_satisfiable __________________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-198/test_range_not_satisfiable0')
+
+    def test_range_not_satisfiable(tmp_path):
+        status, _, _ = _serve(tmp_path, {"Range": "bytes=50-60"})
+>       assert status.startswith("416")
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of str object at 0x000001E9573456B0>('416')
+E        +    where <built-in method startswith of str object at 0x000001E9573456B0> = '200 OK'.startswith
+
+tests\middleware\test_shared_data.py:62: AssertionError
+__________________________ test_precondition_failed ___________________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-198/test_precondition_failed0')
+
+    def test_precondition_failed(tmp_path):
+>       status, _, _ = _serve(tmp_path, {"If-Match": '"nope"'})
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\middleware\test_shared_data.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\middleware\test_shared_data.py:23: in _serve
+    with closing(app_iter):
+         ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <contextlib.closing object at 0x000001E957319BE0>
+exc_info = (None, None, None)
+
+    def __exit__(self, *exc_info):
+>       self.thing.close()
+        ^^^^^^^^^^^^^^^^
+E       AttributeError: 'list_iterator' object has no attribute 'close'
+
+C:\Users\david\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:360: AttributeError
+_________________________ test_deprecated_parameters __________________________
+
+    def test_deprecated_parameters():
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\middleware\test_shared_data.py:71: Failed
+=========================== short test summary info ===========================
+FAILED tests/middleware/test_shared_data.py::test_no_default_max_age - Assert...
+FAILED tests/middleware/test_shared_data.py::test_not_modified - AttributeErr...
+FAILED tests/middleware/test_shared_data.py::test_range - AssertionError: ass...
+FAILED tests/middleware/test_shared_data.py::test_range_not_satisfiable - Ass...
+FAILED tests/middleware/test_shared_data.py::test_precondition_failed - Attri...
+FAILED tests/middleware/test_shared_data.py::test_deprecated_parameters - Fai...
+6 failed, 3 passed in 0.60s

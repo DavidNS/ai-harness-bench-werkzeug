@@ -1,0 +1,14 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC11",
+      "note": "These tests in tests/test_send_file.py cover it: test_object_detects_name_size_mtime, test_object_seeks_to_start, test_object_range (an already-read BytesIO gets Content-Range `bytes 2-5/10`) and test_object_without_mimetype (octet-stream, no error)."
+    },
+    {
+      "criterion": "ACC12",
+      "note": "test_etag now asserts the ETag is exactly `mtime-size`. test_object_range exercises apply_range, test_precondition_failed exercises apply_conditions (PUT with If-None-Match: * raises PreconditionFailed), and the existing test_no_cache_conditional_default covers the 304 path."
+    }
+  ],
+  "replan_request": null,
+  "summary": "I rewrote send_file in src/werkzeug/utils.py to use apply_conditions and apply_range. For file-like objects it takes the name from .name, the mtime from fileno() and the size from seeking to the end, then calls seek(0). The ETag is now `mtime-size` with no path hash, and the mimetype defaults to application/octet-stream when no name is available. I updated tests/test_send_file.py to match. I couldn't run anything here, so none of this has been run."
+}

@@ -1,0 +1,1193 @@
+......FFFFFFFF...............F.........                                  [100%]
+================================== FAILURES ===================================
+________________________ test_object_without_mimetype _________________________
+
+    def test_object_without_mimetype():
+>       with send_file(io.BytesIO(b"test"), environ) as rv:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_send_file.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path_or_file = <_io.BytesIO object at 0x00000274A51079C0>
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+mimetype = None, as_attachment = False, download_name = None, conditional = True
+etag = True, last_modified = None, max_age = None, use_x_sendfile = False
+response_class = <class 'werkzeug.wrappers.response.Response'>
+_root_path = None
+
+    def send_file(
+        path_or_file: os.PathLike[str] | str | t.IO[bytes],
+        environ: WSGIEnvironment,
+        mimetype: str | None = None,
+        as_attachment: bool = False,
+        download_name: str | None = None,
+        conditional: bool = True,
+        etag: bool | str = True,
+        last_modified: datetime | int | float | None = None,
+        max_age: None | (int | t.Callable[[str | None], int | None]) = None,
+        use_x_sendfile: bool = False,
+        response_class: type[Response] | None = None,
+        _root_path: os.PathLike[str] | str | None = None,
+    ) -> Response:
+        """Send the contents of a file to the client.
+    
+        The first argument can be a file path or a file-like object. Paths
+        are preferred in most cases because Werkzeug can manage the file and
+        get extra information from the path. Passing a file-like object
+        requires that the file is opened in binary mode, and is mostly
+        useful when building a file in memory with :class:`io.BytesIO`.
+    
+        Never pass file paths provided by a user. The path is assumed to be
+        trusted, so a user could craft a path to access a file you didn't
+        intend. Use :func:`send_from_directory` to safely serve user-provided paths.
+    
+        If the WSGI server sets a ``file_wrapper`` in ``environ``, it is
+        used, otherwise Werkzeug's built-in wrapper is used. Alternatively,
+        if the HTTP server supports ``X-Sendfile``, ``use_x_sendfile=True``
+        will tell the server to send the given path, which is much more
+        efficient than reading it in Python.
+    
+        :param path_or_file: The path to the file to send, relative to the
+            current working directory if a relative path is given.
+            Alternatively, a file-like object opened in binary mode. Make
+            sure the file pointer is seeked to the start of the data.
+        :param environ: The WSGI environ for the current request.
+        :param mimetype: The MIME type to send for the file. If not
+            provided, it will try to detect it from the file name.
+        :param as_attachment: Indicate to a browser that it should offer to
+            save the file instead of displaying it.
+        :param download_name: The default name browsers will use when saving
+            the file. Defaults to the passed file name.
+        :param conditional: Enable conditional and range responses based on
+            request headers. Requires passing a file path and ``environ``.
+        :param etag: Calculate an ETag for the file, which requires passing
+            a file path. Can also be a string to use instead.
+        :param last_modified: The last modified time to send for the file,
+            in seconds. If not provided, it will try to detect it from the
+            file path.
+        :param max_age: How long the client should cache the file, in
+            seconds. If set, ``Cache-Control`` will be ``public``, otherwise
+            it will be ``no-cache`` to prefer conditional caching.
+        :param use_x_sendfile: Set the ``X-Sendfile`` header to let the
+            server to efficiently send the file. Requires support from the
+            HTTP server. Requires passing a file path.
+        :param response_class: Build the response using this class. Defaults
+            to :class:`~werkzeug.wrappers.Response`.
+        :param _root_path: Do not use. For internal use only. Use
+            :func:`send_from_directory` to safely send files under a path.
+    
+        .. versionchanged:: 2.0.2
+            ``send_file`` only sets a detected ``Content-Encoding`` if
+            ``as_attachment`` is disabled.
+    
+        .. versionadded:: 2.0
+            Adapted from Flask's implementation.
+    
+        .. versionchanged:: 2.0
+            ``download_name`` replaces Flask's ``attachment_filename``
+             parameter. If ``as_attachment=False``, it is passed with
+             ``Content-Disposition: inline`` instead.
+    
+        .. versionchanged:: 2.0
+            ``max_age`` replaces Flask's ``cache_timeout`` parameter.
+            ``conditional`` is enabled and ``max_age`` is not set by
+            default.
+    
+        .. versionchanged:: 2.0
+            ``etag`` replaces Flask's ``add_etags`` parameter. It can be a
+            string to use instead of generating one.
+    
+        .. versionchanged:: 2.0
+            If an encoding is returned when guessing ``mimetype`` from
+            ``download_name``, set the ``Content-Encoding`` header.
+        """
+        if response_class is None:
+            from .wrappers import Response
+    
+            response_class = Response
+    
+        path: str | None = None
+        file: t.IO[bytes] | None = None
+        size: int | None = None
+        mtime: float | None = None
+        headers = Headers()
+    
+        if isinstance(path_or_file, (os.PathLike, str)) or hasattr(
+            path_or_file, "__fspath__"
+        ):
+            path_or_file = t.cast("os.PathLike[str] | str", path_or_file)
+    
+            # Flask will pass app.root_path, allowing its send_file wrapper
+            # to not have to deal with paths.
+            if _root_path is not None:
+                path = os.path.join(_root_path, path_or_file)
+            else:
+                path = os.path.abspath(path_or_file)
+    
+            stat = os.stat(path)
+            size = stat.st_size
+            mtime = stat.st_mtime
+        else:
+            file = path_or_file
+    
+        if download_name is None and path is not None:
+            download_name = os.path.basename(path)
+    
+        if mimetype is None:
+            if download_name is None:
+>               raise TypeError(
+                    "Unable to detect the MIME type because a file name is"
+                    " not available. Either set 'download_name', pass a"
+                    " path instead of a file, or set 'mimetype'."
+                )
+E               TypeError: Unable to detect the MIME type because a file name is not available. Either set 'download_name', pass a path instead of a file, or set 'mimetype'.
+
+src\werkzeug\utils.py:423: TypeError
+_____________________ test_object_detects_name_size_mtime _____________________
+
+    def test_object_detects_name_size_mtime():
+>       with txt_path.open("rb") as f, send_file(f, environ) as rv:
+                                       ^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_send_file.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path_or_file = <_io.BufferedReader name='C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\results\\arms\\detail\\20261012T194722Z-werkzeug-apply-conditions-range-gated-1\\aih-data\\worktrees\\20261012T194727Z-6cbba8-red\\tests\\res\\test.txt'>
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+mimetype = None, as_attachment = False, download_name = None, conditional = True
+etag = True, last_modified = None, max_age = None, use_x_sendfile = False
+response_class = <class 'werkzeug.wrappers.response.Response'>
+_root_path = None
+
+    def send_file(
+        path_or_file: os.PathLike[str] | str | t.IO[bytes],
+        environ: WSGIEnvironment,
+        mimetype: str | None = None,
+        as_attachment: bool = False,
+        download_name: str | None = None,
+        conditional: bool = True,
+        etag: bool | str = True,
+        last_modified: datetime | int | float | None = None,
+        max_age: None | (int | t.Callable[[str | None], int | None]) = None,
+        use_x_sendfile: bool = False,
+        response_class: type[Response] | None = None,
+        _root_path: os.PathLike[str] | str | None = None,
+    ) -> Response:
+        """Send the contents of a file to the client.
+    
+        The first argument can be a file path or a file-like object. Paths
+        are preferred in most cases because Werkzeug can manage the file and
+        get extra information from the path. Passing a file-like object
+        requires that the file is opened in binary mode, and is mostly
+        useful when building a file in memory with :class:`io.BytesIO`.
+    
+        Never pass file paths provided by a user. The path is assumed to be
+        trusted, so a user could craft a path to access a file you didn't
+        intend. Use :func:`send_from_directory` to safely serve user-provided paths.
+    
+        If the WSGI server sets a ``file_wrapper`` in ``environ``, it is
+        used, otherwise Werkzeug's built-in wrapper is used. Alternatively,
+        if the HTTP server supports ``X-Sendfile``, ``use_x_sendfile=True``
+        will tell the server to send the given path, which is much more
+        efficient than reading it in Python.
+    
+        :param path_or_file: The path to the file to send, relative to the
+            current working directory if a relative path is given.
+            Alternatively, a file-like object opened in binary mode. Make
+            sure the file pointer is seeked to the start of the data.
+        :param environ: The WSGI environ for the current request.
+        :param mimetype: The MIME type to send for the file. If not
+            provided, it will try to detect it from the file name.
+        :param as_attachment: Indicate to a browser that it should offer to
+            save the file instead of displaying it.
+        :param download_name: The default name browsers will use when saving
+            the file. Defaults to the passed file name.
+        :param conditional: Enable conditional and range responses based on
+            request headers. Requires passing a file path and ``environ``.
+        :param etag: Calculate an ETag for the file, which requires passing
+            a file path. Can also be a string to use instead.
+        :param last_modified: The last modified time to send for the file,
+            in seconds. If not provided, it will try to detect it from the
+            file path.
+        :param max_age: How long the client should cache the file, in
+            seconds. If set, ``Cache-Control`` will be ``public``, otherwise
+            it will be ``no-cache`` to prefer conditional caching.
+        :param use_x_sendfile: Set the ``X-Sendfile`` header to let the
+            server to efficiently send the file. Requires support from the
+            HTTP server. Requires passing a file path.
+        :param response_class: Build the response using this class. Defaults
+            to :class:`~werkzeug.wrappers.Response`.
+        :param _root_path: Do not use. For internal use only. Use
+            :func:`send_from_directory` to safely send files under a path.
+    
+        .. versionchanged:: 2.0.2
+            ``send_file`` only sets a detected ``Content-Encoding`` if
+            ``as_attachment`` is disabled.
+    
+        .. versionadded:: 2.0
+            Adapted from Flask's implementation.
+    
+        .. versionchanged:: 2.0
+            ``download_name`` replaces Flask's ``attachment_filename``
+             parameter. If ``as_attachment=False``, it is passed with
+             ``Content-Disposition: inline`` instead.
+    
+        .. versionchanged:: 2.0
+            ``max_age`` replaces Flask's ``cache_timeout`` parameter.
+            ``conditional`` is enabled and ``max_age`` is not set by
+            default.
+    
+        .. versionchanged:: 2.0
+            ``etag`` replaces Flask's ``add_etags`` parameter. It can be a
+            string to use instead of generating one.
+    
+        .. versionchanged:: 2.0
+            If an encoding is returned when guessing ``mimetype`` from
+            ``download_name``, set the ``Content-Encoding`` header.
+        """
+        if response_class is None:
+            from .wrappers import Response
+    
+            response_class = Response
+    
+        path: str | None = None
+        file: t.IO[bytes] | None = None
+        size: int | None = None
+        mtime: float | None = None
+        headers = Headers()
+    
+        if isinstance(path_or_file, (os.PathLike, str)) or hasattr(
+            path_or_file, "__fspath__"
+        ):
+            path_or_file = t.cast("os.PathLike[str] | str", path_or_file)
+    
+            # Flask will pass app.root_path, allowing its send_file wrapper
+            # to not have to deal with paths.
+            if _root_path is not None:
+                path = os.path.join(_root_path, path_or_file)
+            else:
+                path = os.path.abspath(path_or_file)
+    
+            stat = os.stat(path)
+            size = stat.st_size
+            mtime = stat.st_mtime
+        else:
+            file = path_or_file
+    
+        if download_name is None and path is not None:
+            download_name = os.path.basename(path)
+    
+        if mimetype is None:
+            if download_name is None:
+>               raise TypeError(
+                    "Unable to detect the MIME type because a file name is"
+                    " not available. Either set 'download_name', pass a"
+                    " path instead of a file, or set 'mimetype'."
+                )
+E               TypeError: Unable to detect the MIME type because a file name is not available. Either set 'download_name', pass a path instead of a file, or set 'mimetype'.
+
+src\werkzeug\utils.py:423: TypeError
+_________________________ test_object_seeks_to_start __________________________
+
+    def test_object_seeks_to_start():
+        f = io.BytesIO(b"0123456789")
+        f.read()
+    
+>       with send_file(f, environ) as rv:
+             ^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_send_file.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path_or_file = <_io.BytesIO object at 0x00000274A46F3150>
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+mimetype = None, as_attachment = False, download_name = None, conditional = True
+etag = True, last_modified = None, max_age = None, use_x_sendfile = False
+response_class = <class 'werkzeug.wrappers.response.Response'>
+_root_path = None
+
+    def send_file(
+        path_or_file: os.PathLike[str] | str | t.IO[bytes],
+        environ: WSGIEnvironment,
+        mimetype: str | None = None,
+        as_attachment: bool = False,
+        download_name: str | None = None,
+        conditional: bool = True,
+        etag: bool | str = True,
+        last_modified: datetime | int | float | None = None,
+        max_age: None | (int | t.Callable[[str | None], int | None]) = None,
+        use_x_sendfile: bool = False,
+        response_class: type[Response] | None = None,
+        _root_path: os.PathLike[str] | str | None = None,
+    ) -> Response:
+        """Send the contents of a file to the client.
+    
+        The first argument can be a file path or a file-like object. Paths
+        are preferred in most cases because Werkzeug can manage the file and
+        get extra information from the path. Passing a file-like object
+        requires that the file is opened in binary mode, and is mostly
+        useful when building a file in memory with :class:`io.BytesIO`.
+    
+        Never pass file paths provided by a user. The path is assumed to be
+        trusted, so a user could craft a path to access a file you didn't
+        intend. Use :func:`send_from_directory` to safely serve user-provided paths.
+    
+        If the WSGI server sets a ``file_wrapper`` in ``environ``, it is
+        used, otherwise Werkzeug's built-in wrapper is used. Alternatively,
+        if the HTTP server supports ``X-Sendfile``, ``use_x_sendfile=True``
+        will tell the server to send the given path, which is much more
+        efficient than reading it in Python.
+    
+        :param path_or_file: The path to the file to send, relative to the
+            current working directory if a relative path is given.
+            Alternatively, a file-like object opened in binary mode. Make
+            sure the file pointer is seeked to the start of the data.
+        :param environ: The WSGI environ for the current request.
+        :param mimetype: The MIME type to send for the file. If not
+            provided, it will try to detect it from the file name.
+        :param as_attachment: Indicate to a browser that it should offer to
+            save the file instead of displaying it.
+        :param download_name: The default name browsers will use when saving
+            the file. Defaults to the passed file name.
+        :param conditional: Enable conditional and range responses based on
+            request headers. Requires passing a file path and ``environ``.
+        :param etag: Calculate an ETag for the file, which requires passing
+            a file path. Can also be a string to use instead.
+        :param last_modified: The last modified time to send for the file,
+            in seconds. If not provided, it will try to detect it from the
+            file path.
+        :param max_age: How long the client should cache the file, in
+            seconds. If set, ``Cache-Control`` will be ``public``, otherwise
+            it will be ``no-cache`` to prefer conditional caching.
+        :param use_x_sendfile: Set the ``X-Sendfile`` header to let the
+            server to efficiently send the file. Requires support from the
+            HTTP server. Requires passing a file path.
+        :param response_class: Build the response using this class. Defaults
+            to :class:`~werkzeug.wrappers.Response`.
+        :param _root_path: Do not use. For internal use only. Use
+            :func:`send_from_directory` to safely send files under a path.
+    
+        .. versionchanged:: 2.0.2
+            ``send_file`` only sets a detected ``Content-Encoding`` if
+            ``as_attachment`` is disabled.
+    
+        .. versionadded:: 2.0
+            Adapted from Flask's implementation.
+    
+        .. versionchanged:: 2.0
+            ``download_name`` replaces Flask's ``attachment_filename``
+             parameter. If ``as_attachment=False``, it is passed with
+             ``Content-Disposition: inline`` instead.
+    
+        .. versionchanged:: 2.0
+            ``max_age`` replaces Flask's ``cache_timeout`` parameter.
+            ``conditional`` is enabled and ``max_age`` is not set by
+            default.
+    
+        .. versionchanged:: 2.0
+            ``etag`` replaces Flask's ``add_etags`` parameter. It can be a
+            string to use instead of generating one.
+    
+        .. versionchanged:: 2.0
+            If an encoding is returned when guessing ``mimetype`` from
+            ``download_name``, set the ``Content-Encoding`` header.
+        """
+        if response_class is None:
+            from .wrappers import Response
+    
+            response_class = Response
+    
+        path: str | None = None
+        file: t.IO[bytes] | None = None
+        size: int | None = None
+        mtime: float | None = None
+        headers = Headers()
+    
+        if isinstance(path_or_file, (os.PathLike, str)) or hasattr(
+            path_or_file, "__fspath__"
+        ):
+            path_or_file = t.cast("os.PathLike[str] | str", path_or_file)
+    
+            # Flask will pass app.root_path, allowing its send_file wrapper
+            # to not have to deal with paths.
+            if _root_path is not None:
+                path = os.path.join(_root_path, path_or_file)
+            else:
+                path = os.path.abspath(path_or_file)
+    
+            stat = os.stat(path)
+            size = stat.st_size
+            mtime = stat.st_mtime
+        else:
+            file = path_or_file
+    
+        if download_name is None and path is not None:
+            download_name = os.path.basename(path)
+    
+        if mimetype is None:
+            if download_name is None:
+>               raise TypeError(
+                    "Unable to detect the MIME type because a file name is"
+                    " not available. Either set 'download_name', pass a"
+                    " path instead of a file, or set 'mimetype'."
+                )
+E               TypeError: Unable to detect the MIME type because a file name is not available. Either set 'download_name', pass a path instead of a file, or set 'mimetype'.
+
+src\werkzeug\utils.py:423: TypeError
+______________________________ test_object_range ______________________________
+
+    def test_object_range():
+        f = io.BytesIO(b"0123456789")
+        f.read()
+        range_environ = create_environ(headers={"Range": "bytes=2-4"})
+    
+>       with send_file(f, range_environ) as rv:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_send_file.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path_or_file = <_io.BytesIO object at 0x00000274A46F32E0>
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+mimetype = None, as_attachment = False, download_name = None, conditional = True
+etag = True, last_modified = None, max_age = None, use_x_sendfile = False
+response_class = <class 'werkzeug.wrappers.response.Response'>
+_root_path = None
+
+    def send_file(
+        path_or_file: os.PathLike[str] | str | t.IO[bytes],
+        environ: WSGIEnvironment,
+        mimetype: str | None = None,
+        as_attachment: bool = False,
+        download_name: str | None = None,
+        conditional: bool = True,
+        etag: bool | str = True,
+        last_modified: datetime | int | float | None = None,
+        max_age: None | (int | t.Callable[[str | None], int | None]) = None,
+        use_x_sendfile: bool = False,
+        response_class: type[Response] | None = None,
+        _root_path: os.PathLike[str] | str | None = None,
+    ) -> Response:
+        """Send the contents of a file to the client.
+    
+        The first argument can be a file path or a file-like object. Paths
+        are preferred in most cases because Werkzeug can manage the file and
+        get extra information from the path. Passing a file-like object
+        requires that the file is opened in binary mode, and is mostly
+        useful when building a file in memory with :class:`io.BytesIO`.
+    
+        Never pass file paths provided by a user. The path is assumed to be
+        trusted, so a user could craft a path to access a file you didn't
+        intend. Use :func:`send_from_directory` to safely serve user-provided paths.
+    
+        If the WSGI server sets a ``file_wrapper`` in ``environ``, it is
+        used, otherwise Werkzeug's built-in wrapper is used. Alternatively,
+        if the HTTP server supports ``X-Sendfile``, ``use_x_sendfile=True``
+        will tell the server to send the given path, which is much more
+        efficient than reading it in Python.
+    
+        :param path_or_file: The path to the file to send, relative to the
+            current working directory if a relative path is given.
+            Alternatively, a file-like object opened in binary mode. Make
+            sure the file pointer is seeked to the start of the data.
+        :param environ: The WSGI environ for the current request.
+        :param mimetype: The MIME type to send for the file. If not
+            provided, it will try to detect it from the file name.
+        :param as_attachment: Indicate to a browser that it should offer to
+            save the file instead of displaying it.
+        :param download_name: The default name browsers will use when saving
+            the file. Defaults to the passed file name.
+        :param conditional: Enable conditional and range responses based on
+            request headers. Requires passing a file path and ``environ``.
+        :param etag: Calculate an ETag for the file, which requires passing
+            a file path. Can also be a string to use instead.
+        :param last_modified: The last modified time to send for the file,
+            in seconds. If not provided, it will try to detect it from the
+            file path.
+        :param max_age: How long the client should cache the file, in
+            seconds. If set, ``Cache-Control`` will be ``public``, otherwise
+            it will be ``no-cache`` to prefer conditional caching.
+        :param use_x_sendfile: Set the ``X-Sendfile`` header to let the
+            server to efficiently send the file. Requires support from the
+            HTTP server. Requires passing a file path.
+        :param response_class: Build the response using this class. Defaults
+            to :class:`~werkzeug.wrappers.Response`.
+        :param _root_path: Do not use. For internal use only. Use
+            :func:`send_from_directory` to safely send files under a path.
+    
+        .. versionchanged:: 2.0.2
+            ``send_file`` only sets a detected ``Content-Encoding`` if
+            ``as_attachment`` is disabled.
+    
+        .. versionadded:: 2.0
+            Adapted from Flask's implementation.
+    
+        .. versionchanged:: 2.0
+            ``download_name`` replaces Flask's ``attachment_filename``
+             parameter. If ``as_attachment=False``, it is passed with
+             ``Content-Disposition: inline`` instead.
+    
+        .. versionchanged:: 2.0
+            ``max_age`` replaces Flask's ``cache_timeout`` parameter.
+            ``conditional`` is enabled and ``max_age`` is not set by
+            default.
+    
+        .. versionchanged:: 2.0
+            ``etag`` replaces Flask's ``add_etags`` parameter. It can be a
+            string to use instead of generating one.
+    
+        .. versionchanged:: 2.0
+            If an encoding is returned when guessing ``mimetype`` from
+            ``download_name``, set the ``Content-Encoding`` header.
+        """
+        if response_class is None:
+            from .wrappers import Response
+    
+            response_class = Response
+    
+        path: str | None = None
+        file: t.IO[bytes] | None = None
+        size: int | None = None
+        mtime: float | None = None
+        headers = Headers()
+    
+        if isinstance(path_or_file, (os.PathLike, str)) or hasattr(
+            path_or_file, "__fspath__"
+        ):
+            path_or_file = t.cast("os.PathLike[str] | str", path_or_file)
+    
+            # Flask will pass app.root_path, allowing its send_file wrapper
+            # to not have to deal with paths.
+            if _root_path is not None:
+                path = os.path.join(_root_path, path_or_file)
+            else:
+                path = os.path.abspath(path_or_file)
+    
+            stat = os.stat(path)
+            size = stat.st_size
+            mtime = stat.st_mtime
+        else:
+            file = path_or_file
+    
+        if download_name is None and path is not None:
+            download_name = os.path.basename(path)
+    
+        if mimetype is None:
+            if download_name is None:
+>               raise TypeError(
+                    "Unable to detect the MIME type because a file name is"
+                    " not available. Either set 'download_name', pass a"
+                    " path instead of a file, or set 'mimetype'."
+                )
+E               TypeError: Unable to detect the MIME type because a file name is not available. Either set 'download_name', pass a path instead of a file, or set 'mimetype'.
+
+src\werkzeug\utils.py:423: TypeError
+_________________________ test_range_not_satisfiable __________________________
+
+    def test_range_not_satisfiable():
+        f = io.BytesIO(b"0123456789")
+    
+        with pytest.raises(RequestedRangeNotSatisfiable):
+>           send_file(f, create_environ(headers={"Range": "bytes=20-30"}))
+
+tests\test_send_file.py:97: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path_or_file = <_io.BytesIO object at 0x00000274A516B2E0>
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+mimetype = None, as_attachment = False, download_name = None, conditional = True
+etag = True, last_modified = None, max_age = None, use_x_sendfile = False
+response_class = <class 'werkzeug.wrappers.response.Response'>
+_root_path = None
+
+    def send_file(
+        path_or_file: os.PathLike[str] | str | t.IO[bytes],
+        environ: WSGIEnvironment,
+        mimetype: str | None = None,
+        as_attachment: bool = False,
+        download_name: str | None = None,
+        conditional: bool = True,
+        etag: bool | str = True,
+        last_modified: datetime | int | float | None = None,
+        max_age: None | (int | t.Callable[[str | None], int | None]) = None,
+        use_x_sendfile: bool = False,
+        response_class: type[Response] | None = None,
+        _root_path: os.PathLike[str] | str | None = None,
+    ) -> Response:
+        """Send the contents of a file to the client.
+    
+        The first argument can be a file path or a file-like object. Paths
+        are preferred in most cases because Werkzeug can manage the file and
+        get extra information from the path. Passing a file-like object
+        requires that the file is opened in binary mode, and is mostly
+        useful when building a file in memory with :class:`io.BytesIO`.
+    
+        Never pass file paths provided by a user. The path is assumed to be
+        trusted, so a user could craft a path to access a file you didn't
+        intend. Use :func:`send_from_directory` to safely serve user-provided paths.
+    
+        If the WSGI server sets a ``file_wrapper`` in ``environ``, it is
+        used, otherwise Werkzeug's built-in wrapper is used. Alternatively,
+        if the HTTP server supports ``X-Sendfile``, ``use_x_sendfile=True``
+        will tell the server to send the given path, which is much more
+        efficient than reading it in Python.
+    
+        :param path_or_file: The path to the file to send, relative to the
+            current working directory if a relative path is given.
+            Alternatively, a file-like object opened in binary mode. Make
+            sure the file pointer is seeked to the start of the data.
+        :param environ: The WSGI environ for the current request.
+        :param mimetype: The MIME type to send for the file. If not
+            provided, it will try to detect it from the file name.
+        :param as_attachment: Indicate to a browser that it should offer to
+            save the file instead of displaying it.
+        :param download_name: The default name browsers will use when saving
+            the file. Defaults to the passed file name.
+        :param conditional: Enable conditional and range responses based on
+            request headers. Requires passing a file path and ``environ``.
+        :param etag: Calculate an ETag for the file, which requires passing
+            a file path. Can also be a string to use instead.
+        :param last_modified: The last modified time to send for the file,
+            in seconds. If not provided, it will try to detect it from the
+            file path.
+        :param max_age: How long the client should cache the file, in
+            seconds. If set, ``Cache-Control`` will be ``public``, otherwise
+            it will be ``no-cache`` to prefer conditional caching.
+        :param use_x_sendfile: Set the ``X-Sendfile`` header to let the
+            server to efficiently send the file. Requires support from the
+            HTTP server. Requires passing a file path.
+        :param response_class: Build the response using this class. Defaults
+            to :class:`~werkzeug.wrappers.Response`.
+        :param _root_path: Do not use. For internal use only. Use
+            :func:`send_from_directory` to safely send files under a path.
+    
+        .. versionchanged:: 2.0.2
+            ``send_file`` only sets a detected ``Content-Encoding`` if
+            ``as_attachment`` is disabled.
+    
+        .. versionadded:: 2.0
+            Adapted from Flask's implementation.
+    
+        .. versionchanged:: 2.0
+            ``download_name`` replaces Flask's ``attachment_filename``
+             parameter. If ``as_attachment=False``, it is passed with
+             ``Content-Disposition: inline`` instead.
+    
+        .. versionchanged:: 2.0
+            ``max_age`` replaces Flask's ``cache_timeout`` parameter.
+            ``conditional`` is enabled and ``max_age`` is not set by
+            default.
+    
+        .. versionchanged:: 2.0
+            ``etag`` replaces Flask's ``add_etags`` parameter. It can be a
+            string to use instead of generating one.
+    
+        .. versionchanged:: 2.0
+            If an encoding is returned when guessing ``mimetype`` from
+            ``download_name``, set the ``Content-Encoding`` header.
+        """
+        if response_class is None:
+            from .wrappers import Response
+    
+            response_class = Response
+    
+        path: str | None = None
+        file: t.IO[bytes] | None = None
+        size: int | None = None
+        mtime: float | None = None
+        headers = Headers()
+    
+        if isinstance(path_or_file, (os.PathLike, str)) or hasattr(
+            path_or_file, "__fspath__"
+        ):
+            path_or_file = t.cast("os.PathLike[str] | str", path_or_file)
+    
+            # Flask will pass app.root_path, allowing its send_file wrapper
+            # to not have to deal with paths.
+            if _root_path is not None:
+                path = os.path.join(_root_path, path_or_file)
+            else:
+                path = os.path.abspath(path_or_file)
+    
+            stat = os.stat(path)
+            size = stat.st_size
+            mtime = stat.st_mtime
+        else:
+            file = path_or_file
+    
+        if download_name is None and path is not None:
+            download_name = os.path.basename(path)
+    
+        if mimetype is None:
+            if download_name is None:
+>               raise TypeError(
+                    "Unable to detect the MIME type because a file name is"
+                    " not available. Either set 'download_name', pass a"
+                    " path instead of a file, or set 'mimetype'."
+                )
+E               TypeError: Unable to detect the MIME type because a file name is not available. Either set 'download_name', pass a path instead of a file, or set 'mimetype'.
+
+src\werkzeug\utils.py:423: TypeError
+____________________ test_precondition_failed_closes_file _____________________
+
+    def test_precondition_failed_closes_file():
+        f = io.BytesIO(b"test")
+    
+        with pytest.raises(PreconditionFailed):
+>           send_file(f, create_environ(headers={"If-Match": '"nope"'}), etag="other")
+
+tests\test_send_file.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path_or_file = <_io.BytesIO object at 0x00000274A51693A0>
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+mimetype = None, as_attachment = False, download_name = None, conditional = True
+etag = 'other', last_modified = None, max_age = None, use_x_sendfile = False
+response_class = <class 'werkzeug.wrappers.response.Response'>
+_root_path = None
+
+    def send_file(
+        path_or_file: os.PathLike[str] | str | t.IO[bytes],
+        environ: WSGIEnvironment,
+        mimetype: str | None = None,
+        as_attachment: bool = False,
+        download_name: str | None = None,
+        conditional: bool = True,
+        etag: bool | str = True,
+        last_modified: datetime | int | float | None = None,
+        max_age: None | (int | t.Callable[[str | None], int | None]) = None,
+        use_x_sendfile: bool = False,
+        response_class: type[Response] | None = None,
+        _root_path: os.PathLike[str] | str | None = None,
+    ) -> Response:
+        """Send the contents of a file to the client.
+    
+        The first argument can be a file path or a file-like object. Paths
+        are preferred in most cases because Werkzeug can manage the file and
+        get extra information from the path. Passing a file-like object
+        requires that the file is opened in binary mode, and is mostly
+        useful when building a file in memory with :class:`io.BytesIO`.
+    
+        Never pass file paths provided by a user. The path is assumed to be
+        trusted, so a user could craft a path to access a file you didn't
+        intend. Use :func:`send_from_directory` to safely serve user-provided paths.
+    
+        If the WSGI server sets a ``file_wrapper`` in ``environ``, it is
+        used, otherwise Werkzeug's built-in wrapper is used. Alternatively,
+        if the HTTP server supports ``X-Sendfile``, ``use_x_sendfile=True``
+        will tell the server to send the given path, which is much more
+        efficient than reading it in Python.
+    
+        :param path_or_file: The path to the file to send, relative to the
+            current working directory if a relative path is given.
+            Alternatively, a file-like object opened in binary mode. Make
+            sure the file pointer is seeked to the start of the data.
+        :param environ: The WSGI environ for the current request.
+        :param mimetype: The MIME type to send for the file. If not
+            provided, it will try to detect it from the file name.
+        :param as_attachment: Indicate to a browser that it should offer to
+            save the file instead of displaying it.
+        :param download_name: The default name browsers will use when saving
+            the file. Defaults to the passed file name.
+        :param conditional: Enable conditional and range responses based on
+            request headers. Requires passing a file path and ``environ``.
+        :param etag: Calculate an ETag for the file, which requires passing
+            a file path. Can also be a string to use instead.
+        :param last_modified: The last modified time to send for the file,
+            in seconds. If not provided, it will try to detect it from the
+            file path.
+        :param max_age: How long the client should cache the file, in
+            seconds. If set, ``Cache-Control`` will be ``public``, otherwise
+            it will be ``no-cache`` to prefer conditional caching.
+        :param use_x_sendfile: Set the ``X-Sendfile`` header to let the
+            server to efficiently send the file. Requires support from the
+            HTTP server. Requires passing a file path.
+        :param response_class: Build the response using this class. Defaults
+            to :class:`~werkzeug.wrappers.Response`.
+        :param _root_path: Do not use. For internal use only. Use
+            :func:`send_from_directory` to safely send files under a path.
+    
+        .. versionchanged:: 2.0.2
+            ``send_file`` only sets a detected ``Content-Encoding`` if
+            ``as_attachment`` is disabled.
+    
+        .. versionadded:: 2.0
+            Adapted from Flask's implementation.
+    
+        .. versionchanged:: 2.0
+            ``download_name`` replaces Flask's ``attachment_filename``
+             parameter. If ``as_attachment=False``, it is passed with
+             ``Content-Disposition: inline`` instead.
+    
+        .. versionchanged:: 2.0
+            ``max_age`` replaces Flask's ``cache_timeout`` parameter.
+            ``conditional`` is enabled and ``max_age`` is not set by
+            default.
+    
+        .. versionchanged:: 2.0
+            ``etag`` replaces Flask's ``add_etags`` parameter. It can be a
+            string to use instead of generating one.
+    
+        .. versionchanged:: 2.0
+            If an encoding is returned when guessing ``mimetype`` from
+            ``download_name``, set the ``Content-Encoding`` header.
+        """
+        if response_class is None:
+            from .wrappers import Response
+    
+            response_class = Response
+    
+        path: str | None = None
+        file: t.IO[bytes] | None = None
+        size: int | None = None
+        mtime: float | None = None
+        headers = Headers()
+    
+        if isinstance(path_or_file, (os.PathLike, str)) or hasattr(
+            path_or_file, "__fspath__"
+        ):
+            path_or_file = t.cast("os.PathLike[str] | str", path_or_file)
+    
+            # Flask will pass app.root_path, allowing its send_file wrapper
+            # to not have to deal with paths.
+            if _root_path is not None:
+                path = os.path.join(_root_path, path_or_file)
+            else:
+                path = os.path.abspath(path_or_file)
+    
+            stat = os.stat(path)
+            size = stat.st_size
+            mtime = stat.st_mtime
+        else:
+            file = path_or_file
+    
+        if download_name is None and path is not None:
+            download_name = os.path.basename(path)
+    
+        if mimetype is None:
+            if download_name is None:
+>               raise TypeError(
+                    "Unable to detect the MIME type because a file name is"
+                    " not available. Either set 'download_name', pass a"
+                    " path instead of a file, or set 'mimetype'."
+                )
+E               TypeError: Unable to detect the MIME type because a file name is not available. Either set 'download_name', pass a path instead of a file, or set 'mimetype'.
+
+src\werkzeug\utils.py:423: TypeError
+___________________________ test_object_unseekable ____________________________
+
+    def test_object_unseekable():
+>       with send_file(_Unseekable(b"test"), environ) as rv:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_send_file.py:128: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path_or_file = <test_send_file._Unseekable object at 0x00000274A4FA1A90>
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+mimetype = None, as_attachment = False, download_name = None, conditional = True
+etag = True, last_modified = None, max_age = None, use_x_sendfile = False
+response_class = <class 'werkzeug.wrappers.response.Response'>
+_root_path = None
+
+    def send_file(
+        path_or_file: os.PathLike[str] | str | t.IO[bytes],
+        environ: WSGIEnvironment,
+        mimetype: str | None = None,
+        as_attachment: bool = False,
+        download_name: str | None = None,
+        conditional: bool = True,
+        etag: bool | str = True,
+        last_modified: datetime | int | float | None = None,
+        max_age: None | (int | t.Callable[[str | None], int | None]) = None,
+        use_x_sendfile: bool = False,
+        response_class: type[Response] | None = None,
+        _root_path: os.PathLike[str] | str | None = None,
+    ) -> Response:
+        """Send the contents of a file to the client.
+    
+        The first argument can be a file path or a file-like object. Paths
+        are preferred in most cases because Werkzeug can manage the file and
+        get extra information from the path. Passing a file-like object
+        requires that the file is opened in binary mode, and is mostly
+        useful when building a file in memory with :class:`io.BytesIO`.
+    
+        Never pass file paths provided by a user. The path is assumed to be
+        trusted, so a user could craft a path to access a file you didn't
+        intend. Use :func:`send_from_directory` to safely serve user-provided paths.
+    
+        If the WSGI server sets a ``file_wrapper`` in ``environ``, it is
+        used, otherwise Werkzeug's built-in wrapper is used. Alternatively,
+        if the HTTP server supports ``X-Sendfile``, ``use_x_sendfile=True``
+        will tell the server to send the given path, which is much more
+        efficient than reading it in Python.
+    
+        :param path_or_file: The path to the file to send, relative to the
+            current working directory if a relative path is given.
+            Alternatively, a file-like object opened in binary mode. Make
+            sure the file pointer is seeked to the start of the data.
+        :param environ: The WSGI environ for the current request.
+        :param mimetype: The MIME type to send for the file. If not
+            provided, it will try to detect it from the file name.
+        :param as_attachment: Indicate to a browser that it should offer to
+            save the file instead of displaying it.
+        :param download_name: The default name browsers will use when saving
+            the file. Defaults to the passed file name.
+        :param conditional: Enable conditional and range responses based on
+            request headers. Requires passing a file path and ``environ``.
+        :param etag: Calculate an ETag for the file, which requires passing
+            a file path. Can also be a string to use instead.
+        :param last_modified: The last modified time to send for the file,
+            in seconds. If not provided, it will try to detect it from the
+            file path.
+        :param max_age: How long the client should cache the file, in
+            seconds. If set, ``Cache-Control`` will be ``public``, otherwise
+            it will be ``no-cache`` to prefer conditional caching.
+        :param use_x_sendfile: Set the ``X-Sendfile`` header to let the
+            server to efficiently send the file. Requires support from the
+            HTTP server. Requires passing a file path.
+        :param response_class: Build the response using this class. Defaults
+            to :class:`~werkzeug.wrappers.Response`.
+        :param _root_path: Do not use. For internal use only. Use
+            :func:`send_from_directory` to safely send files under a path.
+    
+        .. versionchanged:: 2.0.2
+            ``send_file`` only sets a detected ``Content-Encoding`` if
+            ``as_attachment`` is disabled.
+    
+        .. versionadded:: 2.0
+            Adapted from Flask's implementation.
+    
+        .. versionchanged:: 2.0
+            ``download_name`` replaces Flask's ``attachment_filename``
+             parameter. If ``as_attachment=False``, it is passed with
+             ``Content-Disposition: inline`` instead.
+    
+        .. versionchanged:: 2.0
+            ``max_age`` replaces Flask's ``cache_timeout`` parameter.
+            ``conditional`` is enabled and ``max_age`` is not set by
+            default.
+    
+        .. versionchanged:: 2.0
+            ``etag`` replaces Flask's ``add_etags`` parameter. It can be a
+            string to use instead of generating one.
+    
+        .. versionchanged:: 2.0
+            If an encoding is returned when guessing ``mimetype`` from
+            ``download_name``, set the ``Content-Encoding`` header.
+        """
+        if response_class is None:
+            from .wrappers import Response
+    
+            response_class = Response
+    
+        path: str | None = None
+        file: t.IO[bytes] | None = None
+        size: int | None = None
+        mtime: float | None = None
+        headers = Headers()
+    
+        if isinstance(path_or_file, (os.PathLike, str)) or hasattr(
+            path_or_file, "__fspath__"
+        ):
+            path_or_file = t.cast("os.PathLike[str] | str", path_or_file)
+    
+            # Flask will pass app.root_path, allowing its send_file wrapper
+            # to not have to deal with paths.
+            if _root_path is not None:
+                path = os.path.join(_root_path, path_or_file)
+            else:
+                path = os.path.abspath(path_or_file)
+    
+            stat = os.stat(path)
+            size = stat.st_size
+            mtime = stat.st_mtime
+        else:
+            file = path_or_file
+    
+        if download_name is None and path is not None:
+            download_name = os.path.basename(path)
+    
+        if mimetype is None:
+            if download_name is None:
+>               raise TypeError(
+                    "Unable to detect the MIME type because a file name is"
+                    " not available. Either set 'download_name', pass a"
+                    " path instead of a file, or set 'mimetype'."
+                )
+E               TypeError: Unable to detect the MIME type because a file name is not available. Either set 'download_name', pass a path instead of a file, or set 'mimetype'.
+
+src\werkzeug\utils.py:423: TypeError
+____________________ test_object_unseekable_range_ignored _____________________
+
+    def test_object_unseekable_range_ignored():
+        # The complete length is unknown, so the range can't be applied and the
+        # whole body is sent instead of failing.
+        range_environ = create_environ(headers={"Range": "bytes=1-2"})
+    
+>       with send_file(_Unseekable(b"test"), range_environ) as rv:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_send_file.py:142: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path_or_file = <test_send_file._Unseekable object at 0x00000274A471A1E0>
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+mimetype = None, as_attachment = False, download_name = None, conditional = True
+etag = True, last_modified = None, max_age = None, use_x_sendfile = False
+response_class = <class 'werkzeug.wrappers.response.Response'>
+_root_path = None
+
+    def send_file(
+        path_or_file: os.PathLike[str] | str | t.IO[bytes],
+        environ: WSGIEnvironment,
+        mimetype: str | None = None,
+        as_attachment: bool = False,
+        download_name: str | None = None,
+        conditional: bool = True,
+        etag: bool | str = True,
+        last_modified: datetime | int | float | None = None,
+        max_age: None | (int | t.Callable[[str | None], int | None]) = None,
+        use_x_sendfile: bool = False,
+        response_class: type[Response] | None = None,
+        _root_path: os.PathLike[str] | str | None = None,
+    ) -> Response:
+        """Send the contents of a file to the client.
+    
+        The first argument can be a file path or a file-like object. Paths
+        are preferred in most cases because Werkzeug can manage the file and
+        get extra information from the path. Passing a file-like object
+        requires that the file is opened in binary mode, and is mostly
+        useful when building a file in memory with :class:`io.BytesIO`.
+    
+        Never pass file paths provided by a user. The path is assumed to be
+        trusted, so a user could craft a path to access a file you didn't
+        intend. Use :func:`send_from_directory` to safely serve user-provided paths.
+    
+        If the WSGI server sets a ``file_wrapper`` in ``environ``, it is
+        used, otherwise Werkzeug's built-in wrapper is used. Alternatively,
+        if the HTTP server supports ``X-Sendfile``, ``use_x_sendfile=True``
+        will tell the server to send the given path, which is much more
+        efficient than reading it in Python.
+    
+        :param path_or_file: The path to the file to send, relative to the
+            current working directory if a relative path is given.
+            Alternatively, a file-like object opened in binary mode. Make
+            sure the file pointer is seeked to the start of the data.
+        :param environ: The WSGI environ for the current request.
+        :param mimetype: The MIME type to send for the file. If not
+            provided, it will try to detect it from the file name.
+        :param as_attachment: Indicate to a browser that it should offer to
+            save the file instead of displaying it.
+        :param download_name: The default name browsers will use when saving
+            the file. Defaults to the passed file name.
+        :param conditional: Enable conditional and range responses based on
+            request headers. Requires passing a file path and ``environ``.
+        :param etag: Calculate an ETag for the file, which requires passing
+            a file path. Can also be a string to use instead.
+        :param last_modified: The last modified time to send for the file,
+            in seconds. If not provided, it will try to detect it from the
+            file path.
+        :param max_age: How long the client should cache the file, in
+            seconds. If set, ``Cache-Control`` will be ``public``, otherwise
+            it will be ``no-cache`` to prefer conditional caching.
+        :param use_x_sendfile: Set the ``X-Sendfile`` header to let the
+            server to efficiently send the file. Requires support from the
+            HTTP server. Requires passing a file path.
+        :param response_class: Build the response using this class. Defaults
+            to :class:`~werkzeug.wrappers.Response`.
+        :param _root_path: Do not use. For internal use only. Use
+            :func:`send_from_directory` to safely send files under a path.
+    
+        .. versionchanged:: 2.0.2
+            ``send_file`` only sets a detected ``Content-Encoding`` if
+            ``as_attachment`` is disabled.
+    
+        .. versionadded:: 2.0
+            Adapted from Flask's implementation.
+    
+        .. versionchanged:: 2.0
+            ``download_name`` replaces Flask's ``attachment_filename``
+             parameter. If ``as_attachment=False``, it is passed with
+             ``Content-Disposition: inline`` instead.
+    
+        .. versionchanged:: 2.0
+            ``max_age`` replaces Flask's ``cache_timeout`` parameter.
+            ``conditional`` is enabled and ``max_age`` is not set by
+            default.
+    
+        .. versionchanged:: 2.0
+            ``etag`` replaces Flask's ``add_etags`` parameter. It can be a
+            string to use instead of generating one.
+    
+        .. versionchanged:: 2.0
+            If an encoding is returned when guessing ``mimetype`` from
+            ``download_name``, set the ``Content-Encoding`` header.
+        """
+        if response_class is None:
+            from .wrappers import Response
+    
+            response_class = Response
+    
+        path: str | None = None
+        file: t.IO[bytes] | None = None
+        size: int | None = None
+        mtime: float | None = None
+        headers = Headers()
+    
+        if isinstance(path_or_file, (os.PathLike, str)) or hasattr(
+            path_or_file, "__fspath__"
+        ):
+            path_or_file = t.cast("os.PathLike[str] | str", path_or_file)
+    
+            # Flask will pass app.root_path, allowing its send_file wrapper
+            # to not have to deal with paths.
+            if _root_path is not None:
+                path = os.path.join(_root_path, path_or_file)
+            else:
+                path = os.path.abspath(path_or_file)
+    
+            stat = os.stat(path)
+            size = stat.st_size
+            mtime = stat.st_mtime
+        else:
+            file = path_or_file
+    
+        if download_name is None and path is not None:
+            download_name = os.path.basename(path)
+    
+        if mimetype is None:
+            if download_name is None:
+>               raise TypeError(
+                    "Unable to detect the MIME type because a file name is"
+                    " not available. Either set 'download_name', pass a"
+                    " path instead of a file, or set 'mimetype'."
+                )
+E               TypeError: Unable to detect the MIME type because a file name is not available. Either set 'download_name', pass a path instead of a file, or set 'mimetype'.
+
+src\werkzeug\utils.py:423: TypeError
+__________________________________ test_etag __________________________________
+
+    def test_etag():
+        with send_file(txt_path, environ) as rv:
+            stat = txt_path.stat()
+>           assert rv.headers["ETag"] == f'"{stat.st_mtime}-{stat.st_size}"'
+E           assert '"1791835039....6-1031684575"' == '"1791835039.749234-6"'
+E             
+E             - "1791835039.749234-6"
+E             + "1791835039.749234-6-1031684575"
+E             ?                     +++++++++++
+
+tests\test_send_file.py:240: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_send_file.py::test_object_without_mimetype - TypeError: Una...
+FAILED tests/test_send_file.py::test_object_detects_name_size_mtime - TypeErr...
+FAILED tests/test_send_file.py::test_object_seeks_to_start - TypeError: Unabl...
+FAILED tests/test_send_file.py::test_object_range - TypeError: Unable to dete...
+FAILED tests/test_send_file.py::test_range_not_satisfiable - TypeError: Unabl...
+FAILED tests/test_send_file.py::test_precondition_failed_closes_file - TypeEr...
+FAILED tests/test_send_file.py::test_object_unseekable - TypeError: Unable to...
+FAILED tests/test_send_file.py::test_object_unseekable_range_ignored - TypeEr...
+FAILED tests/test_send_file.py::test_etag - assert '"1791835039....6-10316845...
+9 failed, 30 passed in 0.68s
