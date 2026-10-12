@@ -1,0 +1,29 @@
+.............................................F.......................... [ 27%]
+........................................................................ [ 55%]
+........................................................................ [ 83%]
+...........................................                              [100%]
+================================== FAILURES ===================================
+___________________ test_make_conditional_if_range_mismatch ___________________
+
+    def test_make_conditional_if_range_mismatch():
+        env = create_environ(headers={"Range": "bytes=0-4", "If-Range": '"other"'})
+        response = wrappers.Response("Hello World")
+        response.etag = ETag("abc")
+        _make_conditional(response, env, accept_ranges=True, complete_length=11)
+        assert response.status_code == 200
+        assert response.headers["Accept-Ranges"] == "bytes"
+        assert response.headers["Content-Length"] == "11"
+    
+        # no length known beforehand, none is left behind
+        response = wrappers.Response(iter([b"Hello World"]))
+        response.etag = ETag("abc")
+        _make_conditional(response, env, accept_ranges=True, complete_length=11)
+        assert response.status_code == 200
+>       assert "Content-Length" not in response.headers
+E       assert 'Content-Length' not in Headers([('Content-Type', 'text/plain; charset=utf-8'), ('ETag', '"abc"'), ('Date', 'Mon, 12 Oct 2026 20:41:49 GMT'), ('Accept-Ranges', 'bytes'), ('Content-Length', '11')])
+E        +  where Headers([('Content-Type', 'text/plain; charset=utf-8'), ('ETag', '"abc"'), ('Date', 'Mon, 12 Oct 2026 20:41:49 GMT'), ('Accept-Ranges', 'bytes'), ('Content-Length', '11')]) = <Response 11 bytes [200 OK]>.headers
+
+tests\test_wrappers.py:711: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_wrappers.py::test_make_conditional_if_range_mismatch - asse...
+1 failed, 258 passed in 0.68s

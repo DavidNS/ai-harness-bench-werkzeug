@@ -108,6 +108,10 @@ For conditional responses the following functions might be useful:
 
 .. autofunction:: is_resource_modified
 
+See also :meth:`~werkzeug.wrappers.Response.apply_conditions` and
+:meth:`~werkzeug.wrappers.Response.apply_range`, which replace the deprecated
+``is_resource_modified`` and ``is_byte_range_valid``.
+
 Constants
 =========
 

@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "file": "tests/test_send_file.py",
+      "line": 0,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "No test sends a real file with a `Range` header and an `If-Range` header, or a file-like with a mtime and `If-Modified-Since`. Also untested: a non-seekable file-like, where the new unconditional `file.seek(0)` now raises instead of sending the stream."
+    },
+    {
+      "file": "src/werkzeug/utils.py",
+      "line": 536,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "`except Exception` is broader than the old `except RequestedRangeNotSatisfiable`. It is needed to close the file on `PreconditionFailed`, but it also covers unrelated errors; `except BaseException` or a `try/finally` would be the more conventional choice."
+    }
+  ],
+  "summary": "No blocking problems found. ACC9 is implemented, and the changed tests (the ETag dash count and the missing-mimetype case) were updated because the requirements changed, not weakened. I reviewed only the diff and did not open the repository files.",
+  "verdict": "approve"
+}

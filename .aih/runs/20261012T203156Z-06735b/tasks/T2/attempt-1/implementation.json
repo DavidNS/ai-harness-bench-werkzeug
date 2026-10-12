@@ -1,0 +1,26 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC4",
+      "note": "test_apply_conditions_if_match (parametrized over GET/HEAD/POST/PUT/DELETE), test_apply_conditions_if_unmodified_since, test_apply_conditions_if_match_overrides_if_unmodified_since, test_apply_conditions_order. These cover 412 via PreconditionFailed and the RFC 9110 ordering."
+    },
+    {
+      "criterion": "ACC5",
+      "note": "test_apply_conditions_if_none_match_304 and test_apply_conditions_if_modified_since check 304 with entity headers removed. test_apply_conditions_if_none_match_other_methods checks 412 on POST/PUT/DELETE. Accept-Ranges is asserted in test_apply_conditions_no_headers and the 304 test."
+    },
+    {
+      "criterion": "ACC6",
+      "note": "test_apply_conditions_if_match_star and test_apply_conditions_if_none_match_star run the same request with exists=True and exists=False and get different outcomes."
+    },
+    {
+      "criterion": "ACC7",
+      "note": "test_apply_range_basic, test_apply_range_first_range_only, test_apply_range_clamps_stop, test_apply_range_clamps_suffix, test_apply_range_suffix, test_apply_range_uses_content_length_header, test_apply_range_if_range_etag, test_apply_range_if_range_date. These cover 206, sliced data, Content-Range, Content-Length, first range only, clamping and If-Range mismatch."
+    },
+    {
+      "criterion": "ACC8",
+      "note": "test_apply_range_unsatisfiable raises RequestedRangeNotSatisfiable. test_apply_range_other_units_ignored checks non-bytes units. Also covered: no Range header, invalid Range header, and unknown length."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Added Response.apply_conditions and apply_range (make_conditional untouched) plus tests in tests/test_wrappers.py. Nothing was run, since I had no command access."
+}

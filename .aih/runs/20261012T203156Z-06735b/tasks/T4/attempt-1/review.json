@@ -1,0 +1,13 @@
+{
+  "findings": [
+    {
+      "file": "tests/middleware/test_shared_data.py",
+      "line": 0,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "No test sends If-Modified-Since or a HEAD request, and none checks that cache=False ignores conditional headers (no 304 even with a matching If-None-Match); only the If-None-Match 304 path is covered."
+    }
+  ],
+  "summary": "ACC10 is met. The middleware serves through send_file with no default cache_timeout, and a conditional request returns 304. Passing cache or fallback_mimetype warns and still works, and tests cover each. send_file closes the file when it raises, so the 304/412/416 paths don't leak handles. The diff only adds tests, so no existing test was weakened. I found no dead code. The only gap is advisory: the untested conditional cases noted in the finding.",
+  "verdict": "approve"
+}

@@ -1,0 +1,18 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC1",
+      "note": "test_if_range_check covers strong equal, different, weak on either side, missing response values, date equal/different, and empty IfRange."
+    },
+    {
+      "criterion": "ACC2",
+      "note": "test_range_make_content_range (clamped stop/suffix, first range only, None cases, is_byte_range_valid patched to fail), test_range_make_content_range_no_ranges, test_range_for_length_deprecated. Range.from_header and ContentRange.from_header already validate; existing tests in test_http.py cover them."
+    },
+    {
+      "criterion": "ACC3",
+      "note": "test_etag_set_from_header_discards_invalid; the existing parser already dropped invalid unquoted values, so etag.py is unchanged and this test passes at base too."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Added IfRange.check; rewrote Range.make_content_range (clamping, first range, no is_byte_range_valid; range_for_length delegates); ETagSet.from_header already discards invalid unquoted values so only a regression test was added. Tests added in tests/test_datastructures.py. Not run (no command access)."
+}

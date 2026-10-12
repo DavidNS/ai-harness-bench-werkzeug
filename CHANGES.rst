@@ -40,6 +40,19 @@ Version 3.2.0
     setting or deleting ``response.content_range``.
 -   ``Range.range_for_length`` and ``to_content_range_header`` are deprecated.
     Use ``make_content_range`` instead.
+-   Add ``Response.apply_conditions`` and ``apply_range``, which evaluate
+    conditional and range request headers as specified by RFC 9110.
+    ``Response.make_conditional``, ``http.is_resource_modified``, and
+    ``http.is_byte_range_valid`` are deprecated. Add ``IfRange.check``.
+    ``Range.make_content_range`` clamps too-large values and uses the first
+    range. :issue:`3291` :pr:`3308`
+-   ``send_file`` uses ``apply_conditions`` and ``apply_range``. It detects the
+    name, size, and modification time of file-like objects, calls ``seek(0)``
+    on them, no longer includes a hash of the path in the ETag, and defaults to
+    the ``application/octet-stream`` mimetype instead of raising.
+-   ``SharedDataMiddleware`` serves files with ``send_file``. ``cache_timeout``
+    is no longer set by default so that conditional caching works. The
+    ``cache`` and ``fallback_mimetype`` parameters are deprecated.
 -   All ``Response`` header properties behave consistently and document their
     get/set types. They can be set to ``None`` or use ``del`` to unset the
     header. They will not set empty header values. Structured header classes are

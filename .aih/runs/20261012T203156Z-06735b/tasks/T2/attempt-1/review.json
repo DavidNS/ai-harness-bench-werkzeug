@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 790,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "No test covers If-Match or If-None-Match against a response with no etag set, or an If-None-Match list with several tags."
+    },
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 956,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "apply_range tests for a zero-length body and for a direct_passthrough iterable with a known Content-Length only assert headers, not that the sliced body data is correct."
+    }
+  ],
+  "summary": "The implementation follows RFC 9110 ordering and covers the acceptance criteria. Remaining gaps are minor. No existing tests were weakened.",
+  "verdict": "approve"
+}

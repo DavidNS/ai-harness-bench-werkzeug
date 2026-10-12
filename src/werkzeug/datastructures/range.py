@@ -6,7 +6,6 @@ from datetime import datetime
 
 from .._internal import _plain_int
 from ..http import http_date
-from ..http import is_byte_range_valid
 from ..http import parse_date
 from .etag import ETag
 
@@ -62,6 +61,24 @@ class IfRange:
             return ETag(self.etag).to_header()
 
         return ""
+
+    def check(self, etag: ETag | None, last_modified: datetime | None) -> bool:
+        """Check whether the condition is met by the response's values. True if
+        this has a strong ETag equal to the given strong ``etag``, or a date equal
+        to ``last_modified``.
+
+        :param etag: The response's ETag.
+        :param last_modified: The response's modification time.
+
+        .. versionadded:: 3.2
+        """
+        if self.etag is not None:
+            return etag is not None and not etag.weak and etag.value == self.etag
+
+        if self.date is not None:
+            return last_modified is not None and last_modified == self.date
+
+        return False
 
     def __bool__(self) -> bool:
         return self.etag is not None or self.date is not None
@@ -133,9 +150,26 @@ class Range:
             DeprecationWarning,
             stacklevel=2,
         )
-        return self._private_range_for_length(length)
+        if (cr := self.make_content_range(length)) is None:
+            return None
 
-    def _private_range_for_length(self, length: int | None) -> tuple[int, int] | None:
+        return cr.start, cr.stop  # type: ignore[return-value]
+
+    def make_content_range(self, length: int | None) -> ContentRange | None:
+        """Create a :class:`.ContentRange` with the given complete length. Or
+        ``None`` if a valid range cannot be constructed.
+
+        This will generate a range regardless of the value of :attr:`units`.
+        However, :meth:`.Response.apply_range` can only handle ``bytes``.
+
+        If there are multiple ranges in the header, this will only use the
+        first range. A ``stop`` or suffix length that is too large is clamped to
+        the complete length.
+
+        .. versionchanged:: 3.2
+            Allows units other than ``bytes``. Will use the first range if
+            there are multiple. Too-large values are clamped.
+        """
         if length is None or not self.ranges:
             return None
 
@@ -145,32 +179,14 @@ class Range:
             stop = length
 
             if start < 0:
-                start += length
+                start = max(0, start + length)
 
-        if not is_byte_range_valid(start, stop, length):
+        stop = min(stop, length)
+
+        if start >= stop:
             return None
 
-        return start, min(stop, length)
-
-    def make_content_range(self, length: int | None) -> ContentRange | None:
-        """Create a :class:`.ContentRange` with the given complete length. Or
-        ``None`` if a valid range cannot be constructed.
-
-        This will generate a range regardless of the value of :attr:`units`.
-        However, :meth:`.Response.make_conditional` can only handle ``bytes``.
-
-        If there are multiple ranges in the header, this will only return the
-        first range.
-
-        .. versionchanged:: 3.2
-            Allows units other than ``bytes``. Will return the first range if
-            there are multiple.
-        """
-        # TODO inline after deprecation
-        if (bounds := self._private_range_for_length(length)) is None:
-            return None
-
-        return ContentRange(self.units, bounds[0], bounds[1], length)
+        return ContentRange(self.units, start, stop, length)
 
     @classmethod
     def from_header(cls, value: str | None) -> te.Self | None:

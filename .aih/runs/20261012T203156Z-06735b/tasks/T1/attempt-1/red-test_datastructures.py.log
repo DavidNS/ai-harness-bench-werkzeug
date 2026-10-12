@@ -1,0 +1,770 @@
+........................................................................ [ 59%]
+.............................FFFFFFFFFFFFFFFFFF...                       [100%]
+================================== FAILURES ===================================
+______________________ test_if_range_check[strong equal] ______________________
+
+header = '"a"', etag = <ETag 'a' strong>, last_modified = None, expect = True
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', ETag("a"), None, True, id="strong equal"),
+            pytest.param('"a"', ETag("b"), None, False, id="strong different"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('"a"', None, _DATE, False, id="etag, no response etag"),
+            pytest.param('W/"a"', ETag("a"), None, False, id="header weak"),
+            pytest.param(http_date(_DATE), None, _DATE, True, id="date equal"),
+            pytest.param(
+                http_date(_DATE), None, _DATE + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http_date(_DATE), ETag("a"), None, False, id="date, none"),
+            pytest.param("", ETag("a"), _DATE, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(
+        header: str, etag: ETag | None, last_modified: datetime | None, expect: bool
+    ) -> None:
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1139: AttributeError
+____________________ test_if_range_check[strong different] ____________________
+
+header = '"a"', etag = <ETag 'b' strong>, last_modified = None, expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', ETag("a"), None, True, id="strong equal"),
+            pytest.param('"a"', ETag("b"), None, False, id="strong different"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('"a"', None, _DATE, False, id="etag, no response etag"),
+            pytest.param('W/"a"', ETag("a"), None, False, id="header weak"),
+            pytest.param(http_date(_DATE), None, _DATE, True, id="date equal"),
+            pytest.param(
+                http_date(_DATE), None, _DATE + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http_date(_DATE), ETag("a"), None, False, id="date, none"),
+            pytest.param("", ETag("a"), _DATE, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(
+        header: str, etag: ETag | None, last_modified: datetime | None, expect: bool
+    ) -> None:
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1139: AttributeError
+_____________________ test_if_range_check[response weak] ______________________
+
+header = '"a"', etag = <ETag 'a' weak>, last_modified = None, expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', ETag("a"), None, True, id="strong equal"),
+            pytest.param('"a"', ETag("b"), None, False, id="strong different"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('"a"', None, _DATE, False, id="etag, no response etag"),
+            pytest.param('W/"a"', ETag("a"), None, False, id="header weak"),
+            pytest.param(http_date(_DATE), None, _DATE, True, id="date equal"),
+            pytest.param(
+                http_date(_DATE), None, _DATE + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http_date(_DATE), ETag("a"), None, False, id="date, none"),
+            pytest.param("", ETag("a"), _DATE, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(
+        header: str, etag: ETag | None, last_modified: datetime | None, expect: bool
+    ) -> None:
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1139: AttributeError
+_________________ test_if_range_check[etag, no response etag] _________________
+
+header = '"a"', etag = None
+last_modified = datetime.datetime(2026, 1, 1, 0, 0, tzinfo=datetime.timezone.utc)
+expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', ETag("a"), None, True, id="strong equal"),
+            pytest.param('"a"', ETag("b"), None, False, id="strong different"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('"a"', None, _DATE, False, id="etag, no response etag"),
+            pytest.param('W/"a"', ETag("a"), None, False, id="header weak"),
+            pytest.param(http_date(_DATE), None, _DATE, True, id="date equal"),
+            pytest.param(
+                http_date(_DATE), None, _DATE + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http_date(_DATE), ETag("a"), None, False, id="date, none"),
+            pytest.param("", ETag("a"), _DATE, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(
+        header: str, etag: ETag | None, last_modified: datetime | None, expect: bool
+    ) -> None:
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1139: AttributeError
+______________________ test_if_range_check[header weak] _______________________
+
+header = 'W/"a"', etag = <ETag 'a' strong>, last_modified = None, expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', ETag("a"), None, True, id="strong equal"),
+            pytest.param('"a"', ETag("b"), None, False, id="strong different"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('"a"', None, _DATE, False, id="etag, no response etag"),
+            pytest.param('W/"a"', ETag("a"), None, False, id="header weak"),
+            pytest.param(http_date(_DATE), None, _DATE, True, id="date equal"),
+            pytest.param(
+                http_date(_DATE), None, _DATE + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http_date(_DATE), ETag("a"), None, False, id="date, none"),
+            pytest.param("", ETag("a"), _DATE, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(
+        header: str, etag: ETag | None, last_modified: datetime | None, expect: bool
+    ) -> None:
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1139: AttributeError
+_______________________ test_if_range_check[date equal] _______________________
+
+header = 'Thu, 01 Jan 2026 00:00:00 GMT', etag = None
+last_modified = datetime.datetime(2026, 1, 1, 0, 0, tzinfo=datetime.timezone.utc)
+expect = True
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', ETag("a"), None, True, id="strong equal"),
+            pytest.param('"a"', ETag("b"), None, False, id="strong different"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('"a"', None, _DATE, False, id="etag, no response etag"),
+            pytest.param('W/"a"', ETag("a"), None, False, id="header weak"),
+            pytest.param(http_date(_DATE), None, _DATE, True, id="date equal"),
+            pytest.param(
+                http_date(_DATE), None, _DATE + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http_date(_DATE), ETag("a"), None, False, id="date, none"),
+            pytest.param("", ETag("a"), _DATE, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(
+        header: str, etag: ETag | None, last_modified: datetime | None, expect: bool
+    ) -> None:
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1139: AttributeError
+_______________________ test_if_range_check[date diff] ________________________
+
+header = 'Thu, 01 Jan 2026 00:00:00 GMT', etag = None
+last_modified = datetime.datetime(2026, 1, 1, 0, 0, 1, tzinfo=datetime.timezone.utc)
+expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', ETag("a"), None, True, id="strong equal"),
+            pytest.param('"a"', ETag("b"), None, False, id="strong different"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('"a"', None, _DATE, False, id="etag, no response etag"),
+            pytest.param('W/"a"', ETag("a"), None, False, id="header weak"),
+            pytest.param(http_date(_DATE), None, _DATE, True, id="date equal"),
+            pytest.param(
+                http_date(_DATE), None, _DATE + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http_date(_DATE), ETag("a"), None, False, id="date, none"),
+            pytest.param("", ETag("a"), _DATE, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(
+        header: str, etag: ETag | None, last_modified: datetime | None, expect: bool
+    ) -> None:
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1139: AttributeError
+_______________________ test_if_range_check[date, none] _______________________
+
+header = 'Thu, 01 Jan 2026 00:00:00 GMT', etag = <ETag 'a' strong>
+last_modified = None, expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', ETag("a"), None, True, id="strong equal"),
+            pytest.param('"a"', ETag("b"), None, False, id="strong different"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('"a"', None, _DATE, False, id="etag, no response etag"),
+            pytest.param('W/"a"', ETag("a"), None, False, id="header weak"),
+            pytest.param(http_date(_DATE), None, _DATE, True, id="date equal"),
+            pytest.param(
+                http_date(_DATE), None, _DATE + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http_date(_DATE), ETag("a"), None, False, id="date, none"),
+            pytest.param("", ETag("a"), _DATE, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(
+        header: str, etag: ETag | None, last_modified: datetime | None, expect: bool
+    ) -> None:
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1139: AttributeError
+_________________________ test_if_range_check[empty] __________________________
+
+header = '', etag = <ETag 'a' strong>
+last_modified = datetime.datetime(2026, 1, 1, 0, 0, tzinfo=datetime.timezone.utc)
+expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', ETag("a"), None, True, id="strong equal"),
+            pytest.param('"a"', ETag("b"), None, False, id="strong different"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('"a"', None, _DATE, False, id="etag, no response etag"),
+            pytest.param('W/"a"', ETag("a"), None, False, id="header weak"),
+            pytest.param(http_date(_DATE), None, _DATE, True, id="date equal"),
+            pytest.param(
+                http_date(_DATE), None, _DATE + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http_date(_DATE), ETag("a"), None, False, id="date, none"),
+            pytest.param("", ETag("a"), _DATE, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(
+        header: str, etag: ETag | None, last_modified: datetime | None, expect: bool
+    ) -> None:
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1139: AttributeError
+____________________ test_range_make_content_range[normal] ____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DAB8C98D70>
+header = 'bytes=0-9', length = 100, expect = (0, 10)
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            pytest.param("bytes=0-9", 100, (0, 10), id="normal"),
+            pytest.param("bytes=0-999", 100, (0, 100), id="stop clamped"),
+            pytest.param("bytes=90-", 100, (90, 100), id="open"),
+            pytest.param("bytes=-10", 100, (90, 100), id="suffix"),
+            pytest.param("bytes=-1000", 100, (0, 100), id="suffix clamped"),
+            pytest.param("bytes=0-4,10-14", 100, (0, 5), id="first only"),
+            pytest.param("bytes=100-", 100, None, id="start at length"),
+            pytest.param("bytes=200-300", 100, None, id="start past length"),
+            pytest.param("bytes=-10", 0, None, id="empty content"),
+            pytest.param("bytes=0-9", None, None, id="unknown length"),
+        ],
+    )
+    def test_range_make_content_range(
+        monkeypatch: pytest.MonkeyPatch,
+        header: str,
+        length: int | None,
+        expect: tuple[int, int] | None,
+    ) -> None:
+        def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+            raise AssertionError("is_byte_range_valid must not be used")
+    
+        monkeypatch.setattr("werkzeug.http.is_byte_range_valid", fail, raising=False)
+        monkeypatch.setattr(
+            "werkzeug.datastructures.range.is_byte_range_valid", fail, raising=False
+        )
+        r = ds.Range.from_header(header)
+>       cr = r.make_content_range(length)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_datastructures.py:1171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\datastructures\range.py:170: in make_content_range
+    if (bounds := self._private_range_for_length(length)) is None:
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\werkzeug\datastructures\range.py:150: in _private_range_for_length
+    if not is_byte_range_valid(start, stop, length):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (0, 10, 100), kwargs = {}
+
+    def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+>       raise AssertionError("is_byte_range_valid must not be used")
+E       AssertionError: is_byte_range_valid must not be used
+
+tests\test_datastructures.py:1164: AssertionError
+_________________ test_range_make_content_range[stop clamped] _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DAB9EB4E30>
+header = 'bytes=0-999', length = 100, expect = (0, 100)
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            pytest.param("bytes=0-9", 100, (0, 10), id="normal"),
+            pytest.param("bytes=0-999", 100, (0, 100), id="stop clamped"),
+            pytest.param("bytes=90-", 100, (90, 100), id="open"),
+            pytest.param("bytes=-10", 100, (90, 100), id="suffix"),
+            pytest.param("bytes=-1000", 100, (0, 100), id="suffix clamped"),
+            pytest.param("bytes=0-4,10-14", 100, (0, 5), id="first only"),
+            pytest.param("bytes=100-", 100, None, id="start at length"),
+            pytest.param("bytes=200-300", 100, None, id="start past length"),
+            pytest.param("bytes=-10", 0, None, id="empty content"),
+            pytest.param("bytes=0-9", None, None, id="unknown length"),
+        ],
+    )
+    def test_range_make_content_range(
+        monkeypatch: pytest.MonkeyPatch,
+        header: str,
+        length: int | None,
+        expect: tuple[int, int] | None,
+    ) -> None:
+        def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+            raise AssertionError("is_byte_range_valid must not be used")
+    
+        monkeypatch.setattr("werkzeug.http.is_byte_range_valid", fail, raising=False)
+        monkeypatch.setattr(
+            "werkzeug.datastructures.range.is_byte_range_valid", fail, raising=False
+        )
+        r = ds.Range.from_header(header)
+>       cr = r.make_content_range(length)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_datastructures.py:1171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\datastructures\range.py:170: in make_content_range
+    if (bounds := self._private_range_for_length(length)) is None:
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\werkzeug\datastructures\range.py:150: in _private_range_for_length
+    if not is_byte_range_valid(start, stop, length):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (0, 1000, 100), kwargs = {}
+
+    def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+>       raise AssertionError("is_byte_range_valid must not be used")
+E       AssertionError: is_byte_range_valid must not be used
+
+tests\test_datastructures.py:1164: AssertionError
+_____________________ test_range_make_content_range[open] _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DAB8C8E7E0>
+header = 'bytes=90-', length = 100, expect = (90, 100)
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            pytest.param("bytes=0-9", 100, (0, 10), id="normal"),
+            pytest.param("bytes=0-999", 100, (0, 100), id="stop clamped"),
+            pytest.param("bytes=90-", 100, (90, 100), id="open"),
+            pytest.param("bytes=-10", 100, (90, 100), id="suffix"),
+            pytest.param("bytes=-1000", 100, (0, 100), id="suffix clamped"),
+            pytest.param("bytes=0-4,10-14", 100, (0, 5), id="first only"),
+            pytest.param("bytes=100-", 100, None, id="start at length"),
+            pytest.param("bytes=200-300", 100, None, id="start past length"),
+            pytest.param("bytes=-10", 0, None, id="empty content"),
+            pytest.param("bytes=0-9", None, None, id="unknown length"),
+        ],
+    )
+    def test_range_make_content_range(
+        monkeypatch: pytest.MonkeyPatch,
+        header: str,
+        length: int | None,
+        expect: tuple[int, int] | None,
+    ) -> None:
+        def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+            raise AssertionError("is_byte_range_valid must not be used")
+    
+        monkeypatch.setattr("werkzeug.http.is_byte_range_valid", fail, raising=False)
+        monkeypatch.setattr(
+            "werkzeug.datastructures.range.is_byte_range_valid", fail, raising=False
+        )
+        r = ds.Range.from_header(header)
+>       cr = r.make_content_range(length)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_datastructures.py:1171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\datastructures\range.py:170: in make_content_range
+    if (bounds := self._private_range_for_length(length)) is None:
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\werkzeug\datastructures\range.py:150: in _private_range_for_length
+    if not is_byte_range_valid(start, stop, length):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (90, 100, 100), kwargs = {}
+
+    def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+>       raise AssertionError("is_byte_range_valid must not be used")
+E       AssertionError: is_byte_range_valid must not be used
+
+tests\test_datastructures.py:1164: AssertionError
+____________________ test_range_make_content_range[suffix] ____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DAB8C8C1A0>
+header = 'bytes=-10', length = 100, expect = (90, 100)
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            pytest.param("bytes=0-9", 100, (0, 10), id="normal"),
+            pytest.param("bytes=0-999", 100, (0, 100), id="stop clamped"),
+            pytest.param("bytes=90-", 100, (90, 100), id="open"),
+            pytest.param("bytes=-10", 100, (90, 100), id="suffix"),
+            pytest.param("bytes=-1000", 100, (0, 100), id="suffix clamped"),
+            pytest.param("bytes=0-4,10-14", 100, (0, 5), id="first only"),
+            pytest.param("bytes=100-", 100, None, id="start at length"),
+            pytest.param("bytes=200-300", 100, None, id="start past length"),
+            pytest.param("bytes=-10", 0, None, id="empty content"),
+            pytest.param("bytes=0-9", None, None, id="unknown length"),
+        ],
+    )
+    def test_range_make_content_range(
+        monkeypatch: pytest.MonkeyPatch,
+        header: str,
+        length: int | None,
+        expect: tuple[int, int] | None,
+    ) -> None:
+        def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+            raise AssertionError("is_byte_range_valid must not be used")
+    
+        monkeypatch.setattr("werkzeug.http.is_byte_range_valid", fail, raising=False)
+        monkeypatch.setattr(
+            "werkzeug.datastructures.range.is_byte_range_valid", fail, raising=False
+        )
+        r = ds.Range.from_header(header)
+>       cr = r.make_content_range(length)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_datastructures.py:1171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\datastructures\range.py:170: in make_content_range
+    if (bounds := self._private_range_for_length(length)) is None:
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\werkzeug\datastructures\range.py:150: in _private_range_for_length
+    if not is_byte_range_valid(start, stop, length):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (90, 100, 100), kwargs = {}
+
+    def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+>       raise AssertionError("is_byte_range_valid must not be used")
+E       AssertionError: is_byte_range_valid must not be used
+
+tests\test_datastructures.py:1164: AssertionError
+________________ test_range_make_content_range[suffix clamped] ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DAB8C8E450>
+header = 'bytes=-1000', length = 100, expect = (0, 100)
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            pytest.param("bytes=0-9", 100, (0, 10), id="normal"),
+            pytest.param("bytes=0-999", 100, (0, 100), id="stop clamped"),
+            pytest.param("bytes=90-", 100, (90, 100), id="open"),
+            pytest.param("bytes=-10", 100, (90, 100), id="suffix"),
+            pytest.param("bytes=-1000", 100, (0, 100), id="suffix clamped"),
+            pytest.param("bytes=0-4,10-14", 100, (0, 5), id="first only"),
+            pytest.param("bytes=100-", 100, None, id="start at length"),
+            pytest.param("bytes=200-300", 100, None, id="start past length"),
+            pytest.param("bytes=-10", 0, None, id="empty content"),
+            pytest.param("bytes=0-9", None, None, id="unknown length"),
+        ],
+    )
+    def test_range_make_content_range(
+        monkeypatch: pytest.MonkeyPatch,
+        header: str,
+        length: int | None,
+        expect: tuple[int, int] | None,
+    ) -> None:
+        def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+            raise AssertionError("is_byte_range_valid must not be used")
+    
+        monkeypatch.setattr("werkzeug.http.is_byte_range_valid", fail, raising=False)
+        monkeypatch.setattr(
+            "werkzeug.datastructures.range.is_byte_range_valid", fail, raising=False
+        )
+        r = ds.Range.from_header(header)
+>       cr = r.make_content_range(length)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_datastructures.py:1171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\datastructures\range.py:170: in make_content_range
+    if (bounds := self._private_range_for_length(length)) is None:
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\werkzeug\datastructures\range.py:150: in _private_range_for_length
+    if not is_byte_range_valid(start, stop, length):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (-900, 100, 100), kwargs = {}
+
+    def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+>       raise AssertionError("is_byte_range_valid must not be used")
+E       AssertionError: is_byte_range_valid must not be used
+
+tests\test_datastructures.py:1164: AssertionError
+__________________ test_range_make_content_range[first only] __________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DAB8C99160>
+header = 'bytes=0-4,10-14', length = 100, expect = (0, 5)
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            pytest.param("bytes=0-9", 100, (0, 10), id="normal"),
+            pytest.param("bytes=0-999", 100, (0, 100), id="stop clamped"),
+            pytest.param("bytes=90-", 100, (90, 100), id="open"),
+            pytest.param("bytes=-10", 100, (90, 100), id="suffix"),
+            pytest.param("bytes=-1000", 100, (0, 100), id="suffix clamped"),
+            pytest.param("bytes=0-4,10-14", 100, (0, 5), id="first only"),
+            pytest.param("bytes=100-", 100, None, id="start at length"),
+            pytest.param("bytes=200-300", 100, None, id="start past length"),
+            pytest.param("bytes=-10", 0, None, id="empty content"),
+            pytest.param("bytes=0-9", None, None, id="unknown length"),
+        ],
+    )
+    def test_range_make_content_range(
+        monkeypatch: pytest.MonkeyPatch,
+        header: str,
+        length: int | None,
+        expect: tuple[int, int] | None,
+    ) -> None:
+        def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+            raise AssertionError("is_byte_range_valid must not be used")
+    
+        monkeypatch.setattr("werkzeug.http.is_byte_range_valid", fail, raising=False)
+        monkeypatch.setattr(
+            "werkzeug.datastructures.range.is_byte_range_valid", fail, raising=False
+        )
+        r = ds.Range.from_header(header)
+>       cr = r.make_content_range(length)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_datastructures.py:1171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\datastructures\range.py:170: in make_content_range
+    if (bounds := self._private_range_for_length(length)) is None:
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\werkzeug\datastructures\range.py:150: in _private_range_for_length
+    if not is_byte_range_valid(start, stop, length):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (0, 5, 100), kwargs = {}
+
+    def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+>       raise AssertionError("is_byte_range_valid must not be used")
+E       AssertionError: is_byte_range_valid must not be used
+
+tests\test_datastructures.py:1164: AssertionError
+_______________ test_range_make_content_range[start at length] ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DAB8C9B470>
+header = 'bytes=100-', length = 100, expect = None
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            pytest.param("bytes=0-9", 100, (0, 10), id="normal"),
+            pytest.param("bytes=0-999", 100, (0, 100), id="stop clamped"),
+            pytest.param("bytes=90-", 100, (90, 100), id="open"),
+            pytest.param("bytes=-10", 100, (90, 100), id="suffix"),
+            pytest.param("bytes=-1000", 100, (0, 100), id="suffix clamped"),
+            pytest.param("bytes=0-4,10-14", 100, (0, 5), id="first only"),
+            pytest.param("bytes=100-", 100, None, id="start at length"),
+            pytest.param("bytes=200-300", 100, None, id="start past length"),
+            pytest.param("bytes=-10", 0, None, id="empty content"),
+            pytest.param("bytes=0-9", None, None, id="unknown length"),
+        ],
+    )
+    def test_range_make_content_range(
+        monkeypatch: pytest.MonkeyPatch,
+        header: str,
+        length: int | None,
+        expect: tuple[int, int] | None,
+    ) -> None:
+        def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+            raise AssertionError("is_byte_range_valid must not be used")
+    
+        monkeypatch.setattr("werkzeug.http.is_byte_range_valid", fail, raising=False)
+        monkeypatch.setattr(
+            "werkzeug.datastructures.range.is_byte_range_valid", fail, raising=False
+        )
+        r = ds.Range.from_header(header)
+>       cr = r.make_content_range(length)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_datastructures.py:1171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\datastructures\range.py:170: in make_content_range
+    if (bounds := self._private_range_for_length(length)) is None:
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\werkzeug\datastructures\range.py:150: in _private_range_for_length
+    if not is_byte_range_valid(start, stop, length):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (100, 100, 100), kwargs = {}
+
+    def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+>       raise AssertionError("is_byte_range_valid must not be used")
+E       AssertionError: is_byte_range_valid must not be used
+
+tests\test_datastructures.py:1164: AssertionError
+______________ test_range_make_content_range[start past length] _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DAB8C8E450>
+header = 'bytes=200-300', length = 100, expect = None
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            pytest.param("bytes=0-9", 100, (0, 10), id="normal"),
+            pytest.param("bytes=0-999", 100, (0, 100), id="stop clamped"),
+            pytest.param("bytes=90-", 100, (90, 100), id="open"),
+            pytest.param("bytes=-10", 100, (90, 100), id="suffix"),
+            pytest.param("bytes=-1000", 100, (0, 100), id="suffix clamped"),
+            pytest.param("bytes=0-4,10-14", 100, (0, 5), id="first only"),
+            pytest.param("bytes=100-", 100, None, id="start at length"),
+            pytest.param("bytes=200-300", 100, None, id="start past length"),
+            pytest.param("bytes=-10", 0, None, id="empty content"),
+            pytest.param("bytes=0-9", None, None, id="unknown length"),
+        ],
+    )
+    def test_range_make_content_range(
+        monkeypatch: pytest.MonkeyPatch,
+        header: str,
+        length: int | None,
+        expect: tuple[int, int] | None,
+    ) -> None:
+        def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+            raise AssertionError("is_byte_range_valid must not be used")
+    
+        monkeypatch.setattr("werkzeug.http.is_byte_range_valid", fail, raising=False)
+        monkeypatch.setattr(
+            "werkzeug.datastructures.range.is_byte_range_valid", fail, raising=False
+        )
+        r = ds.Range.from_header(header)
+>       cr = r.make_content_range(length)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_datastructures.py:1171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\datastructures\range.py:170: in make_content_range
+    if (bounds := self._private_range_for_length(length)) is None:
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\werkzeug\datastructures\range.py:150: in _private_range_for_length
+    if not is_byte_range_valid(start, stop, length):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (200, 301, 100), kwargs = {}
+
+    def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+>       raise AssertionError("is_byte_range_valid must not be used")
+E       AssertionError: is_byte_range_valid must not be used
+
+tests\test_datastructures.py:1164: AssertionError
+________________ test_range_make_content_range[empty content] _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DAB8C8EF90>
+header = 'bytes=-10', length = 0, expect = None
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            pytest.param("bytes=0-9", 100, (0, 10), id="normal"),
+            pytest.param("bytes=0-999", 100, (0, 100), id="stop clamped"),
+            pytest.param("bytes=90-", 100, (90, 100), id="open"),
+            pytest.param("bytes=-10", 100, (90, 100), id="suffix"),
+            pytest.param("bytes=-1000", 100, (0, 100), id="suffix clamped"),
+            pytest.param("bytes=0-4,10-14", 100, (0, 5), id="first only"),
+            pytest.param("bytes=100-", 100, None, id="start at length"),
+            pytest.param("bytes=200-300", 100, None, id="start past length"),
+            pytest.param("bytes=-10", 0, None, id="empty content"),
+            pytest.param("bytes=0-9", None, None, id="unknown length"),
+        ],
+    )
+    def test_range_make_content_range(
+        monkeypatch: pytest.MonkeyPatch,
+        header: str,
+        length: int | None,
+        expect: tuple[int, int] | None,
+    ) -> None:
+        def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+            raise AssertionError("is_byte_range_valid must not be used")
+    
+        monkeypatch.setattr("werkzeug.http.is_byte_range_valid", fail, raising=False)
+        monkeypatch.setattr(
+            "werkzeug.datastructures.range.is_byte_range_valid", fail, raising=False
+        )
+        r = ds.Range.from_header(header)
+>       cr = r.make_content_range(length)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_datastructures.py:1171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\datastructures\range.py:170: in make_content_range
+    if (bounds := self._private_range_for_length(length)) is None:
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\werkzeug\datastructures\range.py:150: in _private_range_for_length
+    if not is_byte_range_valid(start, stop, length):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (-10, 0, 0), kwargs = {}
+
+    def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+>       raise AssertionError("is_byte_range_valid must not be used")
+E       AssertionError: is_byte_range_valid must not be used
+
+tests\test_datastructures.py:1164: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_datastructures.py::test_if_range_check[strong equal] - Attr...
+FAILED tests/test_datastructures.py::test_if_range_check[strong different] - ...
+FAILED tests/test_datastructures.py::test_if_range_check[response weak] - Att...
+FAILED tests/test_datastructures.py::test_if_range_check[etag, no response etag]
+FAILED tests/test_datastructures.py::test_if_range_check[header weak] - Attri...
+FAILED tests/test_datastructures.py::test_if_range_check[date equal] - Attrib...
+FAILED tests/test_datastructures.py::test_if_range_check[date diff] - Attribu...
+FAILED tests/test_datastructures.py::test_if_range_check[date, none] - Attrib...
+FAILED tests/test_datastructures.py::test_if_range_check[empty] - AttributeEr...
+FAILED tests/test_datastructures.py::test_range_make_content_range[normal] - ...
+FAILED tests/test_datastructures.py::test_range_make_content_range[stop clamped]
+FAILED tests/test_datastructures.py::test_range_make_content_range[open] - As...
+FAILED tests/test_datastructures.py::test_range_make_content_range[suffix] - ...
+FAILED tests/test_datastructures.py::test_range_make_content_range[suffix clamped]
+FAILED tests/test_datastructures.py::test_range_make_content_range[first only]
+FAILED tests/test_datastructures.py::test_range_make_content_range[start at length]
+FAILED tests/test_datastructures.py::test_range_make_content_range[start past length]
+FAILED tests/test_datastructures.py::test_range_make_content_range[empty content]
+18 failed, 104 passed in 1.17s

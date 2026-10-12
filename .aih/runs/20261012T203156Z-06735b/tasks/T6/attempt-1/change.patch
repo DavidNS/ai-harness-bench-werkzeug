@@ -1,0 +1,67 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index 995b7bf1..ab8d5a47 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -40,6 +40,19 @@ Version 3.2.0
+     setting or deleting ``response.content_range``.
+ -   ``Range.range_for_length`` and ``to_content_range_header`` are deprecated.
+     Use ``make_content_range`` instead.
++-   Add ``Response.apply_conditions`` and ``apply_range``, which evaluate
++    conditional and range request headers as specified by RFC 9110.
++    ``Response.make_conditional``, ``http.is_resource_modified``, and
++    ``http.is_byte_range_valid`` are deprecated. Add ``IfRange.check``.
++    ``Range.make_content_range`` clamps too-large values and uses the first
++    range. :issue:`3291` :pr:`3308`
++-   ``send_file`` uses ``apply_conditions`` and ``apply_range``. It detects the
++    name, size, and modification time of file-like objects, calls ``seek(0)``
++    on them, no longer includes a hash of the path in the ETag, and defaults to
++    the ``application/octet-stream`` mimetype instead of raising.
++-   ``SharedDataMiddleware`` serves files with ``send_file``. ``cache_timeout``
++    is no longer set by default so that conditional caching works. The
++    ``cache`` and ``fallback_mimetype`` parameters are deprecated.
+ -   All ``Response`` header properties behave consistently and document their
+     get/set types. They can be set to ``None`` or use ``del`` to unset the
+     header. They will not set empty header values. Structured header classes are
+diff --git a/docs/http.rst b/docs/http.rst
+index ee36ac35..e2a55270 100644
+--- a/docs/http.rst
++++ b/docs/http.rst
+@@ -108,6 +108,10 @@ For conditional responses the following functions might be useful:
+ 
+ .. autofunction:: is_resource_modified
+ 
++See also :meth:`~werkzeug.wrappers.Response.apply_conditions` and
++:meth:`~werkzeug.wrappers.Response.apply_range`, which replace the deprecated
++``is_resource_modified`` and ``is_byte_range_valid``.
++
+ Constants
+ =========
+ 
+diff --git a/docs/quickstart.rst b/docs/quickstart.rst
+index c7f5dc44..8599192f 100644
+--- a/docs/quickstart.rst
++++ b/docs/quickstart.rst
+@@ -293,10 +293,21 @@ response conditional against a request.  Which means that if the request
+ can assure that it has the information already, no data besides the headers
+ is sent over the network which saves traffic.  For that you should set at
+ least an ETag (which is used for comparison) and the date header and then
+-call :class:`~Request.make_conditional` with the request object.
++call :meth:`~werkzeug.wrappers.Response.apply_conditions` with the request
++object.
+ 
+ The response is modified accordingly (status code changed, response body
+-removed, entity headers removed etc.)
++removed, entity headers removed etc.) A failed ``If-Match`` or
++``If-Unmodified-Since`` precondition raises
++:exc:`~werkzeug.exceptions.PreconditionFailed`.
++
++To support partial requests, call
++:meth:`~werkzeug.wrappers.Response.apply_range` after ``apply_conditions``.
++It applies the request's ``Range`` header, turning the response into a
++``206 Partial Content`` response with a ``Content-Range`` header, or raising
++:exc:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`.
++
++``Response.make_conditional`` is deprecated in favor of these two methods.
+ 
+ 
+ Trusting Data

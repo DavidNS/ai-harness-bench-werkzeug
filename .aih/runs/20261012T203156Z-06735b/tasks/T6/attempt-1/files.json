@@ -1,0 +1,17 @@
+[
+  {
+    "action": "modify",
+    "path": "CHANGES.rst",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "docs/http.rst",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "docs/quickstart.rst",
+    "role": "production"
+  }
+]

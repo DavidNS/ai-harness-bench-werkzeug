@@ -1,0 +1,58 @@
+..FFF...                                                                 [100%]
+================================== FAILURES ===================================
+__________________ test_conditional_no_default_cache_timeout __________________
+
+shared_dir = 'C:\\Users\\david\\AppData\\Local\\Temp\\pytest-of-david\\pytest-219\\test_conditional_no_default_ca0'
+
+    def test_conditional_no_default_cache_timeout(shared_dir):
+        app = SharedDataMiddleware(None, {"/": shared_dir})
+        status, headers, body = _serve(app)
+        assert status == "200 OK"
+        assert body == b"0123456789"
+        assert headers["Content-Type"] == "application/octet-stream"
+        assert headers["Cache-Control"] == "no-cache"
+        assert "Expires" not in headers
+        etag = headers["ETag"]
+        assert "Last-Modified" in headers
+    
+        status, headers, body = _serve(app, headers={"If-None-Match": etag})
+>       assert status == "304 NOT MODIFIED"
+E       AssertionError: assert '304 Not Modified' == '304 NOT MODIFIED'
+E         
+E         - 304 NOT MODIFIED
+E         + 304 Not Modified
+
+tests\middleware\test_shared_data.py:94: AssertionError
+_____________________________ test_range_request ______________________________
+
+shared_dir = 'C:\\Users\\david\\AppData\\Local\\Temp\\pytest-of-david\\pytest-219\\test_range_request0'
+
+    def test_range_request(shared_dir):
+        app = SharedDataMiddleware(None, {"/": shared_dir})
+        status, headers, body = _serve(app, headers={"Range": "bytes=2-4"})
+>       assert status == "206 PARTIAL CONTENT"
+E       AssertionError: assert '206 Partial Content' == '206 PARTIAL CONTENT'
+E         
+E         - 206 PARTIAL CONTENT
+E         + 206 Partial Content
+
+tests\middleware\test_shared_data.py:101: AssertionError
+_________________ test_precondition_failed_and_unsatisfiable __________________
+
+shared_dir = 'C:\\Users\\david\\AppData\\Local\\Temp\\pytest-of-david\\pytest-219\\test_precondition_failed_and_u0'
+
+    def test_precondition_failed_and_unsatisfiable(shared_dir):
+        app = SharedDataMiddleware(None, {"/": shared_dir})
+        status, _, _ = _serve(app, headers={"If-Match": '"nope"'})
+>       assert status == "412 PRECONDITION FAILED"
+E       AssertionError: assert '412 Precondition Failed' == '412 PRECONDITION FAILED'
+E         
+E         - 412 PRECONDITION FAILED
+E         + 412 Precondition Failed
+
+tests\middleware\test_shared_data.py:109: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/middleware/test_shared_data.py::test_conditional_no_default_cache_timeout
+FAILED tests/middleware/test_shared_data.py::test_range_request - AssertionEr...
+FAILED tests/middleware/test_shared_data.py::test_precondition_failed_and_unsatisfiable
+3 failed, 5 passed in 0.23s

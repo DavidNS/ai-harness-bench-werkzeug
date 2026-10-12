@@ -7,6 +7,9 @@ import typing as t
 from contextlib import contextmanager
 from copy import copy
 from copy import deepcopy
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 
 import pytest
 
@@ -14,6 +17,7 @@ from werkzeug import datastructures as ds
 from werkzeug.datastructures import ETag
 from werkzeug.datastructures import ETagSet
 from werkzeug.exceptions import BadRequestKeyError
+from werkzeug.http import http_date
 
 
 class _MutableMultiDictTests:
@@ -1098,3 +1102,91 @@ def test_etag_strong_comparison(header: ETagSet, etag: ETag, expect: bool) -> No
 )
 def test_etag_weak_comparison(header: ETagSet, etag: ETag, expect: bool) -> None:
     assert header.contains_weak(etag) is expect
+
+
+def test_etag_set_from_header_discards_invalid() -> None:
+    header = ETagSet.from_header('bad, "a", W/"b", unquoted"x", "c" junk, "d"')
+    assert header.contains_strong("a")
+    assert header.contains_weak("b")
+    assert header.contains_strong("d")
+    assert not header.contains_weak("bad")
+    assert not header.contains_weak("unquoted")
+    assert not header.contains_weak("c")
+
+
+_DATE = datetime(2026, 1, 1, tzinfo=timezone.utc)
+
+
+@pytest.mark.parametrize(
+    ("header", "etag", "last_modified", "expect"),
+    [
+        pytest.param('"a"', ETag("a"), None, True, id="strong equal"),
+        pytest.param('"a"', ETag("b"), None, False, id="strong different"),
+        pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+        pytest.param('"a"', None, _DATE, False, id="etag, no response etag"),
+        pytest.param('W/"a"', ETag("a"), None, False, id="header weak"),
+        pytest.param(http_date(_DATE), None, _DATE, True, id="date equal"),
+        pytest.param(
+            http_date(_DATE), None, _DATE + timedelta(seconds=1), False, id="date diff"
+        ),
+        pytest.param(http_date(_DATE), ETag("a"), None, False, id="date, none"),
+        pytest.param("", ETag("a"), _DATE, False, id="empty"),
+    ],
+)
+def test_if_range_check(
+    header: str, etag: ETag | None, last_modified: datetime | None, expect: bool
+) -> None:
+    assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+
+
+@pytest.mark.parametrize(
+    ("header", "length", "expect"),
+    [
+        pytest.param("bytes=0-9", 100, (0, 10), id="normal"),
+        pytest.param("bytes=0-999", 100, (0, 100), id="stop clamped"),
+        pytest.param("bytes=90-", 100, (90, 100), id="open"),
+        pytest.param("bytes=-10", 100, (90, 100), id="suffix"),
+        pytest.param("bytes=-1000", 100, (0, 100), id="suffix clamped"),
+        pytest.param("bytes=0-4,10-14", 100, (0, 5), id="first only"),
+        pytest.param("bytes=100-", 100, None, id="start at length"),
+        pytest.param("bytes=200-300", 100, None, id="start past length"),
+        pytest.param("bytes=-10", 0, None, id="empty content"),
+        pytest.param("bytes=0-9", None, None, id="unknown length"),
+    ],
+)
+def test_range_make_content_range(
+    monkeypatch: pytest.MonkeyPatch,
+    header: str,
+    length: int | None,
+    expect: tuple[int, int] | None,
+) -> None:
+    def fail(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+        raise AssertionError("is_byte_range_valid must not be used")
+
+    monkeypatch.setattr("werkzeug.http.is_byte_range_valid", fail, raising=False)
+    monkeypatch.setattr(
+        "werkzeug.datastructures.range.is_byte_range_valid", fail, raising=False
+    )
+    r = ds.Range.from_header(header)
+    cr = r.make_content_range(length)
+
+    if expect is None:
+        assert cr is None
+    else:
+        assert (cr.start, cr.stop) == expect
+        assert cr.length == length
+        assert cr.units == "bytes"
+
+
+def test_range_make_content_range_no_ranges() -> None:
+    assert ds.Range("bytes", []).make_content_range(100) is None
+
+
+def test_range_for_length_deprecated() -> None:
+    r = ds.Range.from_header("bytes=0-999")
+
+    with pytest.deprecated_call():
+        assert r.range_for_length(100) == (0, 100)
+
+    with pytest.deprecated_call():
+        assert ds.Range.from_header("bytes=500-").range_for_length(100) is None
