@@ -1,0 +1,14 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC13",
+      "note": "tests/middleware/test_shared_data.py::test_conditional_and_range checks a 200 with no max-age and Accept-Ranges set, a 304 on If-None-Match, and a 206 with Content-Range. test_cache_timeout checks that cache_timeout=60 gives max-age=60. Not re-run after the assertion fix."
+    },
+    {
+      "criterion": "ACC14",
+      "note": "tests/middleware/test_shared_data.py::test_deprecated_parameters is parametrized over cache=False and fallback_mimetype and uses pytest.deprecated_call. It passed in the harness run."
+    }
+  ],
+  "replan_request": null,
+  "summary": "The failing test expected the status text \"206 PARTIAL CONTENT\", but Werkzeug returns \"206 Partial Content\". I corrected the assertion in tests/middleware/test_shared_data.py. No production change this round, and I haven't re-run the tests. The other five tests passed in the harness run."
+}

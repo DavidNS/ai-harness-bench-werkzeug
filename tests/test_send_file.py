@@ -5,6 +5,8 @@ import pathlib
 import pytest
 
 from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import PreconditionFailed
+from werkzeug.exceptions import RequestedRangeNotSatisfiable
 from werkzeug.http import http_date
 from werkzeug.test import create_environ
 from werkzeug.utils import send_file
@@ -52,8 +54,96 @@ def test_object(file_factory):
 
 
 def test_object_without_mimetype():
-    with pytest.raises(TypeError, match="detect the MIME type"):
-        send_file(io.BytesIO(b"test"), environ)
+    with send_file(io.BytesIO(b"test"), environ) as rv:
+        assert rv.mimetype == "application/octet-stream"
+
+
+def test_object_detects_name_size_mtime():
+    with txt_path.open("rb") as f, send_file(f, environ) as rv:
+        assert rv.mimetype == "text/plain"
+        assert rv.headers["Content-Disposition"] == "inline; filename=test.txt"
+        assert rv.content_length == txt_path.stat().st_size
+        assert rv.last_modified is not None
+        assert rv.etag is not None
+
+
+def test_object_seeks_to_start():
+    f = io.BytesIO(b"0123456789")
+    f.read()
+
+    with send_file(f, environ) as rv:
+        rv.direct_passthrough = False
+        assert rv.content_length == 10
+        assert rv.data == b"0123456789"
+
+
+def test_object_range():
+    f = io.BytesIO(b"0123456789")
+    f.read()
+    range_environ = create_environ(headers={"Range": "bytes=2-4"})
+
+    with send_file(f, range_environ) as rv:
+        assert rv.status_code == 206
+        assert rv.content_length == 3
+        assert rv.headers["Content-Range"] == "bytes 2-4/10"
+        rv.direct_passthrough = False
+        assert rv.data == b"234"
+
+
+def test_range_not_satisfiable():
+    f = io.BytesIO(b"0123456789")
+
+    with pytest.raises(RequestedRangeNotSatisfiable):
+        send_file(f, create_environ(headers={"Range": "bytes=20-30"}))
+
+    assert f.closed
+
+
+def test_precondition_failed_closes_file():
+    f = io.BytesIO(b"test")
+
+    with pytest.raises(PreconditionFailed):
+        send_file(f, create_environ(headers={"If-Match": '"nope"'}), etag="other")
+
+    assert f.closed
+
+
+class _Unseekable:
+    """A minimal readable stream with no seek, tell, or fileno."""
+
+    def __init__(self, data):
+        self._io = io.BytesIO(data)
+
+    def read(self, size=-1):
+        return self._io.read(size)
+
+    def __iter__(self):
+        return iter(self._io.readline, b"")
+
+    def close(self):
+        self._io.close()
+
+
+def test_object_unseekable():
+    with send_file(_Unseekable(b"test"), environ) as rv:
+        assert rv.mimetype == "application/octet-stream"
+        assert rv.status_code == 200
+        assert "Content-Length" not in rv.headers
+        assert "ETag" not in rv.headers
+        rv.direct_passthrough = False
+        assert rv.data == b"test"
+
+
+def test_object_unseekable_range_ignored():
+    # The complete length is unknown, so the range can't be applied and the
+    # whole body is sent instead of failing.
+    range_environ = create_environ(headers={"Range": "bytes=1-2"})
+
+    with send_file(_Unseekable(b"test"), range_environ) as rv:
+        assert rv.status_code == 200
+        assert "Content-Range" not in rv.headers
+        rv.direct_passthrough = False
+        assert rv.data == b"test"
 
 
 def test_object_mimetype_from_name():
@@ -146,7 +236,12 @@ def test_max_age(value, public):
 
 def test_etag():
     with send_file(txt_path, environ) as rv:
-        assert rv.headers["ETag"].count("-") == 2
+        stat = txt_path.stat()
+        assert rv.headers["ETag"] == f'"{stat.st_mtime}-{stat.st_size}"'
+
+    # The path is not part of the ETag.
+    with send_file(txt_path, environ, download_name="other.txt") as rv:
+        assert rv.headers["ETag"] == f'"{stat.st_mtime}-{stat.st_size}"'
 
     with send_file(txt_path, environ, etag=False) as rv:
         assert "ETag" not in rv.headers

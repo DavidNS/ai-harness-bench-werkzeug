@@ -1,0 +1,27 @@
+{
+  "findings": [
+    {
+      "file": "tests/test_send_file.py",
+      "line": 0,
+      "pass": 2,
+      "severity": "blocking",
+      "text": "No test covers a file-like object whose seek/tell/fileno raise (an unseekable stream or one without fileno). That is the `except (AttributeError, OSError, ValueError)` fallback in utils.py:429-441, where size and mtime stay None, there is no Content-Length or ETag, and a Range request has to behave sanely."
+    },
+    {
+      "file": "tests/test_send_file.py",
+      "line": 0,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "Nothing tests that a file object is closed when apply_conditions raises PreconditionFailed (test_precondition_failed passes a path, not a file). Nothing tests a file object whose `.name` is an int, as with os.fdopen, or a bytes name."
+    },
+    {
+      "file": "src/werkzeug/utils.py",
+      "line": 446,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "The nested `if download_name is None ... else` that sets mimetype could be flattened. The repeated `mimetype = \"application/octet-stream\"` assignments could be one fallback."
+    }
+  ],
+  "summary": "The implementation matches ACC11 and ACC12 and I found nothing weakened. One gap blocks it: the new file-like detection has an untested fallback path. I only read the production code and did not run anything.",
+  "verdict": "request_changes"
+}

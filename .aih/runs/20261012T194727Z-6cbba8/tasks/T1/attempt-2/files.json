@@ -1,0 +1,17 @@
+[
+  {
+    "action": "modify",
+    "path": "src/werkzeug/datastructures/range.py",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "tests/test_datastructures.py",
+    "role": "test"
+  },
+  {
+    "action": "modify",
+    "path": "tests/test_http.py",
+    "role": "test"
+  }
+]

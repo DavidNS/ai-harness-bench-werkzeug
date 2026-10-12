@@ -7,10 +7,14 @@ import typing as t
 from contextlib import contextmanager
 from copy import copy
 from copy import deepcopy
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 
 import pytest
 
 from werkzeug import datastructures as ds
+from werkzeug import http
 from werkzeug.datastructures import ETag
 from werkzeug.datastructures import ETagSet
 from werkzeug.exceptions import BadRequestKeyError
@@ -1044,6 +1048,80 @@ def test_range_to_header(ranges):
     header = ds.Range("byes", ranges).to_header()
     r = ds.Range.from_header(header)
     assert r.ranges == ranges
+
+
+_lm = datetime(2020, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+
+
+@pytest.mark.parametrize(
+    ("header", "etag", "last_modified", "expect"),
+    [
+        pytest.param('"a"', "a", None, True, id="etag same"),
+        pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+        pytest.param('"a"', "b", None, False, id="etag different"),
+        pytest.param('"a"', None, None, False, id="etag None"),
+        pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+        pytest.param('W/"a"', "a", None, False, id="header weak"),
+        pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+        pytest.param(
+            http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+        ),
+        pytest.param(
+            http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+        ),
+        pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+        pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+        pytest.param("", "a", _lm, False, id="empty"),
+    ],
+)
+def test_if_range_check(header, etag, last_modified, expect):
+    assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+
+
+@pytest.mark.parametrize(
+    ("ranges", "length", "expect"),
+    [
+        pytest.param([(0, 5)], 10, (0, 5), id="within"),
+        pytest.param([(2, 100)], 10, (2, 10), id="stop clamped"),
+        pytest.param([(2, None)], 10, (2, 10), id="open"),
+        pytest.param([(-4, None)], 10, (6, 10), id="suffix"),
+        pytest.param([(-100, None)], 10, (0, 10), id="suffix clamped"),
+        pytest.param([(1, 3), (5, 7)], 10, (1, 3), id="first only"),
+        pytest.param([(10, 20)], 10, None, id="start past end"),
+        pytest.param([(10, None)], 10, None, id="open past end"),
+        pytest.param([(0, 5)], 0, None, id="empty content"),
+        pytest.param([(0, 5)], None, None, id="unknown length"),
+    ],
+)
+def test_range_make_content_range(ranges, length, expect):
+    cr = ds.Range("bytes", ranges).make_content_range(length)
+
+    if expect is None:
+        assert cr is None
+    else:
+        assert (cr.start, cr.stop, cr.length) == (*expect, length)
+
+
+def test_range_does_not_import_is_byte_range_valid():
+    import werkzeug.datastructures.range as range_module
+
+    assert not hasattr(range_module, "is_byte_range_valid")
+
+
+@pytest.mark.parametrize(
+    ("value", "strong", "weak"),
+    [
+        ('"a", W/"b"', {"a"}, {"b"}),
+        ('unquoted, "a"', {"a"}, set()),
+        ('"a", unquoted, W/"b"', {"a"}, {"b"}),
+        ('"a" junk, "b"', {"b"}, set()),
+        ("unquoted", set(), set()),
+    ],
+)
+def test_etag_set_from_header_discards_invalid(value, strong, weak):
+    etags = ETagSet.from_header(value)
+    assert etags._strong == strong
+    assert etags._weak == weak
 
 
 @pytest.mark.parametrize(

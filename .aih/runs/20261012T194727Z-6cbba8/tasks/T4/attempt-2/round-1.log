@@ -1,0 +1,18 @@
+..F......                                                                [100%]
+================================== FAILURES ===================================
+______________________________ test_not_modified ______________________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-195/test_not_modified0')
+
+    def test_not_modified(tmp_path):
+        _, headers, _ = _serve(tmp_path)
+        status, _, body = _serve(tmp_path, {"If-None-Match": headers["ETag"]})
+>       assert status.startswith("304")
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of str object at 0x000001FFAF310EA0>('304')
+E        +    where <built-in method startswith of str object at 0x000001FFAF310EA0> = '200 OK'.startswith
+
+tests\middleware\test_shared_data.py:44: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/middleware/test_shared_data.py::test_not_modified - AssertionErr...
+1 failed, 8 passed in 0.23s

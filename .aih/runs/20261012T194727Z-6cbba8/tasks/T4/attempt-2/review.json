@@ -1,0 +1,26 @@
+{
+  "findings": [
+    {
+      "file": "tests/middleware/test_shared_data.py",
+      "line": 71,
+      "pass": 2,
+      "severity": "blocking",
+      "text": "The deprecated parameters are only tested for emitting a warning. Nothing tests that `fallback_mimetype` still applies to unknown extensions, that an unknown extension now defaults to application/octet-stream, or that `cache=False` still omits the ETag. That branch (`etag=False`, plus the fallback-mimetype branch in shared_data.py) is new logic with no test."
+    },
+    {
+      "file": "tests/middleware/test_shared_data.py",
+      "line": 43,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "There is no test for If-Modified-Since / Last-Modified revalidation, for HEAD requests, or for a file served from a package loader (`generate_etag` and the BytesIO opener). Only the filesystem If-None-Match path is covered."
+    },
+    {
+      "file": "src/werkzeug/middleware/shared_data.py",
+      "line": 293,
+      "pass": 1,
+      "severity": "advisory",
+      "text": "With `cache=False`, `etag=False` still lets send_file set Last-Modified and apply conditions. The old code sent only `Cache-Control: public` and never returned 304. The new behavior is arguably fine for a deprecated option, but it is untested."
+    }
+  ],
+  "verdict": "request_changes"
+}

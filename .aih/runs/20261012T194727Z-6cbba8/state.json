@@ -1,0 +1,101 @@
+{
+  "attempts_total": 8,
+  "base_ref": "aih-base",
+  "base_sha": "671537e0e5c7dcec4ac61ffc755dbd8936cefcfb",
+  "baseline_green": true,
+  "created_at": "2026-10-12T19:47:27+00:00",
+  "plan_version": 1,
+  "repo": "C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\targets\\20261012T194722Z-werkzeug-apply-conditions-range-gated-1",
+  "run_id": "20261012T194727Z-6cbba8",
+  "status": "aborted",
+  "tasks": {
+    "T1": {
+      "advisories": [
+        {
+          "file": "tests/test_http.py",
+          "line": 825,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "The `test_content_range_invalid_int` parametrize line was rewritten without a space after a comma (`\"*/\ud83e\udff1\ud83e\udff2\ud83e\udff3\",\"1-+2/3\"`), which is formatting noise that `ruff format` would reject; restore the original line."
+        },
+        {
+          "file": "tests/test_datastructures.py",
+          "line": 1,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test covers `IfRange.check` with a naive `last_modified` datetime (assumed UTC) or with a non-bytes unit passed to `make_content_range`."
+        }
+      ],
+      "attempts": 2,
+      "commit": "6896bf8a8265b3eb42aecf4e54933e0c067e0299",
+      "status": "committed"
+    },
+    "T2": {
+      "advisories": [
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 930,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test runs apply_range on a streamed response whose length is unknown, or on a file-wrapper or direct_passthrough response, which is the path send_file will use. The `calculate_content_length()` returning None branch is untested."
+        },
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 790,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "Several edge cases have no test: a weak ETag in If-Range, a last_modified with microseconds (the `replace(microsecond=0)` normalisation), and malformed date headers."
+        }
+      ],
+      "attempts": 2,
+      "commit": "bb7c6287d643dac32c51ac38124055e38900dc8a",
+      "review_rounds": 1,
+      "status": "committed"
+    },
+    "T3": {
+      "advisories": [
+        {
+          "file": "src/werkzeug/utils.py",
+          "line": 455,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "The `size = None` in the except branch of the seek-to-end fallback is redundant if `size` is already initialised to None earlier in the function. The size-detection ladder could also be a small helper."
+        },
+        {
+          "file": "tests/test_send_file.py",
+          "line": 0,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test covers a file-like object that has a `fileno` but is not a regular file, such as a pipe. The `S_ISREG` guard and the seek-based size fallback are therefore unexercised for it."
+        }
+      ],
+      "attempts": 2,
+      "commit": "4d4b28a357089b1e8de3ac962e9544303115d754",
+      "review_rounds": 1,
+      "status": "committed"
+    },
+    "T4": {
+      "advisories": [
+        {
+          "file": "tests/middleware/test_shared_data.py",
+          "line": 43,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "There is no test for If-Modified-Since / Last-Modified revalidation, for HEAD requests, or for a file served from a package loader (`generate_etag` and the BytesIO opener). Only the filesystem If-None-Match path is covered."
+        },
+        {
+          "file": "src/werkzeug/middleware/shared_data.py",
+          "line": 293,
+          "pass": 1,
+          "severity": "advisory",
+          "text": "With `cache=False`, `etag=False` still lets send_file set Last-Modified and apply conditions. The old code sent only `Cache-Control: public` and never returned 304. The new behavior is arguably fine for a deprecated option, but it is untested."
+        }
+      ],
+      "attempts": 2,
+      "review_rounds": 2,
+      "status": "in_progress"
+    }
+  },
+  "updated_at": "2026-10-12T20:00:26+00:00",
+  "worktree": "C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\results\\arms\\detail\\20261012T194722Z-werkzeug-apply-conditions-range-gated-1\\aih-data\\worktrees\\20261012T194727Z-6cbba8"
+}

@@ -1,0 +1,14 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC13",
+      "note": "tests/middleware/test_shared_data.py: test_no_default_max_age, test_cache_timeout, test_not_modified (304), test_range (206 + Content-Range), test_range_not_satisfiable (416), test_precondition_failed (412)."
+    },
+    {
+      "criterion": "ACC14",
+      "note": "test_deprecated_parameters uses pytest.deprecated_call for cache and fallback_mimetype."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Fixed test_not_modified. The `_serve` helper rewrote the file on every call, which changed its mtime and so its ETag, and the If-None-Match request got a 200. The helper now writes the file only if it doesn't exist. No production changes this round. I haven't re-run the tests."
+}

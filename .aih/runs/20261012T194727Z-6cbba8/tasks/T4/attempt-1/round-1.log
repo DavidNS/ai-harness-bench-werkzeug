@@ -1,0 +1,32 @@
+F.....                                                                   [100%]
+================================== FAILURES ===================================
+_________________________ test_conditional_and_range __________________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-190/test_conditional_and_range0')
+
+    def test_conditional_and_range(tmp_path):
+        app = _make_app(tmp_path)
+        status, headers, data = _run(app, "/s/data.txt")
+        assert status == "200 OK"
+        assert data == b"0123456789"
+        assert "max-age" not in headers["Cache-Control"]
+        assert headers["Accept-Ranges"] == "bytes"
+        etag = headers["ETag"]
+    
+        status, headers, data = _run(
+            app, "/s/data.txt", headers={"If-None-Match": etag}
+        )
+        assert status == "304 Not Modified"
+        assert data == b""
+    
+        status, headers, data = _run(app, "/s/data.txt", headers={"Range": "bytes=2-4"})
+>       assert status == "206 PARTIAL CONTENT"
+E       AssertionError: assert '206 Partial Content' == '206 PARTIAL CONTENT'
+E         
+E         - 206 PARTIAL CONTENT
+E         + 206 Partial Content
+
+tests\middleware\test_shared_data.py:42: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/middleware/test_shared_data.py::test_conditional_and_range - Ass...
+1 failed, 5 passed in 0.22s

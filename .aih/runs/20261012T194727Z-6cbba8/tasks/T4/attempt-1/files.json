@@ -1,0 +1,12 @@
+[
+  {
+    "action": "modify",
+    "path": "src/werkzeug/middleware/shared_data.py",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "tests/middleware/test_shared_data.py",
+    "role": "test"
+  }
+]

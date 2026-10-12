@@ -1,0 +1,441 @@
+........................................................................ [ 56%]
+.........FFFFFFFFFFFF....F.....F........................                 [100%]
+================================== FAILURES ===================================
+_______________________ test_if_range_check[etag same] ________________________
+
+header = '"a"', etag = 'a', last_modified = None, expect = True
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+____________________ test_if_range_check[etag object same] ____________________
+
+header = '"a"', etag = <ETag 'a' strong>, last_modified = None, expect = True
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+_____________________ test_if_range_check[etag different] _____________________
+
+header = '"a"', etag = 'b', last_modified = None, expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+_______________________ test_if_range_check[etag None] ________________________
+
+header = '"a"', etag = None, last_modified = None, expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+_____________________ test_if_range_check[response weak] ______________________
+
+header = '"a"', etag = <ETag 'a' weak>, last_modified = None, expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+______________________ test_if_range_check[header weak] _______________________
+
+header = 'W/"a"', etag = 'a', last_modified = None, expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+_______________________ test_if_range_check[date same] ________________________
+
+header = 'Wed, 01 Jan 2020 12:00:00 GMT', etag = None
+last_modified = datetime.datetime(2020, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+expect = True
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+________________________ test_if_range_check[date us] _________________________
+
+header = 'Wed, 01 Jan 2020 12:00:00 GMT', etag = None
+last_modified = datetime.datetime(2020, 1, 1, 12, 0, 0, 5, tzinfo=datetime.timezone.utc)
+expect = True
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+_______________________ test_if_range_check[date diff] ________________________
+
+header = 'Wed, 01 Jan 2020 12:00:00 GMT', etag = None
+last_modified = datetime.datetime(2020, 1, 1, 12, 0, 1, tzinfo=datetime.timezone.utc)
+expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+_______________________ test_if_range_check[date None] ________________________
+
+header = 'Wed, 01 Jan 2020 12:00:00 GMT', etag = None, last_modified = None
+expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+____________________ test_if_range_check[date, etag only] _____________________
+
+header = 'Wed, 01 Jan 2020 12:00:00 GMT', etag = 'a', last_modified = None
+expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+_________________________ test_if_range_check[empty] __________________________
+
+header = '', etag = 'a'
+last_modified = datetime.datetime(2020, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+expect = False
+
+    @pytest.mark.parametrize(
+        ("header", "etag", "last_modified", "expect"),
+        [
+            pytest.param('"a"', "a", None, True, id="etag same"),
+            pytest.param('"a"', ETag("a"), None, True, id="etag object same"),
+            pytest.param('"a"', "b", None, False, id="etag different"),
+            pytest.param('"a"', None, None, False, id="etag None"),
+            pytest.param('"a"', ETag("a", weak=True), None, False, id="response weak"),
+            pytest.param('W/"a"', "a", None, False, id="header weak"),
+            pytest.param(http.http_date(_lm), None, _lm, True, id="date same"),
+            pytest.param(
+                http.http_date(_lm), None, _lm.replace(microsecond=5), True, id="date us"
+            ),
+            pytest.param(
+                http.http_date(_lm), None, _lm + timedelta(seconds=1), False, id="date diff"
+            ),
+            pytest.param(http.http_date(_lm), None, None, False, id="date None"),
+            pytest.param(http.http_date(_lm), "a", None, False, id="date, etag only"),
+            pytest.param("", "a", _lm, False, id="empty"),
+        ],
+    )
+    def test_if_range_check(header, etag, last_modified, expect):
+>       assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1078: AttributeError
+________________ test_range_make_content_range[suffix clamped] ________________
+
+ranges = [(-100, None)], length = 10, expect = (0, 10)
+
+    @pytest.mark.parametrize(
+        ("ranges", "length", "expect"),
+        [
+            pytest.param([(0, 5)], 10, (0, 5), id="within"),
+            pytest.param([(2, 100)], 10, (2, 10), id="stop clamped"),
+            pytest.param([(2, None)], 10, (2, 10), id="open"),
+            pytest.param([(-4, None)], 10, (6, 10), id="suffix"),
+            pytest.param([(-100, None)], 10, (0, 10), id="suffix clamped"),
+            pytest.param([(1, 3), (5, 7)], 10, (1, 3), id="first only"),
+            pytest.param([(10, 20)], 10, None, id="start past end"),
+            pytest.param([(10, None)], 10, None, id="open past end"),
+            pytest.param([(0, 5)], 0, None, id="empty content"),
+            pytest.param([(0, 5)], None, None, id="unknown length"),
+        ],
+    )
+    def test_range_make_content_range(ranges, length, expect):
+        cr = ds.Range("bytes", ranges).make_content_range(length)
+    
+        if expect is None:
+            assert cr is None
+        else:
+>           assert (cr.start, cr.stop, cr.length) == (*expect, length)
+                    ^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'start'
+
+tests\test_datastructures.py:1102: AttributeError
+_______________ test_range_does_not_import_is_byte_range_valid ________________
+
+    def test_range_does_not_import_is_byte_range_valid():
+        import werkzeug.datastructures.range as range_module
+    
+>       assert not hasattr(range_module, "is_byte_range_valid")
+E       AssertionError: assert not True
+E        +  where True = hasattr(<module 'werkzeug.datastructures.range' from 'C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\results\\arms\\detail\\2...y-conditions-range-gated-1\\aih-data\\worktrees\\20261012T194727Z-6cbba8-red\\src\\werkzeug\\datastructures\\range.py'>, 'is_byte_range_valid')
+
+tests\test_datastructures.py:1108: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_datastructures.py::test_if_range_check[etag same] - Attribu...
+FAILED tests/test_datastructures.py::test_if_range_check[etag object same] - ...
+FAILED tests/test_datastructures.py::test_if_range_check[etag different] - At...
+FAILED tests/test_datastructures.py::test_if_range_check[etag None] - Attribu...
+FAILED tests/test_datastructures.py::test_if_range_check[response weak] - Att...
+FAILED tests/test_datastructures.py::test_if_range_check[header weak] - Attri...
+FAILED tests/test_datastructures.py::test_if_range_check[date same] - Attribu...
+FAILED tests/test_datastructures.py::test_if_range_check[date us] - Attribute...
+FAILED tests/test_datastructures.py::test_if_range_check[date diff] - Attribu...
+FAILED tests/test_datastructures.py::test_if_range_check[date None] - Attribu...
+FAILED tests/test_datastructures.py::test_if_range_check[date, etag only] - A...
+FAILED tests/test_datastructures.py::test_if_range_check[empty] - AttributeEr...
+FAILED tests/test_datastructures.py::test_range_make_content_range[suffix clamped]
+FAILED tests/test_datastructures.py::test_range_does_not_import_is_byte_range_valid
+14 failed, 114 passed in 1.09s

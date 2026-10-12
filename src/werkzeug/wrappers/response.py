@@ -722,6 +722,113 @@ class Response(_SansIOResponse):
         self._wrap_range_response(content_range.start, content_length)  # type: ignore[arg-type]
         return True
 
+    def apply_conditions(self, request: Request, *, exists: bool = True) -> None:
+        """Evaluate the request's precondition headers against this response's
+        ``etag`` and ``last_modified``, in the order given by RFC 9110:
+        ``If-Match``, ``If-Unmodified-Since``, ``If-None-Match``,
+        ``If-Modified-Since``. Also sets the ``Accept-Ranges`` header.
+
+        A failed precondition raises :exc:`~werkzeug.exceptions.PreconditionFailed`.
+        A satisfied ``If-None-Match`` or ``If-Modified-Since`` on a ``GET`` or
+        ``HEAD`` request changes this response to ``304 Not Modified``.
+
+        :param request: The request to evaluate.
+        :param exists: Whether the resource currently exists. A ``*`` value in
+            ``If-Match`` or ``If-None-Match`` is evaluated by this.
+
+        .. versionadded:: 3.2
+        """
+        from ..exceptions import PreconditionFailed
+
+        self.accept_ranges = "bytes"
+        etag = self.etag
+        last_modified = self.last_modified
+
+        if last_modified is not None:
+            last_modified = last_modified.replace(microsecond=0)
+
+        if_match = request.if_match
+        if_unmodified_since = request.if_unmodified_since
+
+        if if_match:
+            if if_match.star_tag:
+                if not exists:
+                    raise PreconditionFailed()
+            elif not if_match.contains_strong(etag):
+                raise PreconditionFailed()
+        elif if_unmodified_since is not None:
+            if last_modified is not None and last_modified > if_unmodified_since:
+                raise PreconditionFailed()
+
+        is_get = request.method in {"GET", "HEAD"}
+        if_none_match = request.if_none_match
+        if_modified_since = request.if_modified_since
+
+        if if_none_match:
+            if if_none_match.star_tag:
+                matched = exists
+            else:
+                matched = if_none_match.contains_weak(etag)
+
+            if matched:
+                if not is_get:
+                    raise PreconditionFailed()
+
+                self.status_code = 304
+        elif is_get and if_modified_since is not None:
+            if last_modified is not None and last_modified <= if_modified_since:
+                self.status_code = 304
+
+    def apply_range(self, request: Request) -> None:
+        """Apply the request's ``Range`` header to this response. Call this
+        after :meth:`apply_conditions`. Does nothing unless the request is a
+        ``GET``, the response is still ``200``, the ``Range`` unit is
+        ``bytes``, and any ``If-Range`` condition is met by this response's
+        ``etag`` and ``last_modified``.
+
+        Only the first range is used. A too-large stop or suffix length is
+        clamped to the complete length. A satisfiable range changes this
+        response to ``206 Partial Content`` with a ``Content-Range`` header.
+
+        :raises: :exc:`~werkzeug.exceptions.RequestedRangeNotSatisfiable` if
+            the range cannot be satisfied.
+
+        .. versionadded:: 3.2
+        """
+        from ..exceptions import RequestedRangeNotSatisfiable
+
+        if self.status_code != 200 or request.method != "GET":
+            return
+
+        range_ = request.range
+
+        if range_ is None or range_.units != "bytes":
+            return
+
+        if_range = request.if_range
+
+        if if_range and not if_range.check(self.etag, self.last_modified):
+            return
+
+        complete_length = self.content_length
+
+        if complete_length is None:
+            complete_length = self.calculate_content_length()
+
+        if not complete_length:
+            return
+
+        content_range = range_.make_content_range(complete_length)
+
+        if content_range is None:
+            raise RequestedRangeNotSatisfiable(complete_length)
+
+        content_length = content_range.stop - content_range.start  # type: ignore[operator]
+        self.status_code = 206
+        self.content_range = content_range
+        self.content_length = content_length
+        self._wrap_range_response(content_range.start, content_length)  # type: ignore[arg-type]
+
     def make_conditional(
         self,
         request_or_environ: WSGIEnvironment | Request,

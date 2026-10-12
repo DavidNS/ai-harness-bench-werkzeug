@@ -1,0 +1,14 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC11",
+      "note": "tests/test_send_file.py: test_object_detects_name_size_mtime, test_object_seeks_to_start, test_object_range, test_object_without_mimetype, test_object_unseekable, test_object_unseekable_range_ignored."
+    },
+    {
+      "criterion": "ACC12",
+      "note": "tests/test_send_file.py: test_etag (ETag is mtime-size, path independent); test_object_range, test_range_not_satisfiable, test_precondition_failed_closes_file; test_no_cache_conditional_default."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Fixed the two failing tests: the unseekable stub now implements __iter__, because wrap_file returns the object itself as the response iterable. No production changes. Not re-run here."
+}

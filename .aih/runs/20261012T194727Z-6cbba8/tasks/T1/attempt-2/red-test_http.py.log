@@ -1,0 +1,28 @@
+........................................................................ [ 56%]
+...............................................FF......                  [100%]
+================================== FAILURES ===================================
+_____________ test_range_make_content_range_clamps_and_uses_first _____________
+
+    def test_range_make_content_range_clamps_and_uses_first():
+        rv = Range.from_header("bytes=2-99,-3").make_content_range(10)
+        assert rv.to_header() == "bytes 2-9/10"
+    
+        rv = Range.from_header("bytes=-100").make_content_range(10)
+>       assert rv.to_header() == "bytes 0-9/10"
+               ^^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'to_header'
+
+tests\test_http.py:807: AttributeError
+_____________________________ test_if_range_check _____________________________
+
+    def test_if_range_check():
+        lm = datetime(1970, 1, 1, tzinfo=timezone.utc)
+>       assert IfRange.from_header('"Test"').check("Test", None)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_http.py:814: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/test_http.py::test_range_make_content_range_clamps_and_uses_first
+FAILED tests/test_http.py::test_if_range_check - AttributeError: 'IfRange' ob...
+2 failed, 125 passed in 0.49s

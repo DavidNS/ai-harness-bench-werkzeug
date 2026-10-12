@@ -1,0 +1,66 @@
+........................................................................ [ 53%]
+...................F....F.....F...............................           [100%]
+================================== FAILURES ===================================
+________________________ TestRange.test_if_range_check ________________________
+
+self = <test_http.TestRange object at 0x000001CF19B9A540>
+
+    def test_if_range_check(self):
+        last_modified = datetime(1970, 1, 1, 0, 0, 5, 123, tzinfo=timezone.utc)
+>       assert IfRange(etag="a").check("a", None)
+               ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_http.py:697: AttributeError
+__________ TestRange.test_make_content_range[bytes=-999-100-expect4] __________
+
+self = <test_http.TestRange object at 0x000001CF19B990A0>, header = 'bytes=-999'
+length = 100, expect = (0, 100)
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            ("bytes=0-9", 100, (0, 10)),
+            ("bytes=90-", 100, (90, 100)),
+            ("bytes=90-999", 100, (90, 100)),
+            ("bytes=-10", 100, (90, 100)),
+            ("bytes=-999", 100, (0, 100)),
+            ("bytes=0-9,20-29", 100, (0, 10)),
+            ("bytes=100-", 100, None),
+            ("bytes=200-300", 100, None),
+            ("bytes=-5", 0, None),
+            ("bytes=0-", None, None),
+        ],
+    )
+    def test_make_content_range(self, header, length, expect):
+        cr = Range.from_header(header).make_content_range(length)
+    
+        if expect is None:
+            assert cr is None
+        else:
+>           assert (cr.start, cr.stop) == expect
+                    ^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'start'
+
+tests\test_http.py:732: AttributeError
+_____ TestRange.test_make_content_range_does_not_use_is_byte_range_valid ______
+
+self = <test_http.TestRange object at 0x000001CF1AA9EB10>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001CF19C1B650>
+
+    def test_make_content_range_does_not_use_is_byte_range_valid(self, monkeypatch):
+        def fail(*args, **kwargs):
+            raise AssertionError
+    
+        monkeypatch.setattr(http, "is_byte_range_valid", fail)
+        cr = Range.from_header("bytes=-999").make_content_range(10)
+>       assert cr.to_header() == "bytes 0-9/10"
+               ^^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'to_header'
+
+tests\test_http.py:742: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/test_http.py::TestRange::test_if_range_check - AttributeError: '...
+FAILED tests/test_http.py::TestRange::test_make_content_range[bytes=-999-100-expect4]
+FAILED tests/test_http.py::TestRange::test_make_content_range_does_not_use_is_byte_range_valid
+3 failed, 131 passed in 0.54s
