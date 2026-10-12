@@ -6,6 +6,7 @@ from http import HTTPStatus
 from types import TracebackType
 from urllib.parse import urljoin
 
+from .._internal import _dt_as_utc
 from .._internal import _get_environ
 from ..datastructures.etag import ETagSet
 from ..datastructures.headers import Headers
@@ -721,6 +722,125 @@ class Response(_SansIOResponse):
         self.status_code = 206
         self._wrap_range_response(content_range.start, content_length)  # type: ignore[arg-type]
         return True
+
+    def apply_conditions(self, request: Request, *, exists: bool = True) -> None:
+        """Evaluate the request's precondition headers against this response's
+        ``etag`` and ``last_modified``, in the order given by RFC 9110:
+        ``If-Match``, ``If-Unmodified-Since``, ``If-None-Match``,
+        ``If-Modified-Since``. Also sets ``Accept-Ranges: bytes``.
+
+        A failed precondition raises :exc:`~werkzeug.exceptions.PreconditionFailed`.
+        A satisfied ``If-None-Match`` or ``If-Modified-Since`` on a GET or HEAD
+        request changes the response to ``304 Not Modified`` and removes the
+        entity headers. For other methods, a satisfied ``If-None-Match`` raises
+        ``PreconditionFailed``.
+
+        :param request: The request to evaluate.
+        :param exists: Whether the resource exists. Used to evaluate a ``*``
+            ETag in ``If-Match`` and ``If-None-Match``.
+
+        .. versionadded:: 3.2
+        """
+        from ..exceptions import PreconditionFailed
+
+        self.accept_ranges = "bytes"
+        etag = self.etag
+        last_modified = self.last_modified
+
+        # HTTP dates have no microseconds, avoid false comparisons.
+        if last_modified is not None:
+            last_modified = _dt_as_utc(last_modified.replace(microsecond=0))
+
+        if_match = request.if_match
+
+        if if_match:
+            # Strong comparison. A star matches if the resource exists.
+            if if_match.star_tag:
+                matched = exists
+            else:
+                matched = if_match.contains_strong(etag)
+
+            if not matched:
+                raise PreconditionFailed()
+        elif (unmodified_since := request.if_unmodified_since) is not None:
+            if last_modified is not None and last_modified > unmodified_since:
+                raise PreconditionFailed()
+
+        is_get = request.method in {"GET", "HEAD"}
+        not_modified = False
+        if_none_match = request.if_none_match
+
+        if if_none_match:
+            # Weak comparison. A star matches if the resource exists.
+            if if_none_match.star_tag:
+                not_modified = exists
+            else:
+                not_modified = if_none_match.contains_weak(etag)
+
+            if not_modified and not is_get:
+                raise PreconditionFailed()
+        elif is_get and (modified_since := request.if_modified_since) is not None:
+            not_modified = last_modified is not None and last_modified <= modified_since
+
+        if not_modified:
+            self.status_code = 304
+            remove_entity_headers(self.headers)
+
+    def apply_range(self, request: Request) -> None:
+        """Apply the request's ``Range`` header to this response. Call this
+        after :meth:`apply_conditions`. Only the ``bytes`` unit is supported,
+        other units are ignored. If the request has an ``If-Range`` header that
+        doesn't match this response's ``etag`` or ``last_modified``, the range
+        is ignored.
+
+        Only the first range is used. A ``stop`` or suffix length that is too
+        large is clamped to the complete length. An unsatisfiable range raises
+        :exc:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`. Otherwise the
+        response becomes ``206 Partial Content`` with a ``Content-Range`` header.
+
+        The complete length is taken from ``Content-Length`` if set, otherwise
+        calculated from the data. If it can't be determined, the range is
+        ignored.
+
+        :param request: The request to evaluate.
+
+        .. versionadded:: 3.2
+        """
+        from ..exceptions import RequestedRangeNotSatisfiable
+
+        # A 304 from apply_conditions, or any other non-200 status, has no
+        # range to apply.
+        if self.status_code != 200:
+            return
+
+        parsed_range = request.range
+
+        if parsed_range is None or parsed_range.units != "bytes":
+            return
+
+        if_range = request.if_range
+
+        if if_range and not if_range.check(self.etag, self.last_modified):
+            return
+
+        length = self.content_length
+
+        if length is None:
+            length = self.calculate_content_length()
+
+            if length is None:
+                return
+
+        content_range = parsed_range.make_content_range(length)
+
+        if content_range is None:
+            raise RequestedRangeNotSatisfiable(length)
+
+        content_length = content_range.stop - content_range.start  # type: ignore[operator]
+        self.content_length = content_length
+        self.content_range = content_range
+        self.status_code = 206
+        self._wrap_range_response(content_range.start, content_length)  # type: ignore[arg-type]
 
     def make_conditional(
         self,
