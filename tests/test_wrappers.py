@@ -510,6 +510,11 @@ def test_get_data_method_parsing_caching_behavior():
     assert req.form["foo"] == "Hello World"
 
 
+def _make_conditional(response, *args, **kwargs):
+    with pytest.deprecated_call():
+        return response.make_conditional(*args, **kwargs)
+
+
 def test_etag_response():
     response = wrappers.Response("Hello World")
     assert response.etag is None
@@ -529,7 +534,7 @@ def test_etag_response():
     env.update(
         {"REQUEST_METHOD": "GET", "HTTP_IF_NONE_MATCH": response.headers["ETag"]}
     )
-    response.make_conditional(env)
+    _make_conditional(response, env)
     assert "Date" in response.headers
 
     # after the thing is invoked by the server as wsgi application
@@ -543,13 +548,13 @@ def test_etag_response():
     response = wrappers.Response("Hello World")
     response.date = 1337
     d = response.date
-    response.make_conditional(env)
+    _make_conditional(response, env)
     assert response.date == d
 
     # make sure content length is only set if missing
     response = wrappers.Response("Hello World")
     response.content_length = 999
-    response.make_conditional(env)
+    _make_conditional(response, env)
     assert response.content_length == 999
 
 
@@ -570,7 +575,7 @@ def test_etag_response_412():
     assert "Date" not in response.headers
     env = create_environ()
     env.update({"REQUEST_METHOD": "GET", "HTTP_IF_MATCH": '"xyz"'})
-    response.make_conditional(env)
+    _make_conditional(response, env)
     assert "Date" in response.headers
 
     # after the thing is invoked by the server as wsgi application
@@ -585,20 +590,20 @@ def test_etag_response_412():
     response = wrappers.Response("Hello World")
     response.date = 1337
     d = response.date
-    response.make_conditional(env)
+    _make_conditional(response, env)
     assert response.date == d
 
     # make sure content length is only set if missing
     response = wrappers.Response("Hello World")
     response.content_length = 999
-    response.make_conditional(env)
+    _make_conditional(response, env)
     assert response.content_length == 999
 
 
 def test_advertise_accept_ranges() -> None:
     env = create_environ()
     response = wrappers.Response()
-    response.make_conditional(env, accept_ranges=True)
+    _make_conditional(response, env, accept_ranges=True)
     assert response.status_code == 200
     assert response.headers["Accept-Ranges"] == "bytes"
     assert "Content-Range" not in response.headers
@@ -608,7 +613,7 @@ def test_range_request_basic():
     env = create_environ()
     response = wrappers.Response("Hello World")
     env["HTTP_RANGE"] = "bytes=0-4"
-    response.make_conditional(env, accept_ranges=True, complete_length=11)
+    _make_conditional(response, env, accept_ranges=True, complete_length=11)
     assert response.status_code == 206
     assert response.headers["Accept-Ranges"] == "bytes"
     assert response.headers["Content-Range"] == "bytes 0-4/11"
@@ -620,7 +625,7 @@ def test_range_request_out_of_bound():
     env = create_environ()
     response = wrappers.Response("Hello World")
     env["HTTP_RANGE"] = "bytes=6-666"
-    response.make_conditional(env, accept_ranges=True, complete_length=11)
+    _make_conditional(response, env, accept_ranges=True, complete_length=11)
     assert response.status_code == 206
     assert response.headers["Accept-Ranges"] == "bytes"
     assert response.headers["Content-Range"] == "bytes 6-10/11"
@@ -637,8 +642,8 @@ def test_range_request_with_file():
     with open(fname, "rb") as f:
         response = wrappers.Response(f)
         env["HTTP_RANGE"] = "bytes=0-0"
-        response.make_conditional(
-            env, accept_ranges=True, complete_length=len(fcontent)
+        _make_conditional(
+            response, env, accept_ranges=True, complete_length=len(fcontent)
         )
         assert response.status_code == 206
         assert response.headers["Accept-Ranges"] == "bytes"
@@ -657,7 +662,7 @@ def test_range_request_with_complete_file():
         fsize = os.path.getsize(fname)
         response = wrappers.Response(f)
         env["HTTP_RANGE"] = f"bytes=0-{fsize - 1}"
-        response.make_conditional(env, accept_ranges=True, complete_length=fsize)
+        _make_conditional(response, env, accept_ranges=True, complete_length=fsize)
         assert response.status_code == 206
         assert response.headers["Accept-Ranges"] == "bytes"
         assert response.headers["Content-Range"] == f"bytes 0-{fsize - 1}/{fsize}"
@@ -669,7 +674,7 @@ def test_range_request_with_complete_file():
 def test_range_request_without_complete_length(value):
     env = create_environ(headers={"Range": "bytes=0-10"})
     response = wrappers.Response("Hello World")
-    response.make_conditional(env, accept_ranges=True, complete_length=value)
+    _make_conditional(response, env, accept_ranges=True, complete_length=value)
     assert response.status_code == 200
     assert response.data == b"Hello World"
 
@@ -679,7 +684,53 @@ def test_invalid_range_request():
     response = wrappers.Response("Hello World")
     env["HTTP_RANGE"] = "bytes=-"
     with pytest.raises(RequestedRangeNotSatisfiable):
-        response.make_conditional(env, accept_ranges=True, complete_length=11)
+        _make_conditional(response, env, accept_ranges=True, complete_length=11)
+
+
+def test_make_conditional_deprecated():
+    response = wrappers.Response("Hello World")
+
+    with pytest.deprecated_call():
+        response.make_conditional(create_environ())
+
+
+def test_make_conditional_if_range_mismatch():
+    env = create_environ(headers={"Range": "bytes=0-4", "If-Range": '"other"'})
+    response = wrappers.Response("Hello World")
+    response.etag = ETag("abc")
+    _make_conditional(response, env, accept_ranges=True, complete_length=11)
+    assert response.status_code == 200
+    assert response.headers["Accept-Ranges"] == "bytes"
+    assert response.headers["Content-Length"] == "11"
+
+    # no length known beforehand, the response is still served in full
+    response = wrappers.Response(iter([b"Hello World"]))
+    response.etag = ETag("abc")
+    _make_conditional(response, env, accept_ranges=True, complete_length=11)
+    assert response.status_code == 200
+    assert "Content-Range" not in response.headers
+    assert response.get_data() == b"Hello World"
+
+
+def test_make_conditional_range_after_etag_match():
+    # a satisfied If-None-Match takes precedence over Range
+    env = create_environ(headers={"Range": "bytes=0-4", "If-None-Match": '"abc"'})
+    response = wrappers.Response("Hello World")
+    response.etag = ETag("abc")
+    _make_conditional(response, env, accept_ranges="bytes", complete_length=11)
+    assert response.status_code == 304
+
+
+def test_make_conditional_restores_accept_ranges():
+    env = create_environ()
+    response = wrappers.Response("Hello World")
+    response.headers["Accept-Ranges"] = "none"
+    _make_conditional(response, env)
+    assert response.headers["Accept-Ranges"] == "none"
+
+    response = wrappers.Response("Hello World")
+    _make_conditional(response, env)
+    assert "Accept-Ranges" not in response.headers
 
 
 _LM = datetime(2026, 1, 1, 12, 0, 0, 500, tzinfo=timezone.utc)
@@ -1374,7 +1425,7 @@ def test_stream_content_length():
     assert resp.get_wsgi_headers({})["Content-Length"] == "9"
 
     resp = wrappers.Response()
-    resp.make_conditional({"REQUEST_METHOD": "GET"})
+    _make_conditional(resp, {"REQUEST_METHOD": "GET"})
     resp.stream.writelines(["foo", "bar", "baz"])
     assert resp.get_wsgi_headers({})["Content-Length"] == "9"
 
@@ -1395,7 +1446,7 @@ def test_disabled_auto_content_length():
     assert "Content-Length" not in resp.get_wsgi_headers({})
 
     resp = MyResponse()
-    resp.make_conditional({"REQUEST_METHOD": "GET"})
+    _make_conditional(resp, {"REQUEST_METHOD": "GET"})
     assert resp.content_length is None
     assert "Content-Length" not in resp.get_wsgi_headers({})
 
