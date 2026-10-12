@@ -5,6 +5,8 @@ import pathlib
 import pytest
 
 from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import PreconditionFailed
+from werkzeug.exceptions import RequestedRangeNotSatisfiable
 from werkzeug.http import http_date
 from werkzeug.test import create_environ
 from werkzeug.utils import send_file
@@ -52,8 +54,83 @@ def test_object(file_factory):
 
 
 def test_object_without_mimetype():
-    with pytest.raises(TypeError, match="detect the MIME type"):
-        send_file(io.BytesIO(b"test"), environ)
+    with send_file(io.BytesIO(b"test"), environ) as rv:
+        assert rv.mimetype == "application/octet-stream"
+
+
+def test_object_detects_name_size_mtime():
+    with txt_path.open("rb") as f, send_file(f, environ) as rv:
+        assert rv.mimetype == "text/plain"
+        assert rv.headers["Content-Disposition"] == "inline; filename=test.txt"
+        assert rv.content_length == txt_path.stat().st_size
+        assert rv.last_modified is not None
+        assert rv.etag is not None
+
+
+def test_object_without_fileno():
+    class Minimal:
+        def __init__(self):
+            self.data = io.BytesIO(b"test")
+
+        def read(self, size=-1):
+            return self.data.read(size)
+
+        def seek(self, pos):
+            return self.data.seek(pos)
+
+    with send_file(Minimal(), environ) as rv:
+        assert rv.content_length is None
+        assert rv.last_modified is None
+        assert "ETag" not in rv.headers
+
+
+def test_object_seeks_to_start():
+    f = io.BytesIO(b"test")
+    f.read()
+
+    with send_file(f, environ) as rv:
+        rv.direct_passthrough = False
+        assert rv.data == b"test"
+
+
+def test_object_range():
+    f = io.BytesIO(b"abcdef")
+    f.read()
+    env = create_environ(headers={"Range": "bytes=1-100"})
+
+    with send_file(f, env) as rv:
+        assert rv.status_code == 206
+        assert rv.content_length == 5
+        assert rv.headers["Content-Range"] == "bytes 1-5/6"
+        rv.direct_passthrough = False
+        assert rv.data == b"bcdef"
+
+
+def test_range_not_satisfiable_closes_file():
+    f = io.BytesIO(b"abc")
+    env = create_environ(headers={"Range": "bytes=10-20"})
+
+    with pytest.raises(RequestedRangeNotSatisfiable):
+        send_file(f, env)
+
+    assert f.closed
+
+
+def test_precondition_failed_closes_file():
+    f = io.BytesIO(b"abc")
+    env = create_environ(headers={"If-Match": '"other"'})
+
+    with pytest.raises(PreconditionFailed):
+        send_file(f, env, etag="unique")
+
+    assert f.closed
+
+
+def test_not_modified_etag():
+    env = create_environ(headers={"If-None-Match": '"unique"'})
+
+    with send_file(io.BytesIO(b"abc"), env, etag="unique") as rv:
+        assert rv.status_code == 304
 
 
 def test_object_mimetype_from_name():
@@ -146,7 +223,7 @@ def test_max_age(value, public):
 
 def test_etag():
     with send_file(txt_path, environ) as rv:
-        assert rv.headers["ETag"].count("-") == 2
+        assert rv.headers["ETag"].count("-") == 1
 
     with send_file(txt_path, environ, etag=False) as rv:
         assert "ETag" not in rv.headers
