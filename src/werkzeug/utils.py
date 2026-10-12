@@ -10,16 +10,16 @@ import typing as t
 import unicodedata
 from datetime import datetime
 from functools import update_wrapper
+from stat import S_ISREG
 from time import time
 from urllib.parse import quote
-from zlib import adler32
 
 from markupsafe import escape
 
 from ._internal import _missing
 from .datastructures.headers import Headers
+from .exceptions import HTTPException
 from .exceptions import NotFound
-from .exceptions import RequestedRangeNotSatisfiable
 from .security import _windows_device_files
 from .security import safe_join
 from .wsgi import wrap_file
@@ -334,8 +334,9 @@ def send_file(
 
     :param path_or_file: The path to the file to send, relative to the
         current working directory if a relative path is given.
-        Alternatively, a file-like object opened in binary mode. Make
-        sure the file pointer is seeked to the start of the data.
+        Alternatively, a file-like object opened in binary mode. The
+        file is seeked to the start, and its name, size, and modified
+        time are detected if possible.
     :param environ: The WSGI environ for the current request.
     :param mimetype: The MIME type to send for the file. If not
         provided, it will try to detect it from the file name.
@@ -415,26 +416,57 @@ def send_file(
     else:
         file = path_or_file
 
+        if isinstance(file, io.TextIOBase):
+            raise ValueError("Files must be opened in binary mode or use BytesIO.")
+
+        # Start from the beginning so an already-read file is sent in full
+        # and range responses have correct lengths.
+        try:
+            file.seek(0)
+        except (AttributeError, OSError, ValueError):
+            pass
+
+        if download_name is None:
+            name = getattr(file, "name", None)
+
+            if isinstance(name, str):
+                download_name = os.path.basename(name)
+
+        if isinstance(file, io.BytesIO):
+            size = file.getbuffer().nbytes
+        else:
+            try:
+                stat = os.fstat(file.fileno())
+            except (AttributeError, OSError, ValueError):
+                pass
+            else:
+                if S_ISREG(stat.st_mode):
+                    size = stat.st_size
+                    mtime = stat.st_mtime
+
+            if size is None:
+                try:
+                    size = file.seek(0, os.SEEK_END)
+                    file.seek(0)
+                except (AttributeError, OSError, ValueError):
+                    size = None
+
     if download_name is None and path is not None:
         download_name = os.path.basename(path)
 
     if mimetype is None:
         if download_name is None:
-            raise TypeError(
-                "Unable to detect the MIME type because a file name is"
-                " not available. Either set 'download_name', pass a"
-                " path instead of a file, or set 'mimetype'."
-            )
-
-        mimetype, encoding = mimetypes.guess_type(download_name)
-
-        if mimetype is None:
             mimetype = "application/octet-stream"
+        else:
+            mimetype, encoding = mimetypes.guess_type(download_name)
 
-        # Don't send encoding for attachments, it causes browsers to
-        # save decompress tar.gz files.
-        if encoding is not None and not as_attachment:
-            headers.set("Content-Encoding", encoding)
+            if mimetype is None:
+                mimetype = "application/octet-stream"
+
+            # Don't send encoding for attachments, it causes browsers to
+            # save decompress tar.gz files.
+            if encoding is not None and not as_attachment:
+                headers.set("Content-Encoding", encoding)
 
     if download_name is not None:
         try:
@@ -462,10 +494,6 @@ def send_file(
     else:
         if file is None:
             file = open(path, "rb")  # type: ignore[arg-type]
-        elif isinstance(file, io.BytesIO):
-            size = file.getbuffer().nbytes
-        elif isinstance(file, io.TextIOBase):
-            raise ValueError("Files must be opened in binary mode or use BytesIO.")
 
         data = wrap_file(environ, file)
 
@@ -498,14 +526,18 @@ def send_file(
 
     if isinstance(etag, str):
         rv.etag = etag
-    elif etag and path is not None:
-        check = adler32(path.encode()) & 0xFFFFFFFF
-        rv.etag = f"{mtime}-{size}-{check}"
+    elif etag and mtime is not None and size is not None:
+        rv.etag = f"{mtime}-{size}"
 
     if conditional:
+        from .wrappers import Request
+
+        request = Request(environ)
+
         try:
-            rv = rv.make_conditional(environ, accept_ranges=True, complete_length=size)
-        except RequestedRangeNotSatisfiable:
+            rv.apply_conditions(request)
+            rv.apply_range(request)
+        except HTTPException:
             if file is not None:
                 file.close()
 
