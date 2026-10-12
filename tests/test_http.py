@@ -799,6 +799,29 @@ def test_range_invalid_int(value):
     assert Range.from_header(value) is None
 
 
-@pytest.mark.parametrize("value", ["*/🯱🯲🯳", "1-+2/3", "1_23-125/*"])
+def test_range_make_content_range_clamps_and_uses_first():
+    rv = Range.from_header("bytes=2-99,-3").make_content_range(10)
+    assert rv.to_header() == "bytes 2-9/10"
+
+    rv = Range.from_header("bytes=-100").make_content_range(10)
+    assert rv.to_header() == "bytes 0-9/10"
+
+    assert Range.from_header("bytes=10-").make_content_range(10) is None
+
+
+def test_if_range_check():
+    lm = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    assert IfRange.from_header('"Test"').check("Test", None)
+    assert not IfRange.from_header('"Test"').check("Other", lm)
+    assert IfRange.from_header("Thu, 01 Jan 1970 00:00:00 GMT").check(None, lm)
+    assert not IfRange.from_header("").check("Test", lm)
+
+
+@pytest.mark.parametrize("value", ["bytes 5-2/10", "bytes 0-10/10", "bytes x-1/10"])
+def test_content_range_invalid_values(value):
+    assert not ContentRange.from_header(value)
+
+
+@pytest.mark.parametrize("value", ["*/🯱🯲🯳","1-+2/3", "1_23-125/*"])
 def test_content_range_invalid_int(value):
     assert not ContentRange.from_header(f"bytes {value}")
