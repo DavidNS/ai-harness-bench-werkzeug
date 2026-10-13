@@ -1,0 +1,70 @@
+{
+  "coverage": [
+    {
+      "criterion": "ACC4",
+      "line": 845,
+      "note": "Precedence tests, per-method If-Match tests and the no_headers Accept-Ranges assertion together cover the RFC order and the header.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_conditions_if_none_match_takes_precedence_over_modified_since"
+    },
+    {
+      "criterion": "ACC5",
+      "line": 790,
+      "note": "412 on unsafe methods, 304 on GET/HEAD, and the entity headers removed from the 304 are each asserted.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_conditions_if_none_match_unsafe_412"
+    },
+    {
+      "criterion": "ACC6",
+      "line": 800,
+      "note": "Star ETag is tested with exists True and False for both If-Match and If-None-Match, with different outcomes.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_conditions_if_none_match_star"
+    },
+    {
+      "criterion": "ACC7",
+      "line": 938,
+      "note": "The non-GET, non-200, unknown/zero length and non-bytes unit cases are each tested, and each asserts Accept-Ranges.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_range_unknown_or_zero_length"
+    },
+    {
+      "criterion": "ACC8",
+      "line": 882,
+      "note": "First-range-only, clamping, suffix, unsatisfiable and basic 206 are all asserted, including Content-Length, Content-Range and data.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_range_first_only"
+    },
+    {
+      "criterion": "ACC9",
+      "line": 974,
+      "note": "Matching, mismatching and weak ETags are tested, plus the date match and mismatch in the sibling test.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_range_if_range_etag"
+    }
+  ],
+  "findings": [
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 710,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "No test covers If-Match (or a star If-Match) when the response has no ETag, nor a failing If-Match combined with If-None-Match, so the ordering of the 412 check before the 304 check is unproven."
+    },
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 688,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "`_cond_response(**kwargs)` accepts kwargs it never uses."
+    },
+    {
+      "file": "src/werkzeug/wrappers/response.py",
+      "line": 800,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "The `if_none_match.star_tag` and `if_match.star_tag` branches could be folded into a small helper, but this is cosmetic."
+    }
+  ],
+  "verdict": "approve"
+}

@@ -1,0 +1,227 @@
+...................................................................FFFFF [ 54%]
+FFFF.......................................................              [100%]
+================================== FAILURES ===================================
+____________ TestHTTPUtility.test_is_resource_modified_deprecated _____________
+
+self = <test_http.TestHTTPUtility object at 0x000002807331F410>
+
+    def test_is_resource_modified_deprecated(self):
+        env = create_environ()
+    
+>       with pytest.deprecated_call(match="is_resource_modified"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:409: Failed
+__ TestHTTPUtility.test_is_byte_range_valid_deprecated[None-None-None-True] ___
+
+self = <test_http.TestHTTPUtility object at 0x000002807331F950>, start = None
+stop = None, length = None, expect = True
+
+    @pytest.mark.parametrize(
+        ("start", "stop", "length", "expect"),
+        [
+            (None, None, None, True),
+            (None, None, 5, True),
+            (None, 3, 5, False),
+            (0, 3, None, True),
+            (3, 3, None, False),
+            (3, 3, 10, False),
+            (0, 3, 10, True),
+            (10, 12, 10, False),
+        ],
+    )
+    def test_is_byte_range_valid_deprecated(self, start, stop, length, expect):
+>       with pytest.deprecated_call(match="is_byte_range_valid"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:426: Failed
+____ TestHTTPUtility.test_is_byte_range_valid_deprecated[None-None-5-True] ____
+
+self = <test_http.TestHTTPUtility object at 0x000002807331FBF0>, start = None
+stop = None, length = 5, expect = True
+
+    @pytest.mark.parametrize(
+        ("start", "stop", "length", "expect"),
+        [
+            (None, None, None, True),
+            (None, None, 5, True),
+            (None, 3, 5, False),
+            (0, 3, None, True),
+            (3, 3, None, False),
+            (3, 3, 10, False),
+            (0, 3, 10, True),
+            (10, 12, 10, False),
+        ],
+    )
+    def test_is_byte_range_valid_deprecated(self, start, stop, length, expect):
+>       with pytest.deprecated_call(match="is_byte_range_valid"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:426: Failed
+_____ TestHTTPUtility.test_is_byte_range_valid_deprecated[None-3-5-False] _____
+
+self = <test_http.TestHTTPUtility object at 0x000002807331FCB0>, start = None
+stop = 3, length = 5, expect = False
+
+    @pytest.mark.parametrize(
+        ("start", "stop", "length", "expect"),
+        [
+            (None, None, None, True),
+            (None, None, 5, True),
+            (None, 3, 5, False),
+            (0, 3, None, True),
+            (3, 3, None, False),
+            (3, 3, 10, False),
+            (0, 3, 10, True),
+            (10, 12, 10, False),
+        ],
+    )
+    def test_is_byte_range_valid_deprecated(self, start, stop, length, expect):
+>       with pytest.deprecated_call(match="is_byte_range_valid"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:426: Failed
+_____ TestHTTPUtility.test_is_byte_range_valid_deprecated[0-3-None-True] ______
+
+self = <test_http.TestHTTPUtility object at 0x000002807331FDD0>, start = 0
+stop = 3, length = None, expect = True
+
+    @pytest.mark.parametrize(
+        ("start", "stop", "length", "expect"),
+        [
+            (None, None, None, True),
+            (None, None, 5, True),
+            (None, 3, 5, False),
+            (0, 3, None, True),
+            (3, 3, None, False),
+            (3, 3, 10, False),
+            (0, 3, 10, True),
+            (10, 12, 10, False),
+        ],
+    )
+    def test_is_byte_range_valid_deprecated(self, start, stop, length, expect):
+>       with pytest.deprecated_call(match="is_byte_range_valid"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:426: Failed
+_____ TestHTTPUtility.test_is_byte_range_valid_deprecated[3-3-None-False] _____
+
+self = <test_http.TestHTTPUtility object at 0x000002807331F890>, start = 3
+stop = 3, length = None, expect = False
+
+    @pytest.mark.parametrize(
+        ("start", "stop", "length", "expect"),
+        [
+            (None, None, None, True),
+            (None, None, 5, True),
+            (None, 3, 5, False),
+            (0, 3, None, True),
+            (3, 3, None, False),
+            (3, 3, 10, False),
+            (0, 3, 10, True),
+            (10, 12, 10, False),
+        ],
+    )
+    def test_is_byte_range_valid_deprecated(self, start, stop, length, expect):
+>       with pytest.deprecated_call(match="is_byte_range_valid"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:426: Failed
+______ TestHTTPUtility.test_is_byte_range_valid_deprecated[3-3-10-False] ______
+
+self = <test_http.TestHTTPUtility object at 0x000002807331F620>, start = 3
+stop = 3, length = 10, expect = False
+
+    @pytest.mark.parametrize(
+        ("start", "stop", "length", "expect"),
+        [
+            (None, None, None, True),
+            (None, None, 5, True),
+            (None, 3, 5, False),
+            (0, 3, None, True),
+            (3, 3, None, False),
+            (3, 3, 10, False),
+            (0, 3, 10, True),
+            (10, 12, 10, False),
+        ],
+    )
+    def test_is_byte_range_valid_deprecated(self, start, stop, length, expect):
+>       with pytest.deprecated_call(match="is_byte_range_valid"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:426: Failed
+______ TestHTTPUtility.test_is_byte_range_valid_deprecated[0-3-10-True] _______
+
+self = <test_http.TestHTTPUtility object at 0x000002807331F530>, start = 0
+stop = 3, length = 10, expect = True
+
+    @pytest.mark.parametrize(
+        ("start", "stop", "length", "expect"),
+        [
+            (None, None, None, True),
+            (None, None, 5, True),
+            (None, 3, 5, False),
+            (0, 3, None, True),
+            (3, 3, None, False),
+            (3, 3, 10, False),
+            (0, 3, 10, True),
+            (10, 12, 10, False),
+        ],
+    )
+    def test_is_byte_range_valid_deprecated(self, start, stop, length, expect):
+>       with pytest.deprecated_call(match="is_byte_range_valid"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:426: Failed
+_____ TestHTTPUtility.test_is_byte_range_valid_deprecated[10-12-10-False] _____
+
+self = <test_http.TestHTTPUtility object at 0x000002807331F200>, start = 10
+stop = 12, length = 10, expect = False
+
+    @pytest.mark.parametrize(
+        ("start", "stop", "length", "expect"),
+        [
+            (None, None, None, True),
+            (None, None, 5, True),
+            (None, 3, 5, False),
+            (0, 3, None, True),
+            (3, 3, None, False),
+            (3, 3, 10, False),
+            (0, 3, 10, True),
+            (10, 12, 10, False),
+        ],
+    )
+    def test_is_byte_range_valid_deprecated(self, start, stop, length, expect):
+>       with pytest.deprecated_call(match="is_byte_range_valid"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_http.py:426: Failed
+=========================== short test summary info ===========================
+FAILED tests/test_http.py::TestHTTPUtility::test_is_resource_modified_deprecated
+FAILED tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated[None-None-None-True]
+FAILED tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated[None-None-5-True]
+FAILED tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated[None-3-5-False]
+FAILED tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated[0-3-None-True]
+FAILED tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated[3-3-None-False]
+FAILED tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated[3-3-10-False]
+FAILED tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated[0-3-10-True]
+FAILED tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated[10-12-10-False]
+9 failed, 122 passed in 0.71s

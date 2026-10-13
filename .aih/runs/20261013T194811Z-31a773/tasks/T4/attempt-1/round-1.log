@@ -1,0 +1,54 @@
+..FFFF.....                                                              [100%]
+================================== FAILURES ===================================
+____________________________ test_conditional_304 _____________________________
+
+    def test_conditional_304():
+        app = _app()
+        _, headers, _ = _get(app)
+        status, _, data = _get(app, headers={"If-None-Match": headers["ETag"]})
+>       assert status == "304 NOT MODIFIED"
+E       AssertionError: assert '304 Not Modified' == '304 NOT MODIFIED'
+E         
+E         - 304 NOT MODIFIED
+E         + 304 Not Modified
+
+tests\middleware\test_shared_data.py:52: AssertionError
+__________________________ test_precondition_failed ___________________________
+
+    def test_precondition_failed():
+        status, _, _ = _get(_app(), headers={"If-Match": '"nope"'})
+>       assert status == "412 PRECONDITION FAILED"
+E       AssertionError: assert '412 Precondition Failed' == '412 PRECONDITION FAILED'
+E         
+E         - 412 PRECONDITION FAILED
+E         + 412 Precondition Failed
+
+tests\middleware\test_shared_data.py:62: AssertionError
+_________________________________ test_range __________________________________
+
+    def test_range():
+        status, headers, data = _get(_app(), headers={"Range": "bytes=0-2"})
+>       assert status == "206 PARTIAL CONTENT"
+E       AssertionError: assert '206 Partial Content' == '206 PARTIAL CONTENT'
+E         
+E         - 206 PARTIAL CONTENT
+E         + 206 Partial Content
+
+tests\middleware\test_shared_data.py:67: AssertionError
+_________________________ test_range_not_satisfiable __________________________
+
+    def test_range_not_satisfiable():
+        status, _, _ = _get(_app(), headers={"Range": "bytes=1000-2000"})
+>       assert status == "416 REQUESTED RANGE NOT SATISFIABLE"
+E       AssertionError: assert '416 Requeste...t Satisfiable' == '416 REQUESTE...T SATISFIABLE'
+E         
+E         - 416 REQUESTED RANGE NOT SATISFIABLE
+E         + 416 Requested Range Not Satisfiable
+
+tests\middleware\test_shared_data.py:74: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/middleware/test_shared_data.py::test_conditional_304 - Assertion...
+FAILED tests/middleware/test_shared_data.py::test_precondition_failed - Asser...
+FAILED tests/middleware/test_shared_data.py::test_range - AssertionError: ass...
+FAILED tests/middleware/test_shared_data.py::test_range_not_satisfiable - Ass...
+4 failed, 7 passed in 0.26s

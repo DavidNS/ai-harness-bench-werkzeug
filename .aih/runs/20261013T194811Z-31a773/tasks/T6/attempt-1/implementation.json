@@ -1,0 +1,10 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC17",
+      "note": "The quickstart conditional-response section now refers to Response.apply_conditions and Response.apply_range. CHANGES.rst has entries under 3.2.0. No test covers this; I only edited the two doc files."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Updated docs/quickstart.rst to document apply_conditions and apply_range in place of make_conditional. Added CHANGES.rst entries for the new methods, the deprecations, and the send_file and SharedDataMiddleware changes. Docs only; nothing was run."
+}

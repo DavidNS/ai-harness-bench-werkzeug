@@ -1,0 +1,42 @@
+{
+  "coverage": [
+    {
+      "criterion": "ACC13",
+      "line": 55,
+      "note": "Asserts 304 via If-None-Match and If-Modified-Since. test_range asserts 206 with Content-Range, and test_no_default_cache_timeout asserts there is no max-age or Expires by default.",
+      "status": "covered",
+      "test": "tests/middleware/test_shared_data.py::test_conditional_304"
+    },
+    {
+      "criterion": "ACC14",
+      "line": 88,
+      "note": "pytest.deprecated_call wraps fallback_mimetype, and the value is still honoured. test_cache_false_deprecated covers the cache parameter the same way.",
+      "status": "covered",
+      "test": "tests/middleware/test_shared_data.py::test_fallback_mimetype_deprecated_and_used"
+    }
+  ],
+  "findings": [
+    {
+      "file": "tests/middleware/test_shared_data.py",
+      "line": 0,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "No test covers If-Range, HEAD, or a Range request combined with a conditional header through the middleware; these are exercised only indirectly via send_file tests."
+    },
+    {
+      "file": "src/werkzeug/middleware/shared_data.py",
+      "line": 248,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "generate_etag (and its adler32 import) is no longer used by __call__; it is kept as a public method, so removal is optional."
+    },
+    {
+      "file": "tests/middleware/test_shared_data.py",
+      "line": 0,
+      "pass": 3,
+      "severity": "advisory",
+      "text": "No existing test was weakened; the diff only adds tests."
+    }
+  ],
+  "verdict": "approve"
+}

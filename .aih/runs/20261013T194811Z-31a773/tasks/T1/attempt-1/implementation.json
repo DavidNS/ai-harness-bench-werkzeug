@@ -1,0 +1,18 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC1",
+      "note": "tests/test_datastructures.py::test_if_range_check covers matching strong etag (str and ETag), weak etag, mismatch, missing etag, date equal (with and without microseconds), different date, and empty IfRange."
+    },
+    {
+      "criterion": "ACC2",
+      "note": "test_range_make_content_range covers clamp stop, clamp suffix, first range only, unsatisfiable, zero/unknown length and no ranges. test_range_from_header_invalid and test_content_range_from_header_invalid cover the rejected values, including empty units."
+    },
+    {
+      "criterion": "ACC3",
+      "note": "test_etag_set_discards_invalid_unquoted covers unquoted and malformed items being dropped. The base commit's parser already behaved this way, so this test will probably pass without the production change and may not count as fail-before-fix."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Added IfRange.check; made Range.make_content_range self-validating (clamps stop/suffix, first range only, None when unsatisfiable, no is_byte_range_valid); Range/ContentRange.from_header reject empty units. etag.py unchanged because ETagSet.from_header already discards invalid unquoted values. I could not run the tests here, so none of the new tests have been run."
+}

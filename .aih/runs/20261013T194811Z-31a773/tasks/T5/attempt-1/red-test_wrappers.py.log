@@ -1,0 +1,98 @@
+..................................F.F..........F........................ [ 53%]
+...............................................................          [100%]
+================================== FAILURES ===================================
+______________________ test_make_conditional_deprecated _______________________
+
+    def test_make_conditional_deprecated():
+        response = wrappers.Response("Hello World")
+    
+>       with pytest.deprecated_call(match="make_conditional"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:519: Failed
+________________ test_make_conditional_request_object_and_post ________________
+
+    @_MC
+    def test_make_conditional_request_object_and_post():
+        request = wrappers.Request.from_values(
+            headers={"If-None-Match": '"abc"', "Range": "bytes=0-4"}
+        )
+        response = wrappers.Response("Hello World")
+        response.etag = "abc"
+        response.make_conditional(request, accept_ranges=True, complete_length=11)
+>       assert response.status_code == 304
+E       assert 206 == 304
+E        +  where 206 = <Response streamed [206 Partial Content]>.status_code
+
+tests\test_wrappers.py:540: AssertionError
+____________________ test_malformed_range_request_ignored _____________________
+
+    @_MC
+    def test_malformed_range_request_ignored():
+        # previously a 416, now the malformed header is ignored
+        env = create_environ()
+        response = wrappers.Response("Hello World")
+        env["HTTP_RANGE"] = "bytes=-"
+>       response.make_conditional(env, accept_ranges=True, complete_length=11)
+
+tests\test_wrappers.py:740: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\wrappers\response.py:875: in make_conditional
+    is206 = self._process_range_request(environ, complete_length, accept_ranges)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 11 bytes [200 OK]>
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+complete_length = 11, accept_ranges = 'bytes'
+
+    def _process_range_request(
+        self,
+        environ: WSGIEnvironment,
+        complete_length: int | None,
+        accept_ranges: bool | str,
+    ) -> bool:
+        """Handle Range Request related headers (RFC7233).  If `Accept-Ranges`
+        header is valid, and Range Request is processable, we set the headers
+        as described by the RFC, and wrap the underlying response in a
+        RangeWrapper.
+    
+        Returns ``True`` if Range Request can be fulfilled, ``False`` otherwise.
+    
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Returns ``False`` if the length is 0.
+        """
+        from ..exceptions import RequestedRangeNotSatisfiable
+    
+        if not accept_ranges:
+            return False
+    
+        if accept_ranges is True:
+            accept_ranges = "bytes"
+    
+        self.accept_ranges = accept_ranges
+    
+        if not (complete_length and self._is_range_request_processable(environ)):
+            return False
+    
+        parsed_range = Range.from_header(environ.get("HTTP_RANGE"))
+    
+        if parsed_range is None:
+>           raise RequestedRangeNotSatisfiable(complete_length)
+E           werkzeug.exceptions.RequestedRangeNotSatisfiable: 416 Requested Range Not Satisfiable: The server cannot provide the requested range.
+
+src\werkzeug\wrappers\response.py:711: RequestedRangeNotSatisfiable
+=========================== short test summary info ===========================
+FAILED tests/test_wrappers.py::test_make_conditional_deprecated - Failed: DID...
+FAILED tests/test_wrappers.py::test_make_conditional_request_object_and_post
+FAILED tests/test_wrappers.py::test_malformed_range_request_ignored - werkzeu...
+3 failed, 132 passed in 0.57s

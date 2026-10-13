@@ -1,0 +1,50 @@
+{
+  "coverage": [
+    {
+      "criterion": "ACC15",
+      "line": 517,
+      "note": "Asserts the DeprecationWarning. The retained make_conditional tests (etag 304/412, range requests) exercise the apply_conditions and apply_range path under the warning filter.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_make_conditional_deprecated"
+    },
+    {
+      "criterion": "ACC16",
+      "line": 424,
+      "note": "Checks the warning and the unchanged return values for each parametrized case. `test_is_resource_modified_deprecated` checks the warning for `is_resource_modified`, and the existing `is_resource_modified` tests still check its results.",
+      "status": "covered",
+      "test": "tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated"
+    },
+    {
+      "criterion": "ACC18",
+      "line": 428,
+      "note": "Old tests were kept under targeted `filterwarnings` markers rather than deleted, so the existing assertions still run. The harness reports the whole suite green.",
+      "status": "covered",
+      "test": "tests/test_http.py::TestHTTPUtility::test_is_resource_modified"
+    }
+  ],
+  "findings": [
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 764,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "`_LM =datetime(...)` lost the space after `=`. This is an unrelated formatting regression that `ruff format` will flag; restore `_LM = datetime(...)`."
+    },
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 725,
+      "pass": 3,
+      "severity": "advisory",
+      "text": "`test_invalid_range_request` was changed from `bytes=-` to `bytes=20-30`. The new `test_malformed_range_request_ignored` covers the old input with the new behaviour, so no case is lost, but the behaviour change (416 to 200) is only documented in a comment."
+    },
+    {
+      "file": "src/werkzeug/wrappers/response.py",
+      "line": 825,
+      "pass": 1,
+      "severity": "advisory",
+      "text": "`make_conditional` now sets `content_length = complete_length` whenever `complete_length` is truthy, even with no range. The old code set it only for a 206. This is tested, but it is a silent behaviour change for a deprecated method."
+    }
+  ],
+  "summary": "The deprecations are in place and tested. I read the diff only and did not open the repository files, so all line numbers are estimates. Three advisory notes: a formatting typo, a changed existing test, and a small behaviour change in `make_conditional`.",
+  "verdict": "approve"
+}

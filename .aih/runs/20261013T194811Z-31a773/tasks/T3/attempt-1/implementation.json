@@ -1,0 +1,18 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC10",
+      "note": "test_object_detects_name_size_mtime, test_object_without_fileno, test_object_seeks_to_start, test_object_range (range lengths correct after a partial read)"
+    },
+    {
+      "criterion": "ACC11",
+      "note": "test_etag asserts the ETag equals \"{mtime}-{size}\" exactly"
+    },
+    {
+      "criterion": "ACC12",
+      "note": "test_object_without_mimetype (octet-stream), test_object_range, test_path_range_and_accept_ranges, test_etag_conditional_not_modified, test_range_unsatisfiable_closes_file, test_precondition_failed_closes_file"
+    }
+  ],
+  "replan_request": null,
+  "summary": "Refactored send_file onto apply_conditions/apply_range: detects name/size/mtime from file objects, seeks to 0, ETag is now \"{mtime}-{size}\" (no path hash), defaults to application/octet-stream, closes the file on 412/416. Updated and added tests in tests/test_send_file.py. Nothing was run, so the new tests have not been run or checked against the base commit."
+}
