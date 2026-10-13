@@ -1,0 +1,14 @@
+{
+  "coverage": [],
+  "findings": [
+    {
+      "file": "CHANGES.rst",
+      "line": 92,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "Changelog omits that ETagSet.from_header now discards invalid unquoted values, a behaviour change from the plan."
+    }
+  ],
+  "summary": "Docs-only change. The quickstart documents apply_conditions and apply_range, and the changelog covers the new methods, deprecations and send_file/SharedDataMiddleware changes. No blocking issues.",
+  "verdict": "approve"
+}

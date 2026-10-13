@@ -1,0 +1,18 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC15",
+      "note": "`test_make_conditional_deprecated`, the `test_range_request_*` tests, `test_invalid_range_request` (416 on `bytes=20-30`), `test_malformed_range_request_ignored` (200 on `bytes=-`) and `test_make_conditional_complete_length_without_range` (`Content-Length` on non-range 200 and 304) cover this."
+    },
+    {
+      "criterion": "ACC16",
+      "note": "`test_is_resource_modified_deprecated` and `test_is_byte_range_valid_deprecated` in `tests/test_http.py`."
+    },
+    {
+      "criterion": "ACC18",
+      "note": "The old tests of the deprecated functions are kept with the warning ignored via `filterwarnings`, not moved or removed. The suite has not been run."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Added two tests to address the review; I have not run them. `test_malformed_range_request_ignored` asserts that `bytes=-` now gives a 200 with no `Content-Range`. The `bytes=20-30` 416 case stays in `test_invalid_range_request`. `test_make_conditional_complete_length_without_range` checks that `complete_length` sets `Content-Length` on a non-range 200. It also checks that a 304 response has no `Content-Length` once the WSGI headers are built. I kept the code as it was, so `make_conditional` still sets `Content-Length` from `complete_length` even without a range. Previously it only did so on a 206."
+}

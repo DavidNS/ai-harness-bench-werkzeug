@@ -89,6 +89,23 @@ Version 3.2.0
     directly instead. :issue:`3275`
 -   The ``header_property`` function is deprecated. Access ``headers`` directly
     instead. :issue:`3280`
+-   Add ``Response.apply_conditions`` and ``Response.apply_range``, which
+    separately and correctly implement conditional requests (``If-Match``,
+    ``If-Unmodified-Since``, ``If-None-Match``, ``If-Modified-Since``) and
+    range requests (``Range``, ``If-Range``) following RFC 9110.
+    ``Response.make_conditional``, ``is_resource_modified``, and
+    ``is_byte_range_valid`` are deprecated. ``Range.from_header``,
+    ``Range.make_content_range``, and ``ContentRange.from_header`` validate
+    their own values, and ``IfRange.check`` is added. :issue:`3291`
+    :pr:`3308`
+-   ``send_file`` uses ``apply_conditions`` and ``apply_range``. It detects the
+    name, size, and modification time of file-like objects, calls ``seek(0)`` on
+    them, no longer includes a hash of the path in the ETag, and defaults to the
+    ``application/octet-stream`` mimetype instead of raising when
+    ``download_name`` is not given.
+-   ``SharedDataMiddleware`` serves files with ``send_file``, so conditional
+    and range requests work. ``cache_timeout`` is no longer set by default. The
+    ``cache`` and ``fallback_mimetype`` parameters are deprecated.
 -   The ``Request`` form parsing interface has been simplified to a single new
     ``_parse_form_data`` method. ``form_data_parser_class``,
     ``make_form_data_parser``, ``want_form_data_parsed``,

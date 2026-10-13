@@ -1,0 +1,43 @@
+{
+  "coverage": [
+    {
+      "criterion": "ACC1",
+      "line": 1139,
+      "note": "Parametrized cases cover strong, weak, str, mismatched and missing ETags, matching dates, dates differing by a second, microsecond truncation, and an empty IfRange.",
+      "status": "covered",
+      "test": "tests/test_datastructures.py::test_if_range_check"
+    },
+    {
+      "criterion": "ACC2",
+      "line": 1169,
+      "note": "Covers clamping of stop and suffix, first range only, unsatisfiable, zero, unknown and empty cases. The from_header rejection cases are in test_range_from_header_invalid and test_content_range_from_header_invalid.",
+      "status": "covered",
+      "test": "tests/test_datastructures.py::test_range_make_content_range"
+    },
+    {
+      "criterion": "ACC3",
+      "line": 1113,
+      "note": "Asserts unquoted foo, bar, baz and the malformed `\"c\" x` are discarded while quoted values are kept. The behaviour already existed before this task.",
+      "status": "covered",
+      "test": "tests/test_datastructures.py::test_etag_set_discards_invalid_unquoted"
+    }
+  ],
+  "findings": [
+    {
+      "file": "tests/test_datastructures.py",
+      "line": 1139,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "IfRange.check is not tested with a naive last_modified or an If-Range holding a weak ETag, but neither is a required behaviour."
+    },
+    {
+      "file": "tests/test_datastructures.py",
+      "line": 1105,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "ETagSet.from_header already discarded invalid unquoted values, and etag.py is unchanged, so this test only locks in existing behaviour."
+    }
+  ],
+  "summary": "No blocking issues found. I judged this from the diff and a read of etag.py, and did not run the tests. All three criteria are covered by assertions that would fail if the behaviour broke. The ETagSet change needed no production edit, so its test only locks in existing behaviour.",
+  "verdict": "approve"
+}

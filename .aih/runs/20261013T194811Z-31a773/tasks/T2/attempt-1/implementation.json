@@ -1,0 +1,30 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC4",
+      "note": "apply_conditions checks If-Match, then If-Unmodified-Since, then If-None-Match, then If-Modified-Since, and sets Accept-Ranges: bytes. Tests: test_apply_conditions_no_headers, test_apply_conditions_if_match (GET, HEAD, POST, PUT, DELETE), test_apply_conditions_if_unmodified_since, test_apply_conditions_if_match_takes_precedence_over_unmodified_since, test_apply_conditions_if_none_match_takes_precedence_over_modified_since, test_apply_conditions_if_modified_since_ignored_for_unsafe_method."
+    },
+    {
+      "criterion": "ACC5",
+      "note": "A failed If-Match, If-Unmodified-Since or If-None-Match on an unsafe method raises PreconditionFailed. A satisfied If-None-Match or If-Modified-Since on GET/HEAD sets status 304. Tests: test_apply_conditions_if_none_match_304, test_apply_conditions_if_none_match_unsafe_412, test_apply_conditions_if_modified_since, test_apply_conditions_304_removes_entity_headers."
+    },
+    {
+      "criterion": "ACC6",
+      "note": "A star ETag is evaluated against `exists`. Tests: test_apply_conditions_if_match_star (exists True passes, False raises 412) and test_apply_conditions_if_none_match_star (exists True gives 304 on GET and 412 on PUT, False gives 200)."
+    },
+    {
+      "criterion": "ACC7",
+      "note": "apply_range always sets Accept-Ranges: bytes and returns without changing the response for non-GET methods, non-200 status, unknown or zero Content-Length, non-bytes units and a missing Range header. Tests: test_apply_range_only_get, test_apply_range_only_200, test_apply_range_unknown_or_zero_length, test_apply_range_other_units, test_apply_range_no_range_header, test_apply_range_invalid_header_ignored."
+    },
+    {
+      "criterion": "ACC8",
+      "note": "Only the first range is used, a too-large stop or suffix is clamped, an unsatisfiable range raises RequestedRangeNotSatisfiable, and a satisfiable one gives 206 with the sliced data, Content-Length and Content-Range. Tests: test_apply_range_basic, test_apply_range_first_only, test_apply_range_clamps_stop, test_apply_range_suffix, test_apply_range_unsatisfiable, test_apply_range_with_file."
+    },
+    {
+      "criterion": "ACC9",
+      "note": "With If-Range, the range is applied only when IfRange.check matches the response's ETag (strong comparison) or Last-Modified. Tests: test_apply_range_if_range_etag (match, mismatch, weak response ETag) and test_apply_range_if_range_date (match, mismatch)."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Added Response.apply_conditions and Response.apply_range in response.py, next to the unchanged make_conditional. I added tests for every branch in tests/test_wrappers.py. I could not run anything here, so none of the new tests have been run. They also haven't been checked against the base commit to confirm they fail without the change. Two assumptions in the tests are untested: that `Response(\"...\")` sets Content-Length, and that the 304 test strips Content-Type and Content-Length. An invalid or empty Range header is ignored and gives a normal 200, where make_conditional used to raise 416."
+}

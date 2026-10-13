@@ -1,0 +1,133 @@
+F.FFFFFF...                                                              [100%]
+================================== FAILURES ===================================
+________________________ test_no_default_cache_timeout ________________________
+
+    def test_no_default_cache_timeout():
+        status, headers, data = _get(_app())
+        assert status == "200 OK"
+        assert data.strip() == b"FOUND"
+        assert "ETag" in headers
+        assert "Last-Modified" in headers
+>       assert headers["Accept-Ranges"] == "bytes"
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\middleware\test_shared_data.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\werkzeug\datastructures\headers.py:88: in __getitem__
+    return self._get_key(key)
+           ^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Headers([('Date', 'Tue, 13 Oct 2026 19:55:49 GMT'), ('ETag', '"wzsdm-1791921348.955401-6-249103183"'), ('Cache-Control...tent-Type', 'text/plain; charset=utf-8'), ('Content-Length', '6'), ('Last-Modified', 'Tue, 13 Oct 2026 19:55:48 GMT')])
+key = 'Accept-Ranges'
+
+    def _get_key(self, key: str) -> str:
+        ikey = key.lower()
+    
+        for k, v in self._list:
+            if k.lower() == ikey:
+                return v
+    
+>       raise BadRequestKeyError(key)
+E       werkzeug.exceptions.BadRequestKeyError: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+
+src\werkzeug\datastructures\headers.py:102: BadRequestKeyError
+____________________________ test_conditional_304 _____________________________
+
+    def test_conditional_304():
+        app = _app()
+        _, headers, _ = _get(app)
+>       status, _, data = _get(app, headers={"If-None-Match": headers["ETag"]})
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\middleware\test_shared_data.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\middleware\test_shared_data.py:26: in _get
+    with closing(app_iter):
+         ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <contextlib.closing object at 0x00000272B205B530>
+exc_info = (None, None, None)
+
+    def __exit__(self, *exc_info):
+>       self.thing.close()
+        ^^^^^^^^^^^^^^^^
+E       AttributeError: 'list_iterator' object has no attribute 'close'
+
+C:\Users\david\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:360: AttributeError
+__________________________ test_precondition_failed ___________________________
+
+    def test_precondition_failed():
+>       status, _, _ = _get(_app(), headers={"If-Match": '"nope"'})
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\middleware\test_shared_data.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\middleware\test_shared_data.py:26: in _get
+    with closing(app_iter):
+         ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <contextlib.closing object at 0x00000272B2159520>
+exc_info = (None, None, None)
+
+    def __exit__(self, *exc_info):
+>       self.thing.close()
+        ^^^^^^^^^^^^^^^^
+E       AttributeError: 'list_iterator' object has no attribute 'close'
+
+C:\Users\david\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:360: AttributeError
+_________________________________ test_range __________________________________
+
+    def test_range():
+        status, headers, data = _get(_app(), headers={"Range": "bytes=0-2"})
+>       assert status == "206 Partial Content"
+E       AssertionError: assert '200 OK' == '206 Partial Content'
+E         
+E         - 206 Partial Content
+E         + 200 OK
+
+tests\middleware\test_shared_data.py:67: AssertionError
+_________________________ test_range_not_satisfiable __________________________
+
+    def test_range_not_satisfiable():
+        status, _, _ = _get(_app(), headers={"Range": "bytes=1000-2000"})
+>       assert status == "416 Requested Range Not Satisfiable"
+E       AssertionError: assert '200 OK' == '416 Requeste...t Satisfiable'
+E         
+E         - 416 Requested Range Not Satisfiable
+E         + 200 OK
+
+tests\middleware\test_shared_data.py:74: AssertionError
+_________________________ test_cache_false_deprecated _________________________
+
+    def test_cache_false_deprecated():
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\middleware\test_shared_data.py:78: Failed
+_________________ test_fallback_mimetype_deprecated_and_used __________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-309/test_fallback_mimetype_depreca0')
+
+    def test_fallback_mimetype_deprecated_and_used(tmp_path):
+        (tmp_path / "data.zzzqq").write_bytes(b"x")
+    
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\middleware\test_shared_data.py:89: Failed
+=========================== short test summary info ===========================
+FAILED tests/middleware/test_shared_data.py::test_no_default_cache_timeout - ...
+FAILED tests/middleware/test_shared_data.py::test_conditional_304 - Attribute...
+FAILED tests/middleware/test_shared_data.py::test_precondition_failed - Attri...
+FAILED tests/middleware/test_shared_data.py::test_range - AssertionError: ass...
+FAILED tests/middleware/test_shared_data.py::test_range_not_satisfiable - Ass...
+FAILED tests/middleware/test_shared_data.py::test_cache_false_deprecated - Fa...
+FAILED tests/middleware/test_shared_data.py::test_fallback_mimetype_deprecated_and_used
+7 failed, 4 passed in 0.62s

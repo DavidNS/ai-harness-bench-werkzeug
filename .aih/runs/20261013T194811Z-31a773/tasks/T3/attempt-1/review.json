@@ -1,0 +1,42 @@
+{
+  "coverage": [
+    {
+      "criterion": "ACC10",
+      "line": 97,
+      "note": "Reads a BytesIO and a real file to the end, then asserts the full data is sent. test_object_range (line 114) checks Content-Range and length after a partial read. test_object_detects_name_size_mtime (line 66) checks size.",
+      "status": "covered",
+      "test": "tests/test_send_file.py::test_object_seeks_to_start"
+    },
+    {
+      "criterion": "ACC11",
+      "line": 254,
+      "note": "Asserts the ETag equals exactly `\"{mtime}-{size}\"`, so a path hash would fail it.",
+      "status": "covered",
+      "test": "tests/test_send_file.py::test_etag"
+    },
+    {
+      "criterion": "ACC12",
+      "line": 58,
+      "note": "A BytesIO with no name gives application/octet-stream instead of TypeError. Routing through apply_conditions/apply_range is exercised by test_etag_conditional_not_modified (line 155, 304) and test_path_range_and_accept_ranges (206).",
+      "status": "covered",
+      "test": "tests/test_send_file.py::test_object_without_mimetype"
+    }
+  ],
+  "findings": [
+    {
+      "file": "tests/test_send_file.py",
+      "line": 67,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "mtime detection from a file object is only asserted as `last_modified is not None`; no test checks the value equals the file's mtime or that an ETag is generated for a file object, and no test checks that an explicit download_name overrides a named file's name."
+    },
+    {
+      "file": "src/werkzeug/utils.py",
+      "line": 424,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "The `path_name` temporary can be folded into one expression, e.g. `if download_name is None and isinstance(name, str): download_name = os.path.basename(name)`."
+    }
+  ],
+  "verdict": "approve"
+}

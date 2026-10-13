@@ -1,0 +1,247 @@
+diff --git a/src/werkzeug/middleware/shared_data.py b/src/werkzeug/middleware/shared_data.py
+index c2810a01..878a2bef 100644
+--- a/src/werkzeug/middleware/shared_data.py
++++ b/src/werkzeug/middleware/shared_data.py
+@@ -17,18 +17,16 @@ import mimetypes
+ import os
+ import posixpath
+ import typing as t
++import warnings
+ from datetime import datetime
+ from datetime import timezone
+ from io import BytesIO
+-from time import time
+ from zlib import adler32
+ 
+-from ..http import http_date
+-from ..http import is_resource_modified
++from ..exceptions import HTTPException
+ from ..security import safe_join
+-from ..utils import get_content_type
++from ..utils import send_file
+ from ..wsgi import get_path_info
+-from ..wsgi import wrap_file
+ 
+ _TOpener = t.Callable[[], tuple[t.IO[bytes], datetime, int]]
+ _TLoader = t.Callable[[str | None], tuple[str | None, _TOpener | None]]
+@@ -84,9 +82,17 @@ class SharedDataMiddleware:
+                 application you can pass it :exc:`NotFound`.
+     :param exports: a list or dict of exported files and folders.
+     :param disallow: a list of :func:`~fnmatch.fnmatch` rules.
+-    :param cache: enable or disable caching headers.
++    :param cache: enable or disable caching headers. Deprecated.
+     :param cache_timeout: the cache timeout in seconds for the headers.
++        Not set by default, so clients use conditional caching.
+     :param fallback_mimetype: The fallback mimetype for unknown files.
++        Deprecated.
++
++    .. versionchanged:: 3.2
++        Files are served with :func:`~werkzeug.utils.send_file`, which
++        supports conditional and range requests. ``cache_timeout`` is
++        not set by default. ``cache`` and ``fallback_mimetype`` are
++        deprecated.
+ 
+     .. versionchanged:: 1.0
+         The default ``fallback_mimetype`` is
+@@ -108,12 +114,33 @@ class SharedDataMiddleware:
+             | t.Iterable[tuple[str, str | tuple[str, str]]]
+         ),
+         disallow: None = None,
+-        cache: bool = True,
+-        cache_timeout: int = 60 * 60 * 12,
+-        fallback_mimetype: str = "application/octet-stream",
++        cache: bool | None = None,
++        cache_timeout: int | None = None,
++        fallback_mimetype: str | None = None,
+     ) -> None:
+         self.app = app
+         self.exports: list[tuple[str, _TLoader]] = []
++
++        if cache is not None:
++            warnings.warn(
++                "The 'cache' parameter is deprecated and will be removed in"
++                " Werkzeug 3.3.",
++                DeprecationWarning,
++                stacklevel=2,
++            )
++        else:
++            cache = True
++
++        if fallback_mimetype is not None:
++            warnings.warn(
++                "The 'fallback_mimetype' parameter is deprecated and will be"
++                " removed in Werkzeug 3.3.",
++                DeprecationWarning,
++                stacklevel=2,
++            )
++        else:
++            fallback_mimetype = "application/octet-stream"
++
+         self.cache = cache
+         self.cache_timeout = cache_timeout
+ 
+@@ -259,34 +286,21 @@ class SharedDataMiddleware:
+         guessed_type = (
+             mimetypes.guess_type(real_filename) if real_filename else (None, None)
+         )
+-        mime_type = get_content_type(guessed_type[0] or self.fallback_mimetype, "utf-8")
+-        f, mtime, file_size = file_loader()
+-
+-        headers = [("Date", http_date())]
+-
+-        if self.cache:
+-            timeout = self.cache_timeout
+-            etag = f'"{self.generate_etag(mtime, file_size, real_filename)}"'
+-            headers += [
+-                ("ETag", etag),
+-                ("Cache-Control", f"max-age={timeout}, public"),
+-            ]
+-
+-            if not is_resource_modified(environ, etag, last_modified=mtime):
+-                f.close()
+-                start_response("304 Not Modified", headers)
+-                return []
+-
+-            headers.append(("Expires", http_date(time() + timeout)))
+-        else:
+-            headers.append(("Cache-Control", "public"))
+-
+-        headers.extend(
+-            (
+-                ("Content-Type", mime_type),
+-                ("Content-Length", str(file_size)),
+-                ("Last-Modified", http_date(mtime)),
++        mime_type = guessed_type[0] or self.fallback_mimetype
++        f, mtime, _ = file_loader()
++
++        try:
++            response = send_file(
++                f,
++                environ,
++                mimetype=mime_type,
++                download_name=real_filename,
++                conditional=self.cache,
++                etag=self.cache,
++                last_modified=mtime.timestamp(),
++                max_age=self.cache_timeout,
+             )
+-        )
+-        start_response("200 OK", headers)
+-        return wrap_file(environ, f)
++        except HTTPException as e:
++            return e(environ, start_response)
++
++        return response(environ, start_response)
+diff --git a/tests/middleware/test_shared_data.py b/tests/middleware/test_shared_data.py
+index 26e64645..3a548faf 100644
+--- a/tests/middleware/test_shared_data.py
++++ b/tests/middleware/test_shared_data.py
+@@ -1,11 +1,108 @@
+ import os
+ from contextlib import closing
+ 
++import pytest
++
++from werkzeug.datastructures import Headers
+ from werkzeug.middleware.shared_data import SharedDataMiddleware
+ from werkzeug.test import create_environ
+ from werkzeug.test import run_wsgi_app
+ 
+ 
++RES = os.path.join(os.path.dirname(__file__), "..", "res")
++
++
++def _app(**kwargs):
++    def fallback(environ, start_response):
++        start_response("404 NOT FOUND", [("Content-Type", "text/plain")])
++        return [b"NOT FOUND"]
++
++    return SharedDataMiddleware(fallback, {"/": RES}, **kwargs)
++
++
++def _get(app, **kwargs):
++    app_iter, status, headers = run_wsgi_app(app, create_environ("/test.txt", **kwargs))
++
++    with closing(app_iter):
++        data = b"".join(app_iter)
++
++    return status, Headers(headers), data
++
++
++def test_no_default_cache_timeout():
++    status, headers, data = _get(_app())
++    assert status == "200 OK"
++    assert data.strip() == b"FOUND"
++    assert "ETag" in headers
++    assert "Last-Modified" in headers
++    assert headers["Accept-Ranges"] == "bytes"
++    assert "max-age" not in headers["Cache-Control"]
++    assert "Expires" not in headers
++
++
++def test_cache_timeout():
++    _, headers, _ = _get(_app(cache_timeout=60))
++    assert "max-age=60" in headers["Cache-Control"]
++
++
++def test_conditional_304():
++    app = _app()
++    _, headers, _ = _get(app)
++    status, _, data = _get(app, headers={"If-None-Match": headers["ETag"]})
++    assert status == "304 Not Modified"
++    assert data == b""
++    status, _, _ = _get(
++        app, headers={"If-Modified-Since": headers["Last-Modified"]}
++    )
++    assert status == "304 Not Modified"
++
++
++def test_precondition_failed():
++    status, _, _ = _get(_app(), headers={"If-Match": '"nope"'})
++    assert status == "412 Precondition Failed"
++
++
++def test_range():
++    status, headers, data = _get(_app(), headers={"Range": "bytes=0-2"})
++    assert status == "206 Partial Content"
++    assert data == b"FOU"
++    assert headers["Content-Range"].startswith("bytes 0-2/")
++
++
++def test_range_not_satisfiable():
++    status, _, _ = _get(_app(), headers={"Range": "bytes=1000-2000"})
++    assert status == "416 Requested Range Not Satisfiable"
++
++
++def test_cache_false_deprecated():
++    with pytest.deprecated_call():
++        app = _app(cache=False)
++
++    status, headers, _ = _get(app, headers={"Range": "bytes=0-2"})
++    assert status == "200 OK"
++    assert "ETag" not in headers
++
++
++def test_fallback_mimetype_deprecated_and_used(tmp_path):
++    (tmp_path / "data.zzzqq").write_bytes(b"x")
++
++    with pytest.deprecated_call():
++        app = SharedDataMiddleware(None, {"/": str(tmp_path)}, fallback_mimetype="a/b")
++
++    app_iter, status, headers = run_wsgi_app(app, create_environ("/data.zzzqq"))
++    app_iter.close()
++    assert status == "200 OK"
++    assert Headers(headers)["Content-Type"] == "a/b"
++
++
++def test_default_fallback_mimetype(tmp_path):
++    (tmp_path / "data.zzzqq").write_bytes(b"x")
++    app = SharedDataMiddleware(None, {"/": str(tmp_path)})
++    app_iter, status, headers = run_wsgi_app(app, create_environ("/data.zzzqq"))
++    app_iter.close()
++    assert Headers(headers)["Content-Type"] == "application/octet-stream"
++
++
+ def test_get_file_loader():
+     app = SharedDataMiddleware(None, {})
+     assert callable(app.get_file_loader("foo"))

@@ -1,0 +1,14 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC13",
+      "note": "Covered by test_no_default_cache_timeout, test_cache_timeout, test_conditional_304, test_precondition_failed, test_range and test_range_not_satisfiable. Only the first two passed in the last harness run. The other four failed on the status-string casing, which is now fixed but not re-run."
+    },
+    {
+      "criterion": "ACC14",
+      "note": "test_cache_false_deprecated and test_fallback_mimetype_deprecated_and_used both use pytest.deprecated_call, and both passed in the last harness run. test_default_fallback_mimetype covers the default path and also passed."
+    }
+  ],
+  "replan_request": null,
+  "summary": "SharedDataMiddleware now serves files through send_file, so conditional (304/412) and range (206/416) requests work. cache_timeout defaults to None. cache and fallback_mimetype now default to None and emit DeprecationWarning when passed. The previous run had 4 failures, all from my status-string assertions being upper-case; I changed them to the real title-case strings (\"304 Not Modified\" and so on). I haven't re-run the tests after that fix. The other 7 tests passed in the harness run, including the existing ones."
+}

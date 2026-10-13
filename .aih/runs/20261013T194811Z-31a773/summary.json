@@ -1,0 +1,390 @@
+{
+  "attempts_total": 6,
+  "base_sha": "671537e0e5c7dcec4ac61ffc755dbd8936cefcfb",
+  "delivery": null,
+  "gate_failures": [
+    {
+      "attempt": 1,
+      "codes": [
+        "review.changes_requested"
+      ],
+      "gate": "review.approved",
+      "task": "T5"
+    }
+  ],
+  "head": "8cfb9173afed2ed053d93930cc7e7e4f3447c476",
+  "human_decisions": [
+    {
+      "actor": "policy",
+      "decision": "approve",
+      "gate": "human.plan_approved"
+    }
+  ],
+  "models": [
+    "claude-sonnet-5-5"
+  ],
+  "plan_tasks": [
+    {
+      "files": [
+        "src/werkzeug/datastructures/range.py",
+        "src/werkzeug/datastructures/etag.py",
+        "tests/test_datastructures.py"
+      ],
+      "id": "T1",
+      "key": "t1_datastructures",
+      "tests": [
+        "tests/test_datastructures.py"
+      ]
+    },
+    {
+      "files": [
+        "src/werkzeug/wrappers/response.py",
+        "tests/test_wrappers.py"
+      ],
+      "id": "T2",
+      "key": "t2_response_methods",
+      "tests": [
+        "tests/test_wrappers.py"
+      ]
+    },
+    {
+      "files": [
+        "src/werkzeug/utils.py",
+        "tests/test_send_file.py"
+      ],
+      "id": "T3",
+      "key": "t3_send_file",
+      "tests": [
+        "tests/test_send_file.py"
+      ]
+    },
+    {
+      "files": [
+        "src/werkzeug/middleware/shared_data.py",
+        "tests/middleware/test_shared_data.py"
+      ],
+      "id": "T4",
+      "key": "t4_shared_data",
+      "tests": [
+        "tests/middleware/test_shared_data.py"
+      ]
+    },
+    {
+      "files": [
+        "src/werkzeug/wrappers/response.py",
+        "src/werkzeug/http.py",
+        "tests/test_wrappers.py",
+        "tests/test_http.py"
+      ],
+      "id": "T5",
+      "key": "t5_deprecations",
+      "tests": [
+        "tests/test_wrappers.py",
+        "tests/test_http.py"
+      ]
+    },
+    {
+      "files": [
+        "docs/quickstart.rst",
+        "CHANGES.rst"
+      ],
+      "id": "T6",
+      "key": "t6_docs",
+      "tests": []
+    }
+  ],
+  "plan_version": 1,
+  "run_dir": "C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\results\\arms\\detail\\20261013T194808Z-werkzeug-apply-conditions-range-gated-1\\aih-data\\runs\\20261013T194811Z-31a773",
+  "run_id": "20261013T194811Z-31a773",
+  "schema_version": 1,
+  "sessions": 17,
+  "status": "implemented",
+  "tasks": [
+    {
+      "advisories": [
+        {
+          "file": "tests/test_datastructures.py",
+          "line": 1139,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "IfRange.check is not tested with a naive last_modified or an If-Range holding a weak ETag, but neither is a required behaviour."
+        },
+        {
+          "file": "tests/test_datastructures.py",
+          "line": 1105,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "ETagSet.from_header already discarded invalid unquoted values, and etag.py is unchanged, so this test only locks in existing behaviour."
+        }
+      ],
+      "attempts": 1,
+      "commit": "6bae41f7fc58da39aff227dd35ffc2f43f369220",
+      "coverage": [
+        {
+          "criterion": "ACC1",
+          "line": 1139,
+          "note": "Parametrized cases cover strong, weak, str, mismatched and missing ETags, matching dates, dates differing by a second, microsecond truncation, and an empty IfRange.",
+          "status": "covered",
+          "test": "tests/test_datastructures.py::test_if_range_check"
+        },
+        {
+          "criterion": "ACC2",
+          "line": 1169,
+          "note": "Covers clamping of stop and suffix, first range only, unsatisfiable, zero, unknown and empty cases. The from_header rejection cases are in test_range_from_header_invalid and test_content_range_from_header_invalid.",
+          "status": "covered",
+          "test": "tests/test_datastructures.py::test_range_make_content_range"
+        },
+        {
+          "criterion": "ACC3",
+          "line": 1113,
+          "note": "Asserts unquoted foo, bar, baz and the malformed `\"c\" x` are discarded while quoted values are kept. The behaviour already existed before this task.",
+          "status": "covered",
+          "test": "tests/test_datastructures.py::test_etag_set_discards_invalid_unquoted"
+        }
+      ],
+      "id": "T1",
+      "status": "committed"
+    },
+    {
+      "advisories": [
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 710,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test covers If-Match (or a star If-Match) when the response has no ETag, nor a failing If-Match combined with If-None-Match, so the ordering of the 412 check before the 304 check is unproven."
+        },
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 688,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "`_cond_response(**kwargs)` accepts kwargs it never uses."
+        },
+        {
+          "file": "src/werkzeug/wrappers/response.py",
+          "line": 800,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "The `if_none_match.star_tag` and `if_match.star_tag` branches could be folded into a small helper, but this is cosmetic."
+        }
+      ],
+      "attempts": 1,
+      "commit": "114df77af4eecc32f4ed82f2fb67783f9e732e80",
+      "coverage": [
+        {
+          "criterion": "ACC4",
+          "line": 845,
+          "note": "Precedence tests, per-method If-Match tests and the no_headers Accept-Ranges assertion together cover the RFC order and the header.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_conditions_if_none_match_takes_precedence_over_modified_since"
+        },
+        {
+          "criterion": "ACC5",
+          "line": 790,
+          "note": "412 on unsafe methods, 304 on GET/HEAD, and the entity headers removed from the 304 are each asserted.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_conditions_if_none_match_unsafe_412"
+        },
+        {
+          "criterion": "ACC6",
+          "line": 800,
+          "note": "Star ETag is tested with exists True and False for both If-Match and If-None-Match, with different outcomes.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_conditions_if_none_match_star"
+        },
+        {
+          "criterion": "ACC7",
+          "line": 938,
+          "note": "The non-GET, non-200, unknown/zero length and non-bytes unit cases are each tested, and each asserts Accept-Ranges.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_range_unknown_or_zero_length"
+        },
+        {
+          "criterion": "ACC8",
+          "line": 882,
+          "note": "First-range-only, clamping, suffix, unsatisfiable and basic 206 are all asserted, including Content-Length, Content-Range and data.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_range_first_only"
+        },
+        {
+          "criterion": "ACC9",
+          "line": 974,
+          "note": "Matching, mismatching and weak ETags are tested, plus the date match and mismatch in the sibling test.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_range_if_range_etag"
+        }
+      ],
+      "id": "T2",
+      "status": "committed"
+    },
+    {
+      "advisories": [
+        {
+          "file": "tests/test_send_file.py",
+          "line": 67,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "mtime detection from a file object is only asserted as `last_modified is not None`; no test checks the value equals the file's mtime or that an ETag is generated for a file object, and no test checks that an explicit download_name overrides a named file's name."
+        },
+        {
+          "file": "src/werkzeug/utils.py",
+          "line": 424,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "The `path_name` temporary can be folded into one expression, e.g. `if download_name is None and isinstance(name, str): download_name = os.path.basename(name)`."
+        }
+      ],
+      "attempts": 1,
+      "commit": "624fcf44c17089d8af9cbd15457be00336e97eda",
+      "coverage": [
+        {
+          "criterion": "ACC10",
+          "line": 97,
+          "note": "Reads a BytesIO and a real file to the end, then asserts the full data is sent. test_object_range (line 114) checks Content-Range and length after a partial read. test_object_detects_name_size_mtime (line 66) checks size.",
+          "status": "covered",
+          "test": "tests/test_send_file.py::test_object_seeks_to_start"
+        },
+        {
+          "criterion": "ACC11",
+          "line": 254,
+          "note": "Asserts the ETag equals exactly `\"{mtime}-{size}\"`, so a path hash would fail it.",
+          "status": "covered",
+          "test": "tests/test_send_file.py::test_etag"
+        },
+        {
+          "criterion": "ACC12",
+          "line": 58,
+          "note": "A BytesIO with no name gives application/octet-stream instead of TypeError. Routing through apply_conditions/apply_range is exercised by test_etag_conditional_not_modified (line 155, 304) and test_path_range_and_accept_ranges (206).",
+          "status": "covered",
+          "test": "tests/test_send_file.py::test_object_without_mimetype"
+        }
+      ],
+      "id": "T3",
+      "status": "committed"
+    },
+    {
+      "advisories": [
+        {
+          "file": "tests/middleware/test_shared_data.py",
+          "line": 0,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test covers If-Range, HEAD, or a Range request combined with a conditional header through the middleware; these are exercised only indirectly via send_file tests."
+        },
+        {
+          "file": "src/werkzeug/middleware/shared_data.py",
+          "line": 248,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "generate_etag (and its adler32 import) is no longer used by __call__; it is kept as a public method, so removal is optional."
+        },
+        {
+          "file": "tests/middleware/test_shared_data.py",
+          "line": 0,
+          "pass": 3,
+          "severity": "advisory",
+          "text": "No existing test was weakened; the diff only adds tests."
+        }
+      ],
+      "attempts": 1,
+      "commit": "554997998345a47b36d13a4ac56752d0282e6f17",
+      "coverage": [
+        {
+          "criterion": "ACC13",
+          "line": 55,
+          "note": "Asserts 304 via If-None-Match and If-Modified-Since. test_range asserts 206 with Content-Range, and test_no_default_cache_timeout asserts there is no max-age or Expires by default.",
+          "status": "covered",
+          "test": "tests/middleware/test_shared_data.py::test_conditional_304"
+        },
+        {
+          "criterion": "ACC14",
+          "line": 88,
+          "note": "pytest.deprecated_call wraps fallback_mimetype, and the value is still honoured. test_cache_false_deprecated covers the cache parameter the same way.",
+          "status": "covered",
+          "test": "tests/middleware/test_shared_data.py::test_fallback_mimetype_deprecated_and_used"
+        }
+      ],
+      "id": "T4",
+      "status": "committed"
+    },
+    {
+      "advisories": [
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 764,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "`_LM =datetime(...)` lost the space after `=`. This is an unrelated formatting regression that `ruff format` will flag; restore `_LM = datetime(...)`."
+        },
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 725,
+          "pass": 3,
+          "severity": "advisory",
+          "text": "`test_invalid_range_request` was changed from `bytes=-` to `bytes=20-30`. The new `test_malformed_range_request_ignored` covers the old input with the new behaviour, so no case is lost, but the behaviour change (416 to 200) is only documented in a comment."
+        },
+        {
+          "file": "src/werkzeug/wrappers/response.py",
+          "line": 825,
+          "pass": 1,
+          "severity": "advisory",
+          "text": "`make_conditional` now sets `content_length = complete_length` whenever `complete_length` is truthy, even with no range. The old code set it only for a 206. This is tested, but it is a silent behaviour change for a deprecated method."
+        }
+      ],
+      "attempts": 1,
+      "commit": "aff5eae8a82df6b27b0ac2af3cdf800aa153a31b",
+      "coverage": [
+        {
+          "criterion": "ACC15",
+          "line": 517,
+          "note": "Asserts the DeprecationWarning. The retained make_conditional tests (etag 304/412, range requests) exercise the apply_conditions and apply_range path under the warning filter.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_make_conditional_deprecated"
+        },
+        {
+          "criterion": "ACC16",
+          "line": 424,
+          "note": "Checks the warning and the unchanged return values for each parametrized case. `test_is_resource_modified_deprecated` checks the warning for `is_resource_modified`, and the existing `is_resource_modified` tests still check its results.",
+          "status": "covered",
+          "test": "tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated"
+        },
+        {
+          "criterion": "ACC18",
+          "line": 428,
+          "note": "Old tests were kept under targeted `filterwarnings` markers rather than deleted, so the existing assertions still run. The harness reports the whole suite green.",
+          "status": "covered",
+          "test": "tests/test_http.py::TestHTTPUtility::test_is_resource_modified"
+        }
+      ],
+      "id": "T5",
+      "review_rounds": 1,
+      "status": "committed"
+    },
+    {
+      "advisories": [
+        {
+          "file": "CHANGES.rst",
+          "line": 92,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "Changelog omits that ETagSet.from_header now discards invalid unquoted values, a behaviour change from the plan."
+        }
+      ],
+      "attempts": 1,
+      "commit": "8cfb9173afed2ed053d93930cc7e7e4f3447c476",
+      "id": "T6",
+      "status": "committed"
+    }
+  ],
+  "usage": {
+    "cache_creation_input_tokens": 347637,
+    "cache_read_input_tokens": 2206094,
+    "cost_usd": 2.618447,
+    "duration_ms": 577168,
+    "input_tokens": 190,
+    "num_turns": 164,
+    "output_tokens": 100691
+  },
+  "worktree": "C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\results\\arms\\detail\\20261013T194808Z-werkzeug-apply-conditions-range-gated-1\\aih-data\\worktrees\\20261013T194811Z-31a773"
+}

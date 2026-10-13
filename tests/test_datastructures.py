@@ -7,6 +7,8 @@ import typing as t
 from contextlib import contextmanager
 from copy import copy
 from copy import deepcopy
+from datetime import datetime
+from datetime import timezone
 
 import pytest
 
@@ -1098,3 +1100,93 @@ def test_etag_strong_comparison(header: ETagSet, etag: ETag, expect: bool) -> No
 )
 def test_etag_weak_comparison(header: ETagSet, etag: ETag, expect: bool) -> None:
     assert header.contains_weak(etag) is expect
+
+
+def test_etag_set_discards_invalid_unquoted() -> None:
+    s = ETagSet.from_header('foo, "a", W/bar, W/"b", "c" x, baz')
+    assert s.contains_strong("a")
+    assert s.contains_weak("b")
+    assert not s.contains_weak("foo")
+    assert not s.contains_weak("bar")
+    assert not s.contains_weak("c")
+    assert not s.contains_weak("baz")
+
+
+_http_date = datetime(2024, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+
+
+@pytest.mark.parametrize(
+    ("header", "etag", "last_modified", "expect"),
+    [
+        pytest.param('"1"', "1", None, True, id="etag str"),
+        pytest.param('"1"', ETag("1"), None, True, id="etag strong"),
+        pytest.param('"1"', ETag("1", weak=True), None, False, id="etag weak"),
+        pytest.param('"1"', "2", None, False, id="etag different"),
+        pytest.param('"1"', None, None, False, id="etag missing"),
+        pytest.param("Tue, 02 Jan 2024 03:04:05 GMT", None, _http_date, True, id="date"),
+        pytest.param(
+            "Tue, 02 Jan 2024 03:04:05 GMT",
+            None,
+            _http_date.replace(microsecond=500),
+            True,
+            id="date microseconds",
+        ),
+        pytest.param(
+            "Tue, 02 Jan 2024 03:04:05 GMT",
+            None,
+            _http_date.replace(second=6),
+            False,
+            id="date different",
+        ),
+        pytest.param("Tue, 02 Jan 2024 03:04:05 GMT", "1", None, False, id="date none"),
+        pytest.param("", "1", _http_date, False, id="empty"),
+    ],
+)
+def test_if_range_check(
+    header: str, etag: t.Any, last_modified: datetime | None, expect: bool
+) -> None:
+    assert ds.IfRange.from_header(header).check(etag, last_modified) is expect
+
+
+@pytest.mark.parametrize(
+    ("ranges", "length", "expect"),
+    [
+        pytest.param([(0, 5)], 10, (0, 5), id="normal"),
+        pytest.param([(2, 100)], 10, (2, 10), id="clamp stop"),
+        pytest.param([(2, None)], 10, (2, 10), id="open"),
+        pytest.param([(-3, None)], 10, (7, 10), id="suffix"),
+        pytest.param([(-100, None)], 10, (0, 10), id="clamp suffix"),
+        pytest.param([(1, 3), (5, 7)], 10, (1, 3), id="first only"),
+        pytest.param([(10, None)], 10, None, id="start at length"),
+        pytest.param([(20, 30)], 10, None, id="start past length"),
+        pytest.param([(0, 5)], 0, None, id="zero length"),
+        pytest.param([(-3, None)], 0, None, id="suffix zero length"),
+        pytest.param([(0, 5)], None, None, id="unknown length"),
+        pytest.param([], 10, None, id="no ranges"),
+    ],
+)
+def test_range_make_content_range(
+    ranges: list[tuple[int, int | None]],
+    length: int | None,
+    expect: tuple[int, int] | None,
+) -> None:
+    cr = ds.Range("bytes", ranges).make_content_range(length)
+
+    if expect is None:
+        assert cr is None
+    else:
+        assert cr is not None
+        assert (cr.start, cr.stop, cr.length) == (*expect, length)
+        assert cr.units == "bytes"
+
+
+@pytest.mark.parametrize("value", ["", "0-1", "=0-1", "bytes=", "bytes=a-b", "bytes=5-2"])
+def test_range_from_header_invalid(value: str) -> None:
+    assert ds.Range.from_header(value) is None
+
+
+@pytest.mark.parametrize(
+    "value", ["", "0-1/5", " 0-1/5", "bytes 0-1", "bytes 0-5/5", "bytes */*", "bytes a-b/5"]
+)
+def test_content_range_from_header_invalid(value: str) -> None:
+    assert not ds.ContentRange.from_header(value)
