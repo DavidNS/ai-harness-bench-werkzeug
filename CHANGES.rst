@@ -38,6 +38,20 @@ Version 3.2.0
     considered false. ``units`` is always a string. Constructor arguments
     have defaults. The ``set`` and ``unset`` methods are deprecated in favor of
     setting or deleting ``response.content_range``.
+-   Add ``Response.apply_conditions`` and ``Response.apply_range``, which
+    correctly evaluate ``If-Match``, ``If-Unmodified-Since``, ``If-None-Match``,
+    ``If-Modified-Since``, ``Range``, and ``If-Range`` as specified by RFC 9110
+    for all request methods. ``Response.make_conditional``,
+    ``http.is_resource_modified``, and ``http.is_byte_range_valid`` are
+    deprecated. ``Range.make_content_range`` clamps too-large values and uses
+    the first range. ``IfRange.check`` is added. :issue:`3291` :pr:`3308`
+-   ``send_file`` uses the new methods. It detects the name, size, and
+    modification time from file-like objects, seeks them to the start, no longer
+    includes a hash of the path in the ETag, and defaults to the
+    ``application/octet-stream`` mimetype if ``download_name`` is not given.
+-   ``SharedDataMiddleware`` serves files using ``send_file``. ``cache_timeout``
+    is not set by default so that conditional caching works. The ``cache`` and
+    ``fallback_mimetype`` parameters, and ``generate_etag``, are deprecated.
 -   ``Range.range_for_length`` and ``to_content_range_header`` are deprecated.
     Use ``make_content_range`` instead.
 -   All ``Response`` header properties behave consistently and document their

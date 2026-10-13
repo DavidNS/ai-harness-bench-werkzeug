@@ -292,11 +292,19 @@ Finally if you have set all the conditional values, you can make the
 response conditional against a request.  Which means that if the request
 can assure that it has the information already, no data besides the headers
 is sent over the network which saves traffic.  For that you should set at
-least an ETag (which is used for comparison) and the date header and then
-call :class:`~Request.make_conditional` with the request object.
+least an ETag (which is used for comparison) and the last modified time, then
+call :meth:`.Response.apply_conditions` with the request object. If a
+precondition such as ``If-Match`` fails, a
+:exc:`~werkzeug.exceptions.PreconditionFailed` error is raised. If
+``If-None-Match`` or ``If-Modified-Since`` shows the client already has the
+data, the status code is changed to ``304`` and the response body and entity
+headers are removed when the response is sent.
 
-The response is modified accordingly (status code changed, response body
-removed, entity headers removed etc.)
+To support partial downloads, set the ``Content-Length`` and call
+:meth:`.Response.apply_range` with the request object after applying
+conditions. If the ``Range`` header is satisfiable, the response becomes
+``206 Partial Content`` with the requested slice, otherwise
+:exc:`~werkzeug.exceptions.RequestedRangeNotSatisfiable` is raised.
 
 
 Trusting Data
