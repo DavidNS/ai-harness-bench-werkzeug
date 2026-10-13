@@ -293,10 +293,17 @@ response conditional against a request.  Which means that if the request
 can assure that it has the information already, no data besides the headers
 is sent over the network which saves traffic.  For that you should set at
 least an ETag (which is used for comparison) and the date header and then
-call :class:`~Request.make_conditional` with the request object.
+call :meth:`~Response.apply_conditions` with the request object.
 
 The response is modified accordingly (status code changed, response body
-removed, entity headers removed etc.)
+removed, entity headers removed etc.). If a precondition fails, such as
+``If-Match``, :exc:`~werkzeug.exceptions.PreconditionFailed` is raised.
+
+To support range requests, call :meth:`~Response.apply_range` with the request
+object after applying conditions. It sets ``Accept-Ranges: bytes``, and for a
+``GET`` request with a satisfiable ``Range`` header, turns the response into a
+``206 Partial Content`` response. An unsatisfiable range raises
+:exc:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`.
 
 
 Trusting Data
