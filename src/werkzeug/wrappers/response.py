@@ -2,17 +2,15 @@ from __future__ import annotations
 
 import json
 import typing as t
+import warnings
 from http import HTTPStatus
 from types import TracebackType
 from urllib.parse import urljoin
 
 from .._internal import _get_environ
-from ..datastructures.etag import ETagSet
 from ..datastructures.headers import Headers
-from ..datastructures.range import Range
 from ..http import generate_etag
 from ..http import http_date
-from ..http import is_resource_modified
 from ..http import remove_entity_headers
 from ..sansio.response import Response as _SansIOResponse
 from ..urls import iri_to_uri
@@ -491,8 +489,6 @@ class Response(_SansIOResponse):
             location = iri_to_uri(location)
 
             if self.autocorrect_location_header:
-                import warnings
-
                 warnings.warn(
                     "Setting 'Response.autocorrect_location_header' is deprecated"
                     " and will be removed in Werkzeug 4.0. Set 'response.location'"
@@ -655,73 +651,6 @@ class Response(_SansIOResponse):
         if self.status_code == 206:
             self.response = _RangeWrapper(self.response, start, length)  # type: ignore[arg-type]
 
-    def _is_range_request_processable(self, environ: WSGIEnvironment) -> bool:
-        """Return ``True`` if `Range` header is present and if underlying
-        resource is considered unchanged when compared with `If-Range` header.
-        """
-        return "HTTP_RANGE" in environ and (
-            "HTTP_IF_RANGE" not in environ
-            or not is_resource_modified(
-                environ,
-                self.headers.get("ETag"),
-                last_modified=self.headers.get("Last-Modified"),
-                ignore_if_range=False,
-            )
-        )
-
-    def _process_range_request(
-        self,
-        environ: WSGIEnvironment,
-        complete_length: int | None,
-        accept_ranges: bool | str,
-    ) -> bool:
-        """Handle Range Request related headers (RFC7233).  If `Accept-Ranges`
-        header is valid, and Range Request is processable, we set the headers
-        as described by the RFC, and wrap the underlying response in a
-        RangeWrapper.
-
-        Returns ``True`` if Range Request can be fulfilled, ``False`` otherwise.
-
-        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
-                 if `Range` header could not be parsed or satisfied.
-
-        .. versionchanged:: 3.2
-            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
-            even if this is not a satisfiable range request.
-
-        .. versionchanged:: 2.0
-            Returns ``False`` if the length is 0.
-        """
-        from ..exceptions import RequestedRangeNotSatisfiable
-
-        if not accept_ranges:
-            return False
-
-        if accept_ranges is True:
-            accept_ranges = "bytes"
-
-        self.accept_ranges = accept_ranges
-
-        if not (complete_length and self._is_range_request_processable(environ)):
-            return False
-
-        parsed_range = Range.from_header(environ.get("HTTP_RANGE"))
-
-        if parsed_range is None:
-            raise RequestedRangeNotSatisfiable(complete_length)
-
-        content_range = parsed_range.make_content_range(complete_length)
-
-        if content_range is None:
-            raise RequestedRangeNotSatisfiable(complete_length)
-
-        content_length = content_range.stop - content_range.start  # type: ignore[operator]
-        self.content_length = content_length
-        self.content_range = content_range
-        self.status_code = 206
-        self._wrap_range_response(content_range.start, content_length)  # type: ignore[arg-type]
-        return True
-
     def apply_conditions(self, request: Request, *, exists: bool = True) -> None:
         """Evaluate the request's precondition headers against this response's
         ``etag`` and ``last_modified``, in the order given by RFC 9110:
@@ -864,24 +793,45 @@ class Response(_SansIOResponse):
             Range processing is skipped if length is 0 instead of
             raising a 416 Range Not Satisfiable error.
         """
+        warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 3.3."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+
         environ = _get_environ(request_or_environ)
+
         if environ["REQUEST_METHOD"] in ("GET", "HEAD"):
+            if isinstance(request_or_environ, Request):
+                request = request_or_environ
+            else:
+                request = Request(environ)
+
             # if the date is not in the headers, add it now.  We however
             # will not override an already existing header.  Unfortunately
             # this header will be overridden by many WSGI servers including
             # wsgiref.
             if "Date" not in self.headers:
                 self.headers["Date"] = http_date()
-            is206 = self._process_range_request(environ, complete_length, accept_ranges)
-            if not is206 and not is_resource_modified(
-                environ,
-                self.headers.get("ETag"),
-                last_modified=self.headers.get("Last-Modified"),
-            ):
-                if ETagSet.from_header(environ.get("HTTP_IF_MATCH")):
-                    self.status_code = 412
-                else:
-                    self.status_code = 304
+
+            try:
+                self.apply_conditions(request)
+            except PreconditionFailed:
+                self.status_code = 412
+
+            if not accept_ranges:
+                self.headers.remove("Accept-Ranges")
+            else:
+                if accept_ranges is not True:
+                    self.accept_ranges = accept_ranges
+
+                if complete_length:
+                    self.content_length = complete_length
+                    self.apply_range(request)
+
             if (
                 self.automatically_set_content_length
                 and "Content-Length" not in self.headers

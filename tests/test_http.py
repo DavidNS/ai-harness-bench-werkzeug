@@ -403,6 +403,30 @@ class TestHTTPUtility:
         assert http.dump_header({"foo": "bar"}) == "foo=bar"
         assert http.dump_header({"foo*": "UTF-8''bar"}) == "foo*=UTF-8''bar"
 
+    def test_is_resource_modified_deprecated(self):
+        env = create_environ()
+
+        with pytest.deprecated_call(match="is_resource_modified"):
+            assert http.is_resource_modified(env)
+
+    @pytest.mark.parametrize(
+        ("start", "stop", "length", "expect"),
+        [
+            (None, None, None, True),
+            (None, None, 5, True),
+            (None, 3, 5, False),
+            (0, 3, None, True),
+            (3, 3, None, False),
+            (3, 3, 10, False),
+            (0, 3, 10, True),
+            (10, 12, 10, False),
+        ],
+    )
+    def test_is_byte_range_valid_deprecated(self, start, stop, length, expect):
+        with pytest.deprecated_call(match="is_byte_range_valid"):
+            assert http.is_byte_range_valid(start, stop, length) is expect
+
+    @pytest.mark.filterwarnings("ignore:'is_resource_modified':DeprecationWarning")
     def test_is_resource_modified(self):
         env = create_environ()
 
@@ -428,6 +452,7 @@ class TestHTTPUtility:
             env, last_modified=datetime(2008, 1, 1, 13, 00)
         )
 
+    @pytest.mark.filterwarnings("ignore:'is_resource_modified':DeprecationWarning")
     def test_is_resource_modified_for_range_requests(self):
         env = create_environ()
 
