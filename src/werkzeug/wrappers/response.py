@@ -722,6 +722,99 @@ class Response(_SansIOResponse):
         self._wrap_range_response(content_range.start, content_length)  # type: ignore[arg-type]
         return True
 
+    def apply_conditions(self, request: Request, *, exists: bool = True) -> None:
+        """Evaluate the request's precondition headers against this response's
+        ``etag`` and ``last_modified``, in the order given by RFC 9110:
+        ``If-Match``, ``If-Unmodified-Since``, ``If-None-Match``,
+        ``If-Modified-Since``. Also sets ``Accept-Ranges: bytes``.
+
+        A failed precondition raises :exc:`~werkzeug.exceptions.PreconditionFailed`.
+        A satisfied ``If-None-Match`` or ``If-Modified-Since`` on a ``GET`` or
+        ``HEAD`` request changes this response to ``304 Not Modified``.
+
+        :param request: The request to evaluate.
+        :param exists: Whether the resource exists. Used to evaluate a ``*``
+            ETag.
+        :raises: :exc:`~werkzeug.exceptions.PreconditionFailed`
+
+        .. versionadded:: 3.2
+        """
+        from ..exceptions import PreconditionFailed
+
+        self.accept_ranges = "bytes"
+        etag = self.etag
+        last_modified = self.last_modified
+        safe_method = request.method in {"GET", "HEAD"}
+
+        if if_match := request.if_match:
+            if if_match.star_tag:
+                if not exists:
+                    raise PreconditionFailed()
+            elif not if_match.contains_strong(etag):
+                raise PreconditionFailed()
+        elif (date := request.if_unmodified_since) is not None:
+            if last_modified is not None and last_modified.replace(microsecond=0) > date:
+                raise PreconditionFailed()
+
+        if if_none_match := request.if_none_match:
+            if if_none_match.star_tag:
+                matched = exists
+            else:
+                matched = if_none_match.contains_weak(etag)
+
+            if matched:
+                if not safe_method:
+                    raise PreconditionFailed()
+
+                self.status_code = 304
+        elif safe_method and (date := request.if_modified_since) is not None:
+            if last_modified is not None and last_modified.replace(microsecond=0) <= date:
+                self.status_code = 304
+
+    def apply_range(self, request: Request) -> None:
+        """Apply the request's ``Range`` header, after conditions have been
+        applied. Always sets ``Accept-Ranges: bytes``.
+
+        The range is only applied to ``GET`` requests with a ``200`` response
+        and a known, non-zero ``Content-Length``. Only the ``bytes`` unit is
+        supported. If there are multiple ranges, only the first is used. If the
+        request has an ``If-Range`` header, the range is only applied if it
+        matches this response's ``etag`` or ``last_modified``.
+
+        :param request: The request to read the range from.
+        :raises: :exc:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+
+        .. versionadded:: 3.2
+        """
+        from ..exceptions import RequestedRangeNotSatisfiable
+
+        self.accept_ranges = "bytes"
+
+        if request.method != "GET" or self.status_code != 200:
+            return
+
+        length = self.content_length
+
+        if not length:
+            return
+
+        if (range := request.range) is None or range.units != "bytes":
+            return
+
+        if (if_range := request.if_range) and not if_range.check(
+            self.etag, self.last_modified
+        ):
+            return
+
+        if (content_range := range.make_content_range(length)) is None:
+            raise RequestedRangeNotSatisfiable(length)
+
+        content_length = content_range.stop - content_range.start  # type: ignore[operator]
+        self.content_length = content_length
+        self.content_range = content_range
+        self.status_code = 206
+        self._wrap_range_response(content_range.start, content_length)  # type: ignore[arg-type]
+
     def make_conditional(
         self,
         request_or_environ: WSGIEnvironment | Request,
