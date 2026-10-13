@@ -6,7 +6,6 @@ from datetime import datetime
 
 from .._internal import _plain_int
 from ..http import http_date
-from ..http import is_byte_range_valid
 from ..http import parse_date
 from .etag import ETag
 
@@ -52,6 +51,33 @@ class IfRange:
             return cls()
 
         return cls(etag=etag.value)
+
+    def check(self, etag: ETag | str | None, last_modified: datetime | None) -> bool:
+        """Check whether this condition is met by the response's values. True
+        if a strong ETag is equal to ``etag``, or a date is equal to
+        ``last_modified``.
+
+        :param etag: The response's ETag. A ``str`` is an unquoted strong value.
+        :param last_modified: The response's timezone-aware modification time.
+
+        .. versionadded:: 3.2
+        """
+        if self.etag is not None:
+            if isinstance(etag, ETag):
+                if etag.weak:
+                    return False
+
+                etag = etag.value
+
+            return etag == self.etag
+
+        if self.date is not None:
+            return (
+                last_modified is not None
+                and last_modified.replace(microsecond=0) == self.date
+            )
+
+        return False
 
     def to_header(self) -> str:
         """Convert to an ``If-Range`` header value."""
@@ -145,12 +171,15 @@ class Range:
             stop = length
 
             if start < 0:
-                start += length
+                # A suffix longer than the content selects all of it.
+                start = max(start + length, 0)
+        else:
+            stop = min(stop, length)
 
-        if not is_byte_range_valid(start, stop, length):
+        if start >= stop:
             return None
 
-        return start, min(stop, length)
+        return start, stop
 
     def make_content_range(self, length: int | None) -> ContentRange | None:
         """Create a :class:`.ContentRange` with the given complete length. Or
@@ -186,6 +215,9 @@ class Range:
         last_end = 0
         units, _, ranges_str = value.partition("=")
         units = units.strip(" \t").lower()
+
+        if not units:
+            return None
 
         for item in ranges_str.split(","):
             item = item.strip(" \t")
@@ -400,7 +432,7 @@ class ContentRange:
         units, _, range_str = value.partition(" ")
         range_str, sep, length_str = range_str.partition("/")
 
-        if not sep:
+        if not units or not sep:
             return cls()
 
         if length_str == "*":
