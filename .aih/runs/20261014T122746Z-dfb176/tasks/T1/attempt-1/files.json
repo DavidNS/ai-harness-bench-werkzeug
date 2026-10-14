@@ -1,0 +1,62 @@
+[
+  {
+    "action": "modify",
+    "path": "CHANGES.rst",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "docs/quickstart.rst",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "src/werkzeug/datastructures/range.py",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "src/werkzeug/http.py",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "src/werkzeug/middleware/shared_data.py",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "src/werkzeug/utils.py",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "src/werkzeug/wrappers/response.py",
+    "role": "production"
+  },
+  {
+    "action": "modify",
+    "path": "tests/middleware/test_shared_data.py",
+    "role": "test"
+  },
+  {
+    "action": "modify",
+    "path": "tests/test_datastructures.py",
+    "role": "test"
+  },
+  {
+    "action": "modify",
+    "path": "tests/test_http.py",
+    "role": "test"
+  },
+  {
+    "action": "modify",
+    "path": "tests/test_send_file.py",
+    "role": "test"
+  },
+  {
+    "action": "modify",
+    "path": "tests/test_wrappers.py",
+    "role": "test"
+  }
+]

@@ -1,0 +1,77 @@
+.FFF.FF.                                                                 [100%]
+================================== FAILURES ===================================
+__________________________ test_conditional_request ___________________________
+
+    def test_conditional_request():
+        app = SharedDataMiddleware(None, {"/": res_dir})
+        status, headers, data = _run(app)
+        assert status == "200 OK"
+        assert data.strip() == b"FOUND"
+>       assert "max-age" not in headers["Cache-Control"]
+E       AssertionError: assert 'max-age' not in 'max-age=43200, public'
+E         
+E         'max-age' is contained here:
+E           max-age=43200, public
+E         ? +++++++
+
+tests\middleware\test_shared_data.py:33: AssertionError
+_____________________________ test_range_request ______________________________
+
+    def test_range_request():
+        app = SharedDataMiddleware(None, {"/": res_dir})
+        status, headers, data = _run(app, headers={"Range": "bytes=0-1"})
+>       assert status == "206 Partial Content"
+E       AssertionError: assert '200 OK' == '206 Partial Content'
+E         
+E         - 206 Partial Content
+E         + 200 OK
+
+tests\middleware\test_shared_data.py:47: AssertionError
+_____________ test_precondition_failed_and_range_not_satisfiable ______________
+
+    def test_precondition_failed_and_range_not_satisfiable():
+        app = SharedDataMiddleware(None, {"/": res_dir})
+>       status, _, _ = _run(app, headers={"If-Match": '"nope"'})
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\middleware\test_shared_data.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\middleware\test_shared_data.py:22: in _run
+    with closing(app_iter):
+         ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <contextlib.closing object at 0x000001373EF381A0>
+exc_info = (None, None, None)
+
+    def __exit__(self, *exc_info):
+>       self.thing.close()
+        ^^^^^^^^^^^^^^^^
+E       AttributeError: 'list_iterator' object has no attribute 'close'
+
+C:\Users\david\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:360: AttributeError
+____________________________ test_cache_deprecated ____________________________
+
+    def test_cache_deprecated():
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\middleware\test_shared_data.py:67: Failed
+______________________ test_fallback_mimetype_deprecated ______________________
+
+    def test_fallback_mimetype_deprecated():
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\middleware\test_shared_data.py:78: Failed
+=========================== short test summary info ===========================
+FAILED tests/middleware/test_shared_data.py::test_conditional_request - Asser...
+FAILED tests/middleware/test_shared_data.py::test_range_request - AssertionEr...
+FAILED tests/middleware/test_shared_data.py::test_precondition_failed_and_range_not_satisfiable
+FAILED tests/middleware/test_shared_data.py::test_cache_deprecated - Failed: ...
+FAILED tests/middleware/test_shared_data.py::test_fallback_mimetype_deprecated
+5 failed, 3 passed in 0.51s

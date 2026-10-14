@@ -1,0 +1,58 @@
+........................................................................ [ 58%]
+.............F.......FF.............................                     [100%]
+================================== FAILURES ===================================
+_______________ test_make_content_range[bytes=-666-11-expect4] ________________
+
+header = 'bytes=-666', length = 11, expect = ('bytes', 0, 11, 11)
+
+    @pytest.mark.parametrize(
+        ("header", "length", "expect"),
+        [
+            ("bytes=0-4", 11, ("bytes", 0, 5, 11)),
+            ("bytes=6-666", 11, ("bytes", 6, 11, 11)),
+            ("bytes=6-", 11, ("bytes", 6, 11, 11)),
+            ("bytes=-5", 11, ("bytes", 6, 11, 11)),
+            ("bytes=-666", 11, ("bytes", 0, 11, 11)),
+            ("bytes=0-1,4-5", 11, ("bytes", 0, 2, 11)),
+            ("items=0-1", 11, ("items", 0, 2, 11)),
+            ("bytes=11-", 11, None),
+            ("bytes=20-30", 11, None),
+            ("bytes=0-4", 0, None),
+            ("bytes=0-4", None, None),
+        ],
+    )
+    def test_make_content_range(header, length, expect):
+        cr = ds.Range.from_header(header).make_content_range(length)
+    
+        if expect is None:
+            assert cr is None
+        else:
+>           assert (cr.units, cr.start, cr.stop, cr.length) == expect
+                    ^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'units'
+
+tests\test_datastructures.py:1072: AttributeError
+__________________________ test_if_range_check_etag ___________________________
+
+    def test_if_range_check_etag():
+        if_range = ds.IfRange.from_header('"abc"')
+>       assert if_range.check("abc")
+               ^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1081: AttributeError
+__________________________ test_if_range_check_date ___________________________
+
+    def test_if_range_check_date():
+        when = datetime.datetime(2024, 1, 1, 12, tzinfo=datetime.timezone.utc)
+        if_range = ds.IfRange(date=when)
+>       assert if_range.check(None, when)
+               ^^^^^^^^^^^^^^
+E       AttributeError: 'IfRange' object has no attribute 'check'
+
+tests\test_datastructures.py:1094: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/test_datastructures.py::test_make_content_range[bytes=-666-11-expect4]
+FAILED tests/test_datastructures.py::test_if_range_check_etag - AttributeErro...
+FAILED tests/test_datastructures.py::test_if_range_check_date - AttributeErro...
+3 failed, 121 passed in 0.51s
