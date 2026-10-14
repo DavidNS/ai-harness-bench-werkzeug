@@ -1,0 +1,90 @@
+F.FFF.F..                                                                [100%]
+================================== FAILURES ===================================
+_________________________ test_no_max_age_by_default __________________________
+
+app = <werkzeug.middleware.shared_data.SharedDataMiddleware object at 0x00000168FE5E6F00>
+
+    def test_no_max_age_by_default(app):
+        status, headers, data = _serve(app)
+        assert status == "200 OK"
+        headers = dict(headers)
+>       assert "max-age" not in headers["Cache-Control"]
+E       AssertionError: assert 'max-age' not in 'max-age=43200, public'
+E         
+E         'max-age' is contained here:
+E           max-age=43200, public
+E         ? +++++++
+
+tests\middleware\test_shared_data.py:32: AssertionError
+______________________________ test_conditional _______________________________
+
+app = <werkzeug.middleware.shared_data.SharedDataMiddleware object at 0x00000168FE6C5310>
+
+    def test_conditional(app):
+        _, headers, _ = _serve(app)
+        etag = dict(headers)["ETag"]
+>       status, headers, data = _serve(app, **{"If-None-Match": etag})
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\middleware\test_shared_data.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\middleware\test_shared_data.py:16: in _serve
+    with closing(app_iter) as app_iter:
+         ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <contextlib.closing object at 0x00000168FE5E7620>
+exc_info = (None, None, None)
+
+    def __exit__(self, *exc_info):
+>       self.thing.close()
+        ^^^^^^^^^^^^^^^^
+E       AttributeError: 'list_iterator' object has no attribute 'close'
+
+C:\Users\david\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:360: AttributeError
+_________________________________ test_range __________________________________
+
+app = <werkzeug.middleware.shared_data.SharedDataMiddleware object at 0x00000168FE6C6330>
+
+    def test_range(app):
+        status, headers, data = _serve(app, Range="bytes=0-1")
+>       assert status == "206 Partial Content"
+E       AssertionError: assert '200 OK' == '206 Partial Content'
+E         
+E         - 206 Partial Content
+E         + 200 OK
+
+tests\middleware\test_shared_data.py:59: AssertionError
+_________________________ test_range_not_satisfiable __________________________
+
+app = <werkzeug.middleware.shared_data.SharedDataMiddleware object at 0x00000168FE6C5790>
+
+    def test_range_not_satisfiable(app):
+        status, headers, data = _serve(app, Range="bytes=1000-")
+>       assert status == "416 Requested Range Not Satisfiable"
+E       AssertionError: assert '200 OK' == '416 Requeste...t Satisfiable'
+E         
+E         - 416 Requested Range Not Satisfiable
+E         + 200 OK
+
+tests\middleware\test_shared_data.py:66: AssertionError
+_________________________ test_deprecated_parameters __________________________
+
+tmp_path = WindowsPath('C:/Users/david/AppData/Local/Temp/pytest-of-david/pytest-363/test_deprecated_parameters0')
+
+    def test_deprecated_parameters(tmp_path):
+        (tmp_path / "data.unknownext").write_bytes(b"x")
+    
+>       with pytest.deprecated_call(match="'cache'"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\middleware\test_shared_data.py:80: Failed
+=========================== short test summary info ===========================
+FAILED tests/middleware/test_shared_data.py::test_no_max_age_by_default - Ass...
+FAILED tests/middleware/test_shared_data.py::test_conditional - AttributeErro...
+FAILED tests/middleware/test_shared_data.py::test_range - AssertionError: ass...
+FAILED tests/middleware/test_shared_data.py::test_range_not_satisfiable - Ass...
+FAILED tests/middleware/test_shared_data.py::test_deprecated_parameters - Fai...
+5 failed, 4 passed in 0.52s

@@ -1,0 +1,1195 @@
+..................................FFFFFFFFFF........................FF.. [ 20%]
+........................................................................ [ 41%]
+...............FF....................................................... [ 62%]
+....F...............F................................................... [ 82%]
+............................................................             [100%]
+================================== FAILURES ===================================
+_____________________________ test_etag_response ______________________________
+
+    def test_etag_response():
+        response = wrappers.Response("Hello World")
+        assert response.etag is None
+        response.add_etag()
+        assert response.etag.value == "4Wf2jWVj11uyXzqknCnvYS1BNS3ABgbefL1jC7JmX1E"
+        assert not response.cache_control
+        response.cache_control.must_revalidate = True
+        response.cache_control.max_age = 60
+        response.headers["Content-Length"] = len(response.get_data())
+        assert response.headers["Cache-Control"] in (
+            "must-revalidate, max-age=60",
+            "max-age=60, must-revalidate",
+        )
+    
+        assert "Date" not in response.headers
+        env = create_environ()
+        env.update(
+            {"REQUEST_METHOD": "GET", "HTTP_IF_NONE_MATCH": response.headers["ETag"]}
+        )
+>       response.make_conditional(env)
+
+tests\test_wrappers.py:531: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 11 bytes [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+accept_ranges = False, complete_length = None
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+___________________________ test_etag_response_412 ____________________________
+
+    def test_etag_response_412():
+        response = wrappers.Response("Hello World")
+        assert response.etag is None
+        response.add_etag()
+        assert response.etag.value == "4Wf2jWVj11uyXzqknCnvYS1BNS3ABgbefL1jC7JmX1E"
+        assert not response.cache_control
+        response.cache_control.must_revalidate = True
+        response.cache_control.max_age = 60
+        response.headers["Content-Length"] = len(response.get_data())
+        assert response.headers["Cache-Control"] in (
+            "must-revalidate, max-age=60",
+            "max-age=60, must-revalidate",
+        )
+    
+        assert "Date" not in response.headers
+        env = create_environ()
+        env.update({"REQUEST_METHOD": "GET", "HTTP_IF_MATCH": '"xyz"'})
+>       response.make_conditional(env)
+
+tests\test_wrappers.py:572: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 11 bytes [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+accept_ranges = False, complete_length = None
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+________________________ test_advertise_accept_ranges _________________________
+
+    def test_advertise_accept_ranges() -> None:
+        env = create_environ()
+        response = wrappers.Response()
+>       response.make_conditional(env, accept_ranges=True)
+
+tests\test_wrappers.py:600: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 0 bytes [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+accept_ranges = True, complete_length = None
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+__________________________ test_range_request_basic ___________________________
+
+    def test_range_request_basic():
+        env = create_environ()
+        response = wrappers.Response("Hello World")
+        env["HTTP_RANGE"] = "bytes=0-4"
+>       response.make_conditional(env, accept_ranges=True, complete_length=11)
+
+tests\test_wrappers.py:610: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 11 bytes [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+accept_ranges = True, complete_length = 11
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+_______________________ test_range_request_out_of_bound _______________________
+
+    def test_range_request_out_of_bound():
+        env = create_environ()
+        response = wrappers.Response("Hello World")
+        env["HTTP_RANGE"] = "bytes=6-666"
+>       response.make_conditional(env, accept_ranges=True, complete_length=11)
+
+tests\test_wrappers.py:622: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 11 bytes [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+accept_ranges = True, complete_length = 11
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+________________________ test_range_request_with_file _________________________
+
+    def test_range_request_with_file():
+        env = create_environ()
+        resources = os.path.join(os.path.dirname(__file__), "res")
+        fname = os.path.join(resources, "test.txt")
+        with open(fname, "rb") as f:
+            fcontent = f.read()
+        with open(fname, "rb") as f:
+            response = wrappers.Response(f)
+            env["HTTP_RANGE"] = "bytes=0-0"
+>           response.make_conditional(
+                env, accept_ranges=True, complete_length=len(fcontent)
+            )
+
+tests\test_wrappers.py:639: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response streamed [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+accept_ranges = True, complete_length = 6
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+____________________ test_range_request_with_complete_file ____________________
+
+    def test_range_request_with_complete_file():
+        env = create_environ()
+        resources = os.path.join(os.path.dirname(__file__), "res")
+        fname = os.path.join(resources, "test.txt")
+        with open(fname, "rb") as f:
+            fcontent = f.read()
+        with open(fname, "rb") as f:
+            fsize = os.path.getsize(fname)
+            response = wrappers.Response(f)
+            env["HTTP_RANGE"] = f"bytes=0-{fsize - 1}"
+>           response.make_conditional(env, accept_ranges=True, complete_length=fsize)
+
+tests\test_wrappers.py:659: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response streamed [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+accept_ranges = True, complete_length = 6
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+______________ test_range_request_without_complete_length[None] _______________
+
+value = None
+
+    @pytest.mark.parametrize("value", [None, 0])
+    def test_range_request_without_complete_length(value):
+        env = create_environ(headers={"Range": "bytes=0-10"})
+        response = wrappers.Response("Hello World")
+>       response.make_conditional(env, accept_ranges=True, complete_length=value)
+
+tests\test_wrappers.py:671: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 11 bytes [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+accept_ranges = True, complete_length = None
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+________________ test_range_request_without_complete_length[0] ________________
+
+value = 0
+
+    @pytest.mark.parametrize("value", [None, 0])
+    def test_range_request_without_complete_length(value):
+        env = create_environ(headers={"Range": "bytes=0-10"})
+        response = wrappers.Response("Hello World")
+>       response.make_conditional(env, accept_ranges=True, complete_length=value)
+
+tests\test_wrappers.py:671: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 11 bytes [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+accept_ranges = True, complete_length = 0
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+_________________________ test_invalid_range_request __________________________
+
+    def test_invalid_range_request():
+        env = create_environ()
+        response = wrappers.Response("Hello World")
+        env["HTTP_RANGE"] = "bytes=-"
+        with pytest.raises(RequestedRangeNotSatisfiable):
+>           response.make_conditional(env, accept_ranges=True, complete_length=11)
+
+tests\test_wrappers.py:681: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 11 bytes [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+accept_ranges = True, complete_length = 11
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+_________________________ test_stream_content_length __________________________
+
+    def test_stream_content_length():
+        resp = wrappers.Response()
+        resp.stream.writelines(["foo", "bar", "baz"])
+        assert resp.get_wsgi_headers({})["Content-Length"] == "9"
+    
+        resp = wrappers.Response()
+>       resp.make_conditional({"REQUEST_METHOD": "GET"})
+
+tests\test_wrappers.py:1079: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Response 0 bytes [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET'}, accept_ranges = False
+complete_length = None
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+______________________ test_disabled_auto_content_length ______________________
+
+    def test_disabled_auto_content_length():
+        class MyResponse(wrappers.Response):
+            automatically_set_content_length = False
+    
+        resp = MyResponse("Hello World!")
+        assert resp.content_length is None
+    
+        resp = MyResponse(["Hello World!"])
+        assert resp.content_length is None
+        assert "Content-Length" not in resp.get_wsgi_headers({})
+    
+        resp = MyResponse()
+>       resp.make_conditional({"REQUEST_METHOD": "GET"})
+
+tests\test_wrappers.py:1100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <MyResponse 0 bytes [200 OK]>
+request_or_environ = {'REQUEST_METHOD': 'GET'}, accept_ranges = False
+complete_length = None
+
+    def make_conditional(
+        self,
+        request_or_environ: WSGIEnvironment | Request,
+        accept_ranges: bool | str = False,
+        complete_length: int | None = None,
+    ) -> Response:
+        """Make the response conditional to the request.  This method works
+        best if an etag was defined for the response already.  The `add_etag`
+        method can be used to do that.  If called without etag just the date
+        header is set.
+    
+        This does nothing if the request method in the request or environ is
+        anything but GET or HEAD.
+    
+        For optimal performance when handling range requests, it's recommended
+        that your response data object implements `seekable`, `seek` and `tell`
+        methods as described by :py:class:`io.IOBase`.  Objects returned by
+        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+    
+        It does not remove the body of the response because that's something
+        the :meth:`__call__` function does for us automatically.
+    
+        Returns self so that you can do ``return resp.make_conditional(req)``
+        but modifies the object in-place.
+    
+        :param request_or_environ: a request object or WSGI environment to be
+                                   used to make the response conditional
+                                   against.
+        :param accept_ranges: This parameter dictates the value of
+                              `Accept-Ranges` header. If ``False`` (default),
+                              the header is not set. If ``True``, it will be set
+                              to ``"bytes"``. If it's a string, it will use this
+                              value.
+        :param complete_length: Will be used only in valid Range Requests.
+                                It will set `Content-Range` complete length
+                                value and compute `Content-Length` real value.
+                                This parameter is mandatory for successful
+                                Range Requests completion.
+        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+                 if `Range` header could not be parsed or satisfied.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
+            :meth:`apply_range` instead.
+    
+        .. versionchanged:: 3.2
+            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+            even if this is not a satisfiable range request.
+    
+        .. versionchanged:: 2.0
+            Range processing is skipped if length is 0 instead of
+            raising a 416 Range Not Satisfiable error.
+        """
+        import warnings
+    
+        from ..exceptions import PreconditionFailed
+        from .request import Request
+    
+>       warnings.warn(
+            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'apply_conditions' and 'apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'make_conditional' is deprecated and will be removed in Werkzeug 4.0. Use 'apply_conditions' and 'apply_range' instead.
+
+src\werkzeug\wrappers\response.py:818: DeprecationWarning
+__________________ TestHTTPUtility.test_is_resource_modified __________________
+
+self = <test_http.TestHTTPUtility object at 0x0000014668A924B0>
+
+    def test_is_resource_modified(self):
+        env = create_environ()
+    
+        # any method is allowed
+        env["REQUEST_METHOD"] = "POST"
+>       assert http.is_resource_modified(env)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_http.py:411: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+environ = {'REQUEST_METHOD': 'POST', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+etag = None, data = None, last_modified = None, ignore_if_range = True
+
+    def is_resource_modified(
+        environ: WSGIEnvironment,
+        etag: str | None = None,
+        data: bytes | None = None,
+        last_modified: datetime | str | None = None,
+        ignore_if_range: bool = True,
+    ) -> bool:
+        """Convenience method for conditional requests.
+    
+        :param environ: the WSGI environment of the request to be checked.
+        :param etag: the ETag for the response for comparison.
+        :param data: or alternatively the data of the response to automatically
+                     generate an ETag value using :func:`generate_etag`.
+        :param last_modified: an optional date of the last modification.
+        :param ignore_if_range: If `False`, `If-Range` header will be taken into
+                                account.
+        :return: `True` if the resource was modified, otherwise `False`.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use ``Response.apply_conditions`` and
+            ``Response.apply_range`` instead.
+    
+        .. versionchanged:: 1.0
+            The check is run for methods other than ``GET`` and ``HEAD``.
+        """
+        import warnings
+    
+>       warnings.warn(
+            "'is_resource_modified' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'Response.apply_conditions' and 'Response.apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'is_resource_modified' is deprecated and will be removed in Werkzeug 4.0. Use 'Response.apply_conditions' and 'Response.apply_range' instead.
+
+src\werkzeug\http.py:1178: DeprecationWarning
+________ TestHTTPUtility.test_is_resource_modified_for_range_requests _________
+
+self = <test_http.TestHTTPUtility object at 0x0000014668A6FBC0>
+
+    def test_is_resource_modified_for_range_requests(self):
+        env = create_environ()
+    
+        env["HTTP_IF_MODIFIED_SINCE"] = http.http_date(datetime(2008, 1, 1, 12, 30))
+        env["HTTP_IF_RANGE"] = f'"{http.generate_etag(b"awesome_if_range")}"'
+        # Range header not present, so If-Range should be ignored
+>       assert not http.is_resource_modified(
+            env,
+            data=b"not_the_same",
+            ignore_if_range=False,
+            last_modified=datetime(2008, 1, 1, 12, 30),
+        )
+
+tests\test_http.py:437: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+environ = {'REQUEST_METHOD': 'GET', 'SCRIPT_NAME': '', 'PATH_INFO': '/', 'QUERY_STRING': '', ...}
+etag = None, data = b'not_the_same'
+last_modified = datetime.datetime(2008, 1, 1, 12, 30), ignore_if_range = False
+
+    def is_resource_modified(
+        environ: WSGIEnvironment,
+        etag: str | None = None,
+        data: bytes | None = None,
+        last_modified: datetime | str | None = None,
+        ignore_if_range: bool = True,
+    ) -> bool:
+        """Convenience method for conditional requests.
+    
+        :param environ: the WSGI environment of the request to be checked.
+        :param etag: the ETag for the response for comparison.
+        :param data: or alternatively the data of the response to automatically
+                     generate an ETag value using :func:`generate_etag`.
+        :param last_modified: an optional date of the last modification.
+        :param ignore_if_range: If `False`, `If-Range` header will be taken into
+                                account.
+        :return: `True` if the resource was modified, otherwise `False`.
+    
+        .. deprecated:: 3.2
+            Will be removed in Werkzeug 4.0. Use ``Response.apply_conditions`` and
+            ``Response.apply_range`` instead.
+    
+        .. versionchanged:: 1.0
+            The check is run for methods other than ``GET`` and ``HEAD``.
+        """
+        import warnings
+    
+>       warnings.warn(
+            "'is_resource_modified' is deprecated and will be removed in Werkzeug 4.0."
+            " Use 'Response.apply_conditions' and 'Response.apply_range' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+E       DeprecationWarning: 'is_resource_modified' is deprecated and will be removed in Werkzeug 4.0. Use 'Response.apply_conditions' and 'Response.apply_range' instead.
+
+src\werkzeug\http.py:1178: DeprecationWarning
+________________________ test_object_without_mimetype _________________________
+
+    def test_object_without_mimetype():
+>       with pytest.raises(TypeError, match="detect the MIME type"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE TypeError
+
+tests\test_send_file.py:55: Failed
+__________________________________ test_etag __________________________________
+
+    def test_etag():
+        with send_file(txt_path, environ) as rv:
+>           assert rv.headers["ETag"].count("-") == 2
+E           assert 1 == 2
+E            +  where 1 = <built-in method count of str object at 0x00000146693857B0>('-')
+E            +    where <built-in method count of str object at 0x00000146693857B0> = '"1791982168.4733052-6"'.count
+
+tests\test_send_file.py:149: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_wrappers.py::test_etag_response - DeprecationWarning: 'make...
+FAILED tests/test_wrappers.py::test_etag_response_412 - DeprecationWarning: '...
+FAILED tests/test_wrappers.py::test_advertise_accept_ranges - DeprecationWarn...
+FAILED tests/test_wrappers.py::test_range_request_basic - DeprecationWarning:...
+FAILED tests/test_wrappers.py::test_range_request_out_of_bound - DeprecationW...
+FAILED tests/test_wrappers.py::test_range_request_with_file - DeprecationWarn...
+FAILED tests/test_wrappers.py::test_range_request_with_complete_file - Deprec...
+FAILED tests/test_wrappers.py::test_range_request_without_complete_length[None]
+FAILED tests/test_wrappers.py::test_range_request_without_complete_length[0]
+FAILED tests/test_wrappers.py::test_invalid_range_request - DeprecationWarnin...
+FAILED tests/test_wrappers.py::test_stream_content_length - DeprecationWarnin...
+FAILED tests/test_wrappers.py::test_disabled_auto_content_length - Deprecatio...
+FAILED tests/test_http.py::TestHTTPUtility::test_is_resource_modified - Depre...
+FAILED tests/test_http.py::TestHTTPUtility::test_is_resource_modified_for_range_requests
+FAILED tests/test_send_file.py::test_object_without_mimetype - Failed: DID NO...
+FAILED tests/test_send_file.py::test_etag - assert 1 == 2
+16 failed, 332 passed in 1.07s

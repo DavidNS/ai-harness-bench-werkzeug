@@ -7,6 +7,8 @@ import typing as t
 from contextlib import contextmanager
 from copy import copy
 from copy import deepcopy
+from datetime import datetime
+from datetime import timezone
 
 import pytest
 
@@ -1098,3 +1100,84 @@ def test_etag_strong_comparison(header: ETagSet, etag: ETag, expect: bool) -> No
 )
 def test_etag_weak_comparison(header: ETagSet, etag: ETag, expect: bool) -> None:
     assert header.contains_weak(etag) is expect
+
+
+def test_etag_set_discards_unquoted() -> None:
+    header = ETagSet.from_header('abc, "def", W/ghi, W/"jkl"')
+    assert header.contains_strong("def")
+    assert header.contains_weak("jkl")
+    assert not header.contains_weak("abc")
+    assert not header.contains_weak("ghi")
+
+
+@pytest.mark.parametrize(
+    ("header", "length", "expect"),
+    [
+        ("bytes=0-4", 11, (0, 5)),
+        ("bytes=6-666", 11, (6, 11)),
+        ("bytes=6-", 11, (6, 11)),
+        ("bytes=-5", 11, (6, 11)),
+        ("bytes=-666", 11, (0, 11)),
+        ("bytes=0-1, 4-5", 11, (0, 2)),
+        ("bytes=11-", 11, None),
+        ("bytes=11-20", 11, None),
+        ("bytes=0-", 0, None),
+        ("bytes=-5", 0, None),
+        ("bytes=0-4", None, None),
+    ],
+)
+def test_make_content_range(
+    header: str, length: int | None, expect: tuple[int, int] | None
+) -> None:
+    r = ds.Range.from_header(header)
+    cr = r.make_content_range(length)
+
+    if expect is None:
+        assert cr is None
+    else:
+        assert (cr.start, cr.stop) == expect
+        assert cr.length == length
+        assert cr.units == "bytes"
+
+
+def test_make_content_range_no_ranges() -> None:
+    assert ds.Range("bytes", []).make_content_range(10) is None
+
+
+_modified = datetime(2024, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+
+
+@pytest.mark.parametrize(
+    ("if_range", "etag", "last_modified", "expect"),
+    [
+        pytest.param(ds.IfRange("a"), ETag("a"), None, True, id="etag, same"),
+        pytest.param(ds.IfRange("a"), "a", None, True, id="etag, str"),
+        pytest.param(ds.IfRange("a"), ETag("b"), None, False, id="etag, different"),
+        pytest.param(ds.IfRange("a"), ETag("a", True), None, False, id="etag, weak"),
+        pytest.param(ds.IfRange("a"), None, _modified, False, id="etag, missing"),
+        pytest.param(ds.IfRange(date=_modified), None, _modified, True, id="date"),
+        pytest.param(
+            ds.IfRange(date=_modified),
+            None,
+            _modified.replace(microsecond=5, tzinfo=None),
+            True,
+            id="date, naive microsecond",
+        ),
+        pytest.param(
+            ds.IfRange(date=_modified),
+            None,
+            _modified.replace(day=3),
+            False,
+            id="date, different",
+        ),
+        pytest.param(ds.IfRange(date=_modified), None, None, False, id="date, missing"),
+        pytest.param(ds.IfRange(), ETag("a"), _modified, False, id="empty"),
+    ],
+)
+def test_if_range_check(
+    if_range: ds.IfRange,
+    etag: ETag | str | None,
+    last_modified: datetime | None,
+    expect: bool,
+) -> None:
+    assert if_range.check(etag, last_modified) is expect

@@ -1,0 +1,48 @@
+..FFF....                                                                [100%]
+================================== FAILURES ===================================
+______________________________ test_conditional _______________________________
+
+app = <werkzeug.middleware.shared_data.SharedDataMiddleware object at 0x00000177BF6F61E0>
+
+    def test_conditional(app):
+        _, headers, _ = _serve(app)
+        etag = dict(headers)["ETag"]
+        status, headers, data = _serve(app, **{"If-None-Match": etag})
+>       assert status == "304 NOT MODIFIED"
+E       AssertionError: assert '304 Not Modified' == '304 NOT MODIFIED'
+E         
+E         - 304 NOT MODIFIED
+E         + 304 Not Modified
+
+tests\middleware\test_shared_data.py:50: AssertionError
+_________________________________ test_range __________________________________
+
+app = <werkzeug.middleware.shared_data.SharedDataMiddleware object at 0x00000177BF6F78F0>
+
+    def test_range(app):
+        status, headers, data = _serve(app, Range="bytes=0-1")
+>       assert status == "206 PARTIAL CONTENT"
+E       AssertionError: assert '206 Partial Content' == '206 PARTIAL CONTENT'
+E         
+E         - 206 PARTIAL CONTENT
+E         + 206 Partial Content
+
+tests\middleware\test_shared_data.py:59: AssertionError
+_________________________ test_range_not_satisfiable __________________________
+
+app = <werkzeug.middleware.shared_data.SharedDataMiddleware object at 0x00000177BF741BB0>
+
+    def test_range_not_satisfiable(app):
+        status, headers, data = _serve(app, Range="bytes=1000-")
+>       assert status == "416 REQUESTED RANGE NOT SATISFIABLE"
+E       AssertionError: assert '416 Requeste...t Satisfiable' == '416 REQUESTE...T SATISFIABLE'
+E         
+E         - 416 REQUESTED RANGE NOT SATISFIABLE
+E         + 416 Requested Range Not Satisfiable
+
+tests\middleware\test_shared_data.py:66: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/middleware/test_shared_data.py::test_conditional - AssertionErro...
+FAILED tests/middleware/test_shared_data.py::test_range - AssertionError: ass...
+FAILED tests/middleware/test_shared_data.py::test_range_not_satisfiable - Ass...
+3 failed, 6 passed in 0.22s

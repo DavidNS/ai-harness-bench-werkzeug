@@ -4,9 +4,9 @@ import collections.abc as cabc
 import typing as t
 from datetime import datetime
 
+from .._internal import _dt_as_utc
 from .._internal import _plain_int
 from ..http import http_date
-from ..http import is_byte_range_valid
 from ..http import parse_date
 from .etag import ETag
 
@@ -63,6 +63,33 @@ class IfRange:
 
         return ""
 
+    def check(self, etag: ETag | str | None, last_modified: datetime | None) -> bool:
+        """Check whether the ``If-Range`` condition is met by the response's
+        values. Only a strong ETag equal to the condition, or a date equal to
+        the last modified time, meets it.
+
+        :param etag: The response's ETag. A ``str`` is assumed to be an
+            unquoted strong value.
+        :param last_modified: The response's last modified time.
+
+        .. versionadded:: 3.2
+        """
+        if self.etag is not None:
+            if isinstance(etag, ETag):
+                if etag.weak:
+                    return False
+
+                etag = etag.value
+
+            return etag is not None and self.etag == etag
+
+        if self.date is not None and last_modified is not None:
+            # HTTP dates don't have microseconds, naive datetimes are UTC.
+            last_modified = _dt_as_utc(last_modified.replace(microsecond=0))
+            return self.date == last_modified
+
+        return False
+
     def __bool__(self) -> bool:
         return self.etag is not None or self.date is not None
 
@@ -108,7 +135,7 @@ class Range:
         if a valid range cannot be constructed.
 
         This will generate a range regardless of the value of :attr:`units`.
-        However, :meth:`.Response.make_conditional` can only handle ``bytes``.
+        However, :meth:`.Response.apply_range` can only handle ``bytes``.
 
         If there are multiple ranges in the header, this will only return the
         first range.
@@ -145,22 +172,26 @@ class Range:
             stop = length
 
             if start < 0:
-                start += length
+                # A suffix longer than the content selects all of it.
+                start = max(0, start + length)
+        else:
+            stop = min(stop, length)
 
-        if not is_byte_range_valid(start, stop, length):
+        if not 0 <= start < stop:
             return None
 
-        return start, min(stop, length)
+        return start, stop
 
     def make_content_range(self, length: int | None) -> ContentRange | None:
         """Create a :class:`.ContentRange` with the given complete length. Or
         ``None`` if a valid range cannot be constructed.
 
         This will generate a range regardless of the value of :attr:`units`.
-        However, :meth:`.Response.make_conditional` can only handle ``bytes``.
+        However, :meth:`.Response.apply_range` can only handle ``bytes``.
 
         If there are multiple ranges in the header, this will only return the
-        first range.
+        first range. A ``stop`` or suffix length that is too large is clamped
+        to the complete length.
 
         .. versionchanged:: 3.2
             Allows units other than ``bytes``. Will return the first range if

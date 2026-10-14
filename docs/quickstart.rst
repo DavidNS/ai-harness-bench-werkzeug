@@ -292,11 +292,30 @@ Finally if you have set all the conditional values, you can make the
 response conditional against a request.  Which means that if the request
 can assure that it has the information already, no data besides the headers
 is sent over the network which saves traffic.  For that you should set at
-least an ETag (which is used for comparison) and the date header and then
-call :class:`~Request.make_conditional` with the request object.
+least an ETag (which is used for comparison) or the ``Last-Modified`` date,
+and then call :meth:`.Response.apply_conditions` with the request object.
 
-The response is modified accordingly (status code changed, response body
-removed, entity headers removed etc.)
+The response is modified accordingly (status code changed to ``304``, response
+body removed, entity headers removed etc.) If a precondition such as
+``If-Match`` fails, :exc:`~werkzeug.exceptions.PreconditionFailed` is raised
+instead. This is checked for all request methods, and ``exists`` can be passed
+to say whether the resource exists, for the ``*`` ETag value.
+
+If the response has a known ``Content-Length``, call
+:meth:`.Response.apply_range` after that to handle a ``Range`` request. It
+always sets ``Accept-Ranges: bytes``. For a ``GET`` request with a satisfiable
+``Range``, the response is changed to ``206 Partial Content`` with the
+requested slice of the data. An unsatisfiable range raises
+:exc:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`.
+
+.. code-block:: python
+
+    response = Response(data)
+    response.add_etag()
+    response.apply_conditions(request)
+    response.apply_range(request)
+
+:meth:`.Response.make_conditional` is deprecated in favor of these two methods.
 
 
 Trusting Data

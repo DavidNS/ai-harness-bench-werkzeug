@@ -1,0 +1,54 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC1",
+      "note": "tests/test_wrappers.py test_apply_conditions_if_match, _if_match_star, _if_unmodified_since, _if_none_match_failed, _if_none_match_star, _if_match_failed_before_if_none_match, _if_match_before_if_unmodified_since. They cover all methods, RFC order and the star ETag with exists True/False."
+    },
+    {
+      "criterion": "ACC2",
+      "note": "test_apply_conditions_if_none_match_not_modified, test_apply_conditions_if_modified_since and test_etag_response (304 with Accept-Ranges: bytes; entity headers are removed when the response is sent)."
+    },
+    {
+      "criterion": "ACC3",
+      "note": "test_apply_range_accept_ranges, _only_get, _only_200, _unknown_length and _zero_length."
+    },
+    {
+      "criterion": "ACC4",
+      "note": "test_apply_range_basic, _first_only, _clamped, _unsatisfiable, _other_units, _with_file and _invalid_header_ignored. A syntactically invalid Range header is ignored (RFC behaviour), not a 416 as the old make_conditional did."
+    },
+    {
+      "criterion": "ACC5",
+      "note": "test_apply_range_if_range_etag (strong match, mismatch, weak ETag) and test_apply_range_if_range_date."
+    },
+    {
+      "criterion": "ACC6",
+      "note": "test_make_conditional_deprecated, test_make_conditional_deprecated_range, test_is_resource_modified_deprecated and test_is_byte_range_valid_deprecated all use pytest.deprecated_call. The old is_resource_modified tests now ignore the warning."
+    },
+    {
+      "criterion": "ACC7",
+      "note": "tests/test_datastructures.py test_make_content_range (clamping, suffix, first range, invalid) and test_etag_set_discards_unquoted. from_header validation of Range and ContentRange already existed and is unchanged. is_byte_range_valid is no longer imported by range.py."
+    },
+    {
+      "criterion": "ACC8",
+      "note": "test_if_range_check parametrized over strong, weak, str and missing ETags and over date cases, including naive datetimes and microseconds."
+    },
+    {
+      "criterion": "ACC9",
+      "note": "tests/test_send_file.py test_object_without_mimetype, test_object_detects_name_size_mtime, test_object_bytesio_size, test_object_unknown_size, test_object_without_fileno_or_seek, test_object_seeks_to_start, test_object_range, test_path_range, test_etag, test_range_not_satisfiable_closes_file, test_precondition_failed_closes_file, test_if_none_match_not_modified and test_not_conditional."
+    },
+    {
+      "criterion": "ACC10",
+      "note": "tests/middleware/test_shared_data.py test_no_max_age_by_default, test_cache_timeout, test_conditional (304 and 412), test_range, test_range_not_satisfiable, test_fallback_mimetype_default and test_deprecated_parameters."
+    },
+    {
+      "criterion": "ACC11",
+      "note": "docs/quickstart.rst documents apply_conditions and apply_range. CHANGES.rst has a 3.2.0 entry. docs/http.rst is unchanged (the deprecated functions are still autodocumented)."
+    },
+    {
+      "criterion": "ACC12",
+      "note": "New tests cover apply_conditions and apply_range, send_file tests are updated, and the old make_conditional tests are replaced. The five target test files and the full `aih check tests` run both pass."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Added Response.apply_conditions and apply_range plus IfRange.check. Range.make_content_range now clamps, uses the first range and validates itself. send_file and SharedDataMiddleware now use the new methods. make_conditional, is_resource_modified and is_byte_range_valid are deprecated. The quickstart docs and CHANGES.rst are updated. `aih check tests` passes (1093 passed, 25 deselected); the five target files pass on their own (435). I did not check the new tests against the base commit."
+}

@@ -1,0 +1,854 @@
+..................................FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF [ 53%]
+FFFFFFFFFFFFFFF.........................F......................          [100%]
+================================== FAILURES ===================================
+_____________________________ test_etag_response ______________________________
+
+    def test_etag_response():
+        response = wrappers.Response("Hello World")
+        assert response.etag is None
+        response.add_etag()
+        assert response.etag.value == "4Wf2jWVj11uyXzqknCnvYS1BNS3ABgbefL1jC7JmX1E"
+        assert not response.cache_control
+        response.cache_control.must_revalidate = True
+        response.cache_control.max_age = 60
+        response.headers["Content-Length"] = len(response.get_data())
+        assert response.headers["Cache-Control"] in (
+            "must-revalidate, max-age=60",
+            "max-age=60, must-revalidate",
+        )
+    
+        request = wrappers.Request.from_values(
+            headers={"If-None-Match": response.headers["ETag"]}
+        )
+>       response.apply_conditions(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:531: AttributeError
+_____________________ test_apply_conditions_if_match[GET] _____________________
+
+method = 'GET'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_match(method):
+        response = _response("abc")
+>       response.apply_conditions(_request(method, **{"If-Match": '"abc"'}))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:562: AttributeError
+____________________ test_apply_conditions_if_match[HEAD] _____________________
+
+method = 'HEAD'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_match(method):
+        response = _response("abc")
+>       response.apply_conditions(_request(method, **{"If-Match": '"abc"'}))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:562: AttributeError
+____________________ test_apply_conditions_if_match[POST] _____________________
+
+method = 'POST'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_match(method):
+        response = _response("abc")
+>       response.apply_conditions(_request(method, **{"If-Match": '"abc"'}))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:562: AttributeError
+_____________________ test_apply_conditions_if_match[PUT] _____________________
+
+method = 'PUT'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_match(method):
+        response = _response("abc")
+>       response.apply_conditions(_request(method, **{"If-Match": '"abc"'}))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:562: AttributeError
+___________________ test_apply_conditions_if_match[DELETE] ____________________
+
+method = 'DELETE'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_match(method):
+        response = _response("abc")
+>       response.apply_conditions(_request(method, **{"If-Match": '"abc"'}))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:562: AttributeError
+_____________ test_apply_conditions_if_match_star[True-True-GET] ______________
+
+method = 'GET', exists = True, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "POST"])
+    @pytest.mark.parametrize(("exists", "ok"), [(True, True), (False, False)])
+    def test_apply_conditions_if_match_star(method, exists, ok):
+        response = _response("abc")
+        request = _request(method, **{"If-Match": "*"})
+    
+        if ok:
+>           response.apply_conditions(request, exists=exists)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:588: AttributeError
+_____________ test_apply_conditions_if_match_star[True-True-POST] _____________
+
+method = 'POST', exists = True, ok = True
+
+    @pytest.mark.parametrize("method", ["GET", "POST"])
+    @pytest.mark.parametrize(("exists", "ok"), [(True, True), (False, False)])
+    def test_apply_conditions_if_match_star(method, exists, ok):
+        response = _response("abc")
+        request = _request(method, **{"If-Match": "*"})
+    
+        if ok:
+>           response.apply_conditions(request, exists=exists)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:588: AttributeError
+____________ test_apply_conditions_if_match_star[False-False-GET] _____________
+
+method = 'GET', exists = False, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "POST"])
+    @pytest.mark.parametrize(("exists", "ok"), [(True, True), (False, False)])
+    def test_apply_conditions_if_match_star(method, exists, ok):
+        response = _response("abc")
+        request = _request(method, **{"If-Match": "*"})
+    
+        if ok:
+            response.apply_conditions(request, exists=exists)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request, exists=exists)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:592: AttributeError
+____________ test_apply_conditions_if_match_star[False-False-POST] ____________
+
+method = 'POST', exists = False, ok = False
+
+    @pytest.mark.parametrize("method", ["GET", "POST"])
+    @pytest.mark.parametrize(("exists", "ok"), [(True, True), (False, False)])
+    def test_apply_conditions_if_match_star(method, exists, ok):
+        response = _response("abc")
+        request = _request(method, **{"If-Match": "*"})
+    
+        if ok:
+            response.apply_conditions(request, exists=exists)
+            assert response.status_code == 200
+        else:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request, exists=exists)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:592: AttributeError
+_______________ test_apply_conditions_if_unmodified_since[GET] ________________
+
+method = 'GET'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_unmodified_since(method):
+        modified = datetime(2024, 1, 2, tzinfo=timezone.utc)
+        response = _response(last_modified=modified)
+>       response.apply_conditions(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+            _request(method, **{"If-Unmodified-Since": http_date(modified)})
+        )
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:599: AttributeError
+_______________ test_apply_conditions_if_unmodified_since[HEAD] _______________
+
+method = 'HEAD'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_unmodified_since(method):
+        modified = datetime(2024, 1, 2, tzinfo=timezone.utc)
+        response = _response(last_modified=modified)
+>       response.apply_conditions(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+            _request(method, **{"If-Unmodified-Since": http_date(modified)})
+        )
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:599: AttributeError
+_______________ test_apply_conditions_if_unmodified_since[POST] _______________
+
+method = 'POST'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_unmodified_since(method):
+        modified = datetime(2024, 1, 2, tzinfo=timezone.utc)
+        response = _response(last_modified=modified)
+>       response.apply_conditions(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+            _request(method, **{"If-Unmodified-Since": http_date(modified)})
+        )
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:599: AttributeError
+_______________ test_apply_conditions_if_unmodified_since[PUT] ________________
+
+method = 'PUT'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_unmodified_since(method):
+        modified = datetime(2024, 1, 2, tzinfo=timezone.utc)
+        response = _response(last_modified=modified)
+>       response.apply_conditions(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+            _request(method, **{"If-Unmodified-Since": http_date(modified)})
+        )
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:599: AttributeError
+______________ test_apply_conditions_if_unmodified_since[DELETE] ______________
+
+method = 'DELETE'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_unmodified_since(method):
+        modified = datetime(2024, 1, 2, tzinfo=timezone.utc)
+        response = _response(last_modified=modified)
+>       response.apply_conditions(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+            _request(method, **{"If-Unmodified-Since": http_date(modified)})
+        )
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:599: AttributeError
+__________ test_apply_conditions_if_match_before_if_unmodified_since __________
+
+    def test_apply_conditions_if_match_before_if_unmodified_since():
+        # If-Unmodified-Since is ignored if If-Match is present.
+        modified = datetime(2024, 1, 2, tzinfo=timezone.utc)
+        response = _response("abc", modified)
+>       response.apply_conditions(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+            _request(
+                **{
+                    "If-Match": '"abc"',
+                    "If-Unmodified-Since": http_date(datetime(2024, 1, 1)),
+                }
+            )
+        )
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:621: AttributeError
+____________ test_apply_conditions_if_none_match_not_modified[GET] ____________
+
+method = 'GET'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    def test_apply_conditions_if_none_match_not_modified(method):
+        response = _response("abc")
+>       response.apply_conditions(_request(method, **{"If-None-Match": '"abc"'}))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:635: AttributeError
+___________ test_apply_conditions_if_none_match_not_modified[HEAD] ____________
+
+method = 'HEAD'
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD"])
+    def test_apply_conditions_if_none_match_not_modified(method):
+        response = _response("abc")
+>       response.apply_conditions(_request(method, **{"If-None-Match": '"abc"'}))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:635: AttributeError
+______________ test_apply_conditions_if_none_match_failed[POST] _______________
+
+method = 'POST'
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_none_match_failed(method):
+        with pytest.raises(PreconditionFailed):
+>           _response("abc").apply_conditions(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                _request(method, **{"If-None-Match": '"abc"'})
+            )
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:651: AttributeError
+_______________ test_apply_conditions_if_none_match_failed[PUT] _______________
+
+method = 'PUT'
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_none_match_failed(method):
+        with pytest.raises(PreconditionFailed):
+>           _response("abc").apply_conditions(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                _request(method, **{"If-None-Match": '"abc"'})
+            )
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:651: AttributeError
+_____________ test_apply_conditions_if_none_match_failed[DELETE] ______________
+
+method = 'DELETE'
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE"])
+    def test_apply_conditions_if_none_match_failed(method):
+        with pytest.raises(PreconditionFailed):
+>           _response("abc").apply_conditions(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                _request(method, **{"If-None-Match": '"abc"'})
+            )
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:651: AttributeError
+___________ test_apply_conditions_if_none_match_star[GET-True-304] ____________
+
+method = 'GET', exists = True, status = 304
+
+    @pytest.mark.parametrize(
+        ("method", "exists", "status"),
+        [
+            ("GET", True, 304),
+            ("GET", False, 200),
+            ("POST", False, 200),
+            ("POST", True, 412),
+        ],
+    )
+    def test_apply_conditions_if_none_match_star(method, exists, status):
+        response = _response("abc")
+        request = _request(method, **{"If-None-Match": "*"})
+    
+        if status == 412:
+            with pytest.raises(PreconditionFailed):
+                response.apply_conditions(request, exists=exists)
+        else:
+>           response.apply_conditions(request, exists=exists)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:677: AttributeError
+___________ test_apply_conditions_if_none_match_star[GET-False-200] ___________
+
+method = 'GET', exists = False, status = 200
+
+    @pytest.mark.parametrize(
+        ("method", "exists", "status"),
+        [
+            ("GET", True, 304),
+            ("GET", False, 200),
+            ("POST", False, 200),
+            ("POST", True, 412),
+        ],
+    )
+    def test_apply_conditions_if_none_match_star(method, exists, status):
+        response = _response("abc")
+        request = _request(method, **{"If-None-Match": "*"})
+    
+        if status == 412:
+            with pytest.raises(PreconditionFailed):
+                response.apply_conditions(request, exists=exists)
+        else:
+>           response.apply_conditions(request, exists=exists)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:677: AttributeError
+__________ test_apply_conditions_if_none_match_star[POST-False-200] ___________
+
+method = 'POST', exists = False, status = 200
+
+    @pytest.mark.parametrize(
+        ("method", "exists", "status"),
+        [
+            ("GET", True, 304),
+            ("GET", False, 200),
+            ("POST", False, 200),
+            ("POST", True, 412),
+        ],
+    )
+    def test_apply_conditions_if_none_match_star(method, exists, status):
+        response = _response("abc")
+        request = _request(method, **{"If-None-Match": "*"})
+    
+        if status == 412:
+            with pytest.raises(PreconditionFailed):
+                response.apply_conditions(request, exists=exists)
+        else:
+>           response.apply_conditions(request, exists=exists)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:677: AttributeError
+___________ test_apply_conditions_if_none_match_star[POST-True-412] ___________
+
+method = 'POST', exists = True, status = 412
+
+    @pytest.mark.parametrize(
+        ("method", "exists", "status"),
+        [
+            ("GET", True, 304),
+            ("GET", False, 200),
+            ("POST", False, 200),
+            ("POST", True, 412),
+        ],
+    )
+    def test_apply_conditions_if_none_match_star(method, exists, status):
+        response = _response("abc")
+        request = _request(method, **{"If-None-Match": "*"})
+    
+        if status == 412:
+            with pytest.raises(PreconditionFailed):
+>               response.apply_conditions(request, exists=exists)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:675: AttributeError
+___________________ test_apply_conditions_if_modified_since ___________________
+
+    def test_apply_conditions_if_modified_since():
+        modified = datetime(2024, 1, 2, tzinfo=timezone.utc)
+    
+        for method in "GET", "HEAD":
+            response = _response(last_modified=modified)
+>           response.apply_conditions(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+                _request(method, **{"If-Modified-Since": http_date(modified)})
+            )
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:686: AttributeError
+________ test_apply_conditions_if_none_match_before_if_modified_since _________
+
+    def test_apply_conditions_if_none_match_before_if_modified_since():
+        # If-Modified-Since is ignored if If-None-Match is present.
+        modified = datetime(2024, 1, 2, tzinfo=timezone.utc)
+        response = _response("abc", modified)
+>       response.apply_conditions(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+            _request(**{"If-None-Match": '"xyz"', "If-Modified-Since": http_date(modified)})
+        )
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:716: AttributeError
+_________ test_apply_conditions_if_match_failed_before_if_none_match __________
+
+    def test_apply_conditions_if_match_failed_before_if_none_match():
+        response = _response("abc")
+    
+        with pytest.raises(PreconditionFailed):
+>           response.apply_conditions(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+                _request(**{"If-Match": '"xyz"', "If-None-Match": '"abc"'})
+            )
+E           AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:726: AttributeError
+______________________ test_apply_conditions_no_headers _______________________
+
+    def test_apply_conditions_no_headers():
+        response = _response("abc")
+>       response.apply_conditions(_request())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_conditions'
+
+tests\test_wrappers.py:735: AttributeError
+_______________________ test_apply_range_accept_ranges ________________________
+
+    def test_apply_range_accept_ranges():
+        response = wrappers.Response()
+>       response.apply_range(_request())
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:742: AttributeError
+___________________________ test_apply_range_basic ____________________________
+
+    def test_apply_range_basic():
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(Range="bytes=0-4"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:750: AttributeError
+_________________________ test_apply_range_first_only _________________________
+
+    def test_apply_range_first_only():
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(Range="bytes=0-1, 4-5"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:760: AttributeError
+__________ test_apply_range_clamped[bytes=6-666-bytes 6-10/11-World] __________
+
+value = 'bytes=6-666', content_range = 'bytes 6-10/11', data = b'World'
+
+    @pytest.mark.parametrize(
+        ("value", "content_range", "data"),
+        [
+            ("bytes=6-666", "bytes 6-10/11", b"World"),
+            ("bytes=-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=-5", "bytes 6-10/11", b"World"),
+            ("bytes=6-", "bytes 6-10/11", b"World"),
+        ],
+    )
+    def test_apply_range_clamped(value, content_range, data):
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(Range=value))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:777: AttributeError
+_______ test_apply_range_clamped[bytes=-666-bytes 0-10/11-Hello World] ________
+
+value = 'bytes=-666', content_range = 'bytes 0-10/11', data = b'Hello World'
+
+    @pytest.mark.parametrize(
+        ("value", "content_range", "data"),
+        [
+            ("bytes=6-666", "bytes 6-10/11", b"World"),
+            ("bytes=-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=-5", "bytes 6-10/11", b"World"),
+            ("bytes=6-", "bytes 6-10/11", b"World"),
+        ],
+    )
+    def test_apply_range_clamped(value, content_range, data):
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(Range=value))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:777: AttributeError
+___________ test_apply_range_clamped[bytes=-5-bytes 6-10/11-World] ____________
+
+value = 'bytes=-5', content_range = 'bytes 6-10/11', data = b'World'
+
+    @pytest.mark.parametrize(
+        ("value", "content_range", "data"),
+        [
+            ("bytes=6-666", "bytes 6-10/11", b"World"),
+            ("bytes=-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=-5", "bytes 6-10/11", b"World"),
+            ("bytes=6-", "bytes 6-10/11", b"World"),
+        ],
+    )
+    def test_apply_range_clamped(value, content_range, data):
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(Range=value))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:777: AttributeError
+___________ test_apply_range_clamped[bytes=6--bytes 6-10/11-World] ____________
+
+value = 'bytes=6-', content_range = 'bytes 6-10/11', data = b'World'
+
+    @pytest.mark.parametrize(
+        ("value", "content_range", "data"),
+        [
+            ("bytes=6-666", "bytes 6-10/11", b"World"),
+            ("bytes=-666", "bytes 0-10/11", b"Hello World"),
+            ("bytes=-5", "bytes 6-10/11", b"World"),
+            ("bytes=6-", "bytes 6-10/11", b"World"),
+        ],
+    )
+    def test_apply_range_clamped(value, content_range, data):
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(Range=value))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:777: AttributeError
+__________________ test_apply_range_unsatisfiable[bytes=11-] __________________
+
+value = 'bytes=11-'
+
+    @pytest.mark.parametrize("value", ["bytes=11-", "bytes=20-30", "bytes=11-15"])
+    def test_apply_range_unsatisfiable(value):
+        response = wrappers.Response("Hello World")
+    
+        with pytest.raises(RequestedRangeNotSatisfiable) as exc_info:
+>           response.apply_range(_request(Range=value))
+            ^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:788: AttributeError
+_________________ test_apply_range_unsatisfiable[bytes=20-30] _________________
+
+value = 'bytes=20-30'
+
+    @pytest.mark.parametrize("value", ["bytes=11-", "bytes=20-30", "bytes=11-15"])
+    def test_apply_range_unsatisfiable(value):
+        response = wrappers.Response("Hello World")
+    
+        with pytest.raises(RequestedRangeNotSatisfiable) as exc_info:
+>           response.apply_range(_request(Range=value))
+            ^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:788: AttributeError
+_________________ test_apply_range_unsatisfiable[bytes=11-15] _________________
+
+value = 'bytes=11-15'
+
+    @pytest.mark.parametrize("value", ["bytes=11-", "bytes=20-30", "bytes=11-15"])
+    def test_apply_range_unsatisfiable(value):
+        response = wrappers.Response("Hello World")
+    
+        with pytest.raises(RequestedRangeNotSatisfiable) as exc_info:
+>           response.apply_range(_request(Range=value))
+            ^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:788: AttributeError
+_______________________ test_apply_range_only_get[HEAD] _______________________
+
+method = 'HEAD'
+
+    @pytest.mark.parametrize("method", ["HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_range_only_get(method):
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(method, Range="bytes=0-4"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:797: AttributeError
+_______________________ test_apply_range_only_get[POST] _______________________
+
+method = 'POST'
+
+    @pytest.mark.parametrize("method", ["HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_range_only_get(method):
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(method, Range="bytes=0-4"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:797: AttributeError
+_______________________ test_apply_range_only_get[PUT] ________________________
+
+method = 'PUT'
+
+    @pytest.mark.parametrize("method", ["HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_range_only_get(method):
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(method, Range="bytes=0-4"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:797: AttributeError
+______________________ test_apply_range_only_get[DELETE] ______________________
+
+method = 'DELETE'
+
+    @pytest.mark.parametrize("method", ["HEAD", "POST", "PUT", "DELETE"])
+    def test_apply_range_only_get(method):
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(method, Range="bytes=0-4"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:797: AttributeError
+__________________________ test_apply_range_only_200 __________________________
+
+    def test_apply_range_only_200():
+        response = wrappers.Response("Hello World", status=201)
+>       response.apply_range(_request(Range="bytes=0-4"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:805: AttributeError
+_______________________ test_apply_range_unknown_length _______________________
+
+    def test_apply_range_unknown_length():
+        response = wrappers.Response(["Hello World"])
+        assert response.content_length is None
+>       response.apply_range(_request(Range="bytes=0-4"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:814: AttributeError
+________________________ test_apply_range_zero_length _________________________
+
+    def test_apply_range_zero_length():
+        response = wrappers.Response()
+        response.content_length = 0
+>       response.apply_range(_request(Range="bytes=0-4"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:822: AttributeError
+________________________ test_apply_range_other_units _________________________
+
+    def test_apply_range_other_units():
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(Range="items=0-4"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:829: AttributeError
+___________________ test_apply_range_invalid_header_ignored ___________________
+
+    def test_apply_range_invalid_header_ignored():
+        response = wrappers.Response("Hello World")
+>       response.apply_range(_request(Range="bytes=-"))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:837: AttributeError
+_________________________ test_apply_range_with_file __________________________
+
+    def test_apply_range_with_file():
+        resources = os.path.join(os.path.dirname(__file__), "res")
+        fname = os.path.join(resources, "test.txt")
+        fsize = os.path.getsize(fname)
+    
+        with open(fname, "rb") as f:
+            fcontent = f.read()
+    
+        with open(fname, "rb") as f:
+            response = wrappers.Response(f)
+            response.content_length = fsize
+>           response.apply_range(_request(Range=f"bytes=0-{fsize - 1}"))
+            ^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:853: AttributeError
+_______________________ test_apply_range_if_range_etag ________________________
+
+    def test_apply_range_if_range_etag():
+        response = _response("abc")
+>       response.apply_range(_request(Range="bytes=0-4", **{"If-Range": '"abc"'}))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:862: AttributeError
+_______________________ test_apply_range_if_range_date ________________________
+
+    def test_apply_range_if_range_date():
+        modified = datetime(2024, 1, 2, tzinfo=timezone.utc)
+        response = _response(last_modified=modified)
+>       response.apply_range(
+        ^^^^^^^^^^^^^^^^^^^^
+            _request(Range="bytes=0-4", **{"If-Range": http_date(modified)})
+        )
+E       AttributeError: 'Response' object has no attribute 'apply_range'
+
+tests\test_wrappers.py:880: AttributeError
+______________________ test_make_conditional_deprecated _______________________
+
+    def test_make_conditional_deprecated():
+        response = wrappers.Response("Hello World")
+        response.add_etag()
+        env = create_environ(headers={"If-None-Match": response.headers["ETag"]})
+    
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:904: Failed
+___________________ test_make_conditional_deprecated_range ____________________
+
+    def test_make_conditional_deprecated_range():
+        response = wrappers.Response("Hello World")
+        env = create_environ(headers={"Range": "bytes=0-4"})
+    
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:955: Failed
+______________________ test_disabled_auto_content_length ______________________
+
+    def test_disabled_auto_content_length():
+        class MyResponse(wrappers.Response):
+            automatically_set_content_length = False
+    
+        resp = MyResponse("Hello World!")
+        assert resp.content_length is None
+    
+        resp = MyResponse(["Hello World!"])
+        assert resp.content_length is None
+        assert "Content-Length" not in resp.get_wsgi_headers({})
+    
+        resp = MyResponse()
+    
+>       with pytest.deprecated_call():
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>, <class 'PendingDeprecationWarning'>, <class 'FutureWarning'>) were emitted.
+E        Emitted warnings: [].
+
+tests\test_wrappers.py:1396: Failed
+=========================== short test summary info ===========================
+FAILED tests/test_wrappers.py::test_etag_response - AttributeError: 'Response...
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[GET] - Attribut...
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[HEAD] - Attribu...
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[POST] - Attribu...
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[PUT] - Attribut...
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match[DELETE] - Attri...
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match_star[True-True-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match_star[True-True-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match_star[False-False-GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match_star[False-False-POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_unmodified_since[GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_unmodified_since[HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_unmodified_since[POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_unmodified_since[PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_unmodified_since[DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match_before_if_unmodified_since
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_not_modified[GET]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_not_modified[HEAD]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_failed[POST]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_failed[PUT]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_failed[DELETE]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_star[GET-True-304]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_star[GET-False-200]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_star[POST-False-200]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_star[POST-True-412]
+FAILED tests/test_wrappers.py::test_apply_conditions_if_modified_since - Attr...
+FAILED tests/test_wrappers.py::test_apply_conditions_if_none_match_before_if_modified_since
+FAILED tests/test_wrappers.py::test_apply_conditions_if_match_failed_before_if_none_match
+FAILED tests/test_wrappers.py::test_apply_conditions_no_headers - AttributeEr...
+FAILED tests/test_wrappers.py::test_apply_range_accept_ranges - AttributeErro...
+FAILED tests/test_wrappers.py::test_apply_range_basic - AttributeError: 'Resp...
+FAILED tests/test_wrappers.py::test_apply_range_first_only - AttributeError: ...
+FAILED tests/test_wrappers.py::test_apply_range_clamped[bytes=6-666-bytes 6-10/11-World]
+FAILED tests/test_wrappers.py::test_apply_range_clamped[bytes=-666-bytes 0-10/11-Hello World]
+FAILED tests/test_wrappers.py::test_apply_range_clamped[bytes=-5-bytes 6-10/11-World]
+FAILED tests/test_wrappers.py::test_apply_range_clamped[bytes=6--bytes 6-10/11-World]
+FAILED tests/test_wrappers.py::test_apply_range_unsatisfiable[bytes=11-] - At...
+FAILED tests/test_wrappers.py::test_apply_range_unsatisfiable[bytes=20-30] - ...
+FAILED tests/test_wrappers.py::test_apply_range_unsatisfiable[bytes=11-15] - ...
+FAILED tests/test_wrappers.py::test_apply_range_only_get[HEAD] - AttributeErr...
+FAILED tests/test_wrappers.py::test_apply_range_only_get[POST] - AttributeErr...
+FAILED tests/test_wrappers.py::test_apply_range_only_get[PUT] - AttributeErro...
+FAILED tests/test_wrappers.py::test_apply_range_only_get[DELETE] - AttributeE...
+FAILED tests/test_wrappers.py::test_apply_range_only_200 - AttributeError: 'R...
+FAILED tests/test_wrappers.py::test_apply_range_unknown_length - AttributeErr...
+FAILED tests/test_wrappers.py::test_apply_range_zero_length - AttributeError:...
+FAILED tests/test_wrappers.py::test_apply_range_other_units - AttributeError:...
+FAILED tests/test_wrappers.py::test_apply_range_invalid_header_ignored - Attr...
+FAILED tests/test_wrappers.py::test_apply_range_with_file - AttributeError: '...
+FAILED tests/test_wrappers.py::test_apply_range_if_range_etag - AttributeErro...
+FAILED tests/test_wrappers.py::test_apply_range_if_range_date - AttributeErro...
+FAILED tests/test_wrappers.py::test_make_conditional_deprecated - Failed: DID...
+FAILED tests/test_wrappers.py::test_make_conditional_deprecated_range - Faile...
+FAILED tests/test_wrappers.py::test_disabled_auto_content_length - Failed: DI...
+54 failed, 81 passed in 1.67s
