@@ -1,0 +1,106 @@
+{
+  "coverage": [
+    {
+      "criterion": "ACC1",
+      "line": 1,
+      "note": "I did not read the exact assertion line. Failure of If-Match and If-Unmodified-Since on every method, the If-None-Match 412 on non-GET/HEAD, the star ETag with exists, and the RFC ordering are each asserted in the parametrized apply_conditions tests.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_conditions_if_match_failed_before_if_none_match"
+    },
+    {
+      "criterion": "ACC2",
+      "line": 525,
+      "note": "Asserts a 304, Accept-Ranges: bytes, and Content-Length absent after from_app. The If-None-Match and If-Modified-Since GET/HEAD cases are in dedicated tests.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_etag_response"
+    },
+    {
+      "criterion": "ACC3",
+      "line": 800,
+      "note": "Non-GET is left unchanged with Accept-Ranges set. Separate tests cover non-200, unknown length and zero length.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_range_only_get"
+    },
+    {
+      "criterion": "ACC4",
+      "line": 780,
+      "note": "Covers clamping. The first-range-only, unsatisfiable (416), 206 Content-Range and non-bytes-unit cases have their own tests.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_range_clamped"
+    },
+    {
+      "criterion": "ACC5",
+      "line": 860,
+      "note": "Covers a matching ETag, a mismatch, and a weak ETag. test_apply_range_if_range_date covers the date match, mismatch and missing Last-Modified.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_range_if_range_etag"
+    },
+    {
+      "criterion": "ACC6",
+      "line": 899,
+      "note": "Uses pytest.deprecated_call and also asserts the old behaviour still works. The http.py deprecations are tested in test_http.py.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_make_conditional_deprecated"
+    },
+    {
+      "criterion": "ACC7",
+      "line": 1130,
+      "note": "Covers clamping of stop and suffix, first range only, and the unsatisfiable cases. test_etag_set_discards_unquoted covers ETagSet, and the existing ContentRange.from_header tests in test_http.py cover its validation.",
+      "status": "covered",
+      "test": "tests/test_datastructures.py::test_make_content_range"
+    },
+    {
+      "criterion": "ACC8",
+      "line": 1180,
+      "note": "Parametrized over strong, weak and mismatched ETags, equal and different dates, naive datetimes with microseconds, and missing values.",
+      "status": "covered",
+      "test": "tests/test_datastructures.py::test_if_range_check"
+    },
+    {
+      "criterion": "ACC9",
+      "line": 70,
+      "note": "Detection of name, size and mtime is covered here. Seek is covered by test_object_seeks_to_start and test_object_range, the ETag by test_etag, and the octet-stream default by test_object_without_mimetype.",
+      "status": "covered",
+      "test": "tests/test_send_file.py::test_object_detects_name_size_mtime"
+    },
+    {
+      "criterion": "ACC10",
+      "line": 75,
+      "note": "Covers the warnings for cache and fallback_mimetype. test_no_max_age_by_default, test_conditional, test_range and test_range_not_satisfiable cover the other behaviour.",
+      "status": "covered",
+      "test": "tests/middleware/test_shared_data.py::test_deprecated_parameters"
+    },
+    {
+      "criterion": "ACC12",
+      "line": 748,
+      "note": "New apply_conditions and apply_range tests exist, the send_file tests are updated, and the deprecated-function tests are moved or filtered.",
+      "status": "covered",
+      "test": "tests/test_wrappers.py::test_apply_range_basic"
+    }
+  ],
+  "findings": [
+    {
+      "file": "tests/test_wrappers.py",
+      "line": 525,
+      "pass": 3,
+      "severity": "advisory",
+      "text": "The deleted test_etag_response_412 asserted that a 412 response from make_conditional still has a body ('Make sure there is a body still'). The new deprecated-path test only checks status_code == 412."
+    },
+    {
+      "file": "tests/test_send_file.py",
+      "line": 1,
+      "pass": 2,
+      "severity": "advisory",
+      "text": "No test combines If-Range with send_file, or checks that apply_conditions's 304 keeps working with a Range header present. Both are interactions between the new methods and send_file."
+    },
+    {
+      "file": "src/werkzeug/wrappers/response.py",
+      "line": 835,
+      "pass": 4,
+      "severity": "advisory",
+      "text": "The old_accept_ranges save and restore in make_conditional is a workaround for apply_conditions always setting Accept-Ranges. It is only needed to keep the deprecated method's legacy behaviour of not advertising ranges when accept_ranges is falsy."
+    }
+  ],
+  "summary": "All behaviour criteria are exercised by tests whose assertions would fail if the behaviour broke. I found no blocking issues. The advisories are one deleted assertion and a few small untested edges.",
+  "verdict": "approve"
+}

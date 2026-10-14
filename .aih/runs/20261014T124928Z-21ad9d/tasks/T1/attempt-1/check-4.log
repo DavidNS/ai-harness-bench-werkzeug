@@ -1,0 +1,15 @@
+........................................................................ [ 53%]
+.......F.......................................................          [100%]
+================================== FAILURES ===================================
+________________________ test_apply_range_zero_length _________________________
+
+    def test_apply_range_zero_length():
+        response = wrappers.Response()
+>       assert response.content_length == 0
+E       assert None == 0
+E        +  where None = <Response 0 bytes [200 OK]>.content_length
+
+tests\test_wrappers.py:821: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_wrappers.py::test_apply_range_zero_length - assert None == 0
+1 failed, 134 passed in 0.45s

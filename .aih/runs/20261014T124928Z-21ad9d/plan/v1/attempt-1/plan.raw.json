@@ -1,0 +1,300 @@
+{
+  "criteria": [
+    {
+      "intent": "INTENT1",
+      "key": "C1",
+      "kind": "behavior",
+      "text": "apply_conditions raises PreconditionFailed for failed If-Match/If-Unmodified-Since on any method, and for If-None-Match matches on non-GET/HEAD; evaluates in RFC order; star ETag honors exists."
+    },
+    {
+      "intent": "INTENT1",
+      "key": "C2",
+      "kind": "behavior",
+      "text": "apply_conditions turns the response into 304 with entity headers removed when If-None-Match/If-Modified-Since is satisfied on GET/HEAD, and sets Accept-Ranges: bytes."
+    },
+    {
+      "intent": "INTENT2",
+      "key": "C3",
+      "kind": "behavior",
+      "text": "apply_range always sets Accept-Ranges: bytes; leaves response unchanged for non-GET, non-200, or unknown/zero Content-Length."
+    },
+    {
+      "intent": "INTENT2",
+      "key": "C4",
+      "kind": "behavior",
+      "text": "apply_range uses only the first range, clamps too-large stop/suffix, raises RequestedRangeNotSatisfiable when unsatisfiable, else 206 with sliced data and correct Content-Range; ignores non-bytes units."
+    },
+    {
+      "intent": "INTENT2",
+      "key": "C5",
+      "kind": "behavior",
+      "text": "apply_range honors If-Range by strong ETag or Last-Modified match, otherwise returns the full response."
+    },
+    {
+      "intent": "INTENT3",
+      "key": "C6",
+      "kind": "behavior",
+      "text": "make_conditional, is_resource_modified and is_byte_range_valid emit DeprecationWarning and still work."
+    },
+    {
+      "intent": "INTENT4",
+      "key": "C7",
+      "kind": "behavior",
+      "text": "Range.make_content_range clamps too-large stop and suffix, uses first range, validates without is_byte_range_valid; from_header methods reject invalid values; ETagSet.from_header discards unquoted values."
+    },
+    {
+      "intent": "INTENT5",
+      "key": "C8",
+      "kind": "behavior",
+      "text": "IfRange.check returns True for matching strong ETag or equal date, False otherwise."
+    },
+    {
+      "intent": "INTENT6",
+      "key": "C9",
+      "kind": "behavior",
+      "text": "send_file detects name/size/mtime from file-likes, seeks to 0, ETag has no path hash, and defaults to application/octet-stream without download_name."
+    },
+    {
+      "intent": "INTENT7",
+      "key": "C10",
+      "kind": "behavior",
+      "text": "SharedDataMiddleware serves via send_file, sets no max-age by default, supports conditional and range requests, and warns when cache or fallback_mimetype is passed."
+    },
+    {
+      "intent": "INTENT8",
+      "key": "C11",
+      "kind": "other",
+      "text": "Quickstart documents apply_conditions and apply_range; CHANGES.rst has an entry."
+    },
+    {
+      "intent": "INTENT9",
+      "key": "C12",
+      "kind": "behavior",
+      "text": "New tests cover apply_conditions and apply_range; send_file tests updated; deprecated-function tests moved/removed; pytest -m 'not dev_server' passes."
+    }
+  ],
+  "intents": [
+    {
+      "evidence": [
+        {
+          "end": 730,
+          "path": "src/werkzeug/wrappers/response.py",
+          "quote": "def make_conditional(",
+          "start": 725
+        }
+      ],
+      "intent": "INTENT1",
+      "rationale": "Add Response.apply_conditions implementing RFC 9110 precondition order.",
+      "resolution": "change"
+    },
+    {
+      "evidence": [
+        {
+          "end": 677,
+          "path": "src/werkzeug/wrappers/response.py",
+          "quote": "def _process_range_request(",
+          "start": 672
+        }
+      ],
+      "intent": "INTENT2",
+      "rationale": "Add Response.apply_range replacing _process_range_request logic.",
+      "resolution": "change"
+    },
+    {
+      "evidence": [
+        {
+          "end": 1157,
+          "path": "src/werkzeug/http.py",
+          "quote": "def is_resource_modified(",
+          "start": 1151
+        }
+      ],
+      "intent": "INTENT3",
+      "rationale": "make_conditional, is_resource_modified, is_byte_range_valid must warn and delegate.",
+      "resolution": "change"
+    },
+    {
+      "evidence": [
+        {
+          "end": 153,
+          "path": "src/werkzeug/datastructures/range.py",
+          "quote": "if not is_byte_range_valid(start, stop, length):",
+          "start": 150
+        }
+      ],
+      "intent": "INTENT4",
+      "rationale": "make_content_range relies on is_byte_range_valid and doesn't clamp suffix; must validate inline and clamp.",
+      "resolution": "change"
+    },
+    {
+      "evidence": [
+        {
+          "end": 19,
+          "path": "src/werkzeug/datastructures/range.py",
+          "quote": "class IfRange:",
+          "start": 19
+        }
+      ],
+      "intent": "INTENT5",
+      "rationale": "IfRange lacks a check method.",
+      "resolution": "change"
+    },
+    {
+      "evidence": [
+        {
+          "end": 503,
+          "path": "src/werkzeug/utils.py",
+          "quote": "check = adler32(path.encode()) & 0xFFFFFFFF",
+          "start": 502
+        }
+      ],
+      "intent": "INTENT6",
+      "rationale": "send_file needs refactor to new methods, detection, seek, etag, default mimetype.",
+      "resolution": "change"
+    },
+    {
+      "evidence": [
+        {
+          "end": 113,
+          "path": "src/werkzeug/middleware/shared_data.py",
+          "quote": "cache_timeout: int = 60 * 60 * 12,",
+          "start": 112
+        }
+      ],
+      "intent": "INTENT7",
+      "rationale": "SharedDataMiddleware has its own serving logic and defaults.",
+      "resolution": "change"
+    },
+    {
+      "evidence": [
+        {
+          "end": 296,
+          "path": "docs/quickstart.rst",
+          "quote": "call :class:`~Request.make_conditional`",
+          "start": 296
+        }
+      ],
+      "intent": "INTENT8",
+      "rationale": "Quickstart references make_conditional; changelog needs entry.",
+      "resolution": "change"
+    },
+    {
+      "evidence": [
+        {
+          "end": 406,
+          "path": "tests/test_http.py",
+          "quote": "def test_is_resource_modified",
+          "start": 406
+        }
+      ],
+      "intent": "INTENT9",
+      "rationale": "Tests for new methods; update old tests.",
+      "resolution": "change"
+    }
+  ],
+  "tasks": [
+    {
+      "criteria": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7",
+        "C8",
+        "C9",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "depends_on": [],
+      "files": [
+        {
+          "action": "modify",
+          "path": "src/werkzeug/wrappers/response.py",
+          "role": "production"
+        },
+        {
+          "action": "modify",
+          "path": "src/werkzeug/http.py",
+          "role": "production"
+        },
+        {
+          "action": "modify",
+          "path": "src/werkzeug/sansio/http.py",
+          "role": "production"
+        },
+        {
+          "action": "modify",
+          "path": "src/werkzeug/datastructures/range.py",
+          "role": "production"
+        },
+        {
+          "action": "modify",
+          "path": "src/werkzeug/datastructures/etag.py",
+          "role": "production"
+        },
+        {
+          "action": "modify",
+          "path": "src/werkzeug/utils.py",
+          "role": "production"
+        },
+        {
+          "action": "modify",
+          "path": "src/werkzeug/middleware/shared_data.py",
+          "role": "production"
+        },
+        {
+          "action": "modify",
+          "path": "docs/quickstart.rst",
+          "role": "production"
+        },
+        {
+          "action": "modify",
+          "path": "docs/http.rst",
+          "role": "production"
+        },
+        {
+          "action": "modify",
+          "path": "CHANGES.rst",
+          "role": "production"
+        },
+        {
+          "action": "modify",
+          "path": "tests/test_wrappers.py",
+          "role": "test"
+        },
+        {
+          "action": "modify",
+          "path": "tests/test_http.py",
+          "role": "test"
+        },
+        {
+          "action": "modify",
+          "path": "tests/test_send_file.py",
+          "role": "test"
+        },
+        {
+          "action": "modify",
+          "path": "tests/middleware/test_shared_data.py",
+          "role": "test"
+        },
+        {
+          "action": "modify",
+          "path": "tests/test_datastructures.py",
+          "role": "test"
+        }
+      ],
+      "key": "T1",
+      "summary": "Add apply_conditions/apply_range and IfRange.check, fix Range/ETagSet validation, then migrate send_file and SharedDataMiddleware and their tests, and deprecate make_conditional/is_resource_modified/is_byte_range_valid last (internal callers must stop using them first since warnings may be errors). Update docs and changelog.",
+      "tests": [
+        "tests/test_wrappers.py",
+        "tests/test_http.py",
+        "tests/test_send_file.py",
+        "tests/middleware/test_shared_data.py",
+        "tests/test_datastructures.py"
+      ]
+    }
+  ]
+}
