@@ -1,0 +1,50 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC1",
+      "note": "tests/test_wrappers.py::test_apply_conditions, test_apply_conditions_precondition_failed, test_apply_conditions_304_removes_entity_headers (not run)"
+    },
+    {
+      "criterion": "ACC2",
+      "note": "test_apply_conditions_star_etag_exists plus If-Match * / exists=False cases; Accept-Ranges asserted in test_apply_conditions (not run)"
+    },
+    {
+      "criterion": "ACC3",
+      "note": "test_apply_range_ignored, test_apply_range_not_200, test_apply_range_no_length (not run)"
+    },
+    {
+      "criterion": "ACC4",
+      "note": "test_apply_range_basic, test_apply_range_clamp_first, test_apply_range_unsatisfiable (not run)"
+    },
+    {
+      "criterion": "ACC5",
+      "note": "tests/test_datastructures.py::test_if_range_check_etag/date; test_apply_range_if_range_match and the If-Range cases in test_apply_range_ignored (not run)"
+    },
+    {
+      "criterion": "ACC6",
+      "note": "test_make_conditional_deprecated; tests/test_http.py::test_is_resource_modified_deprecated and test_is_byte_range_valid_deprecated (not run)"
+    },
+    {
+      "criterion": "ACC7",
+      "note": "test_datastructures.py: test_make_content_range, test_content_range_from_header_valid/invalid, test_etag_set_discards_unquoted (not run)"
+    },
+    {
+      "criterion": "ACC8",
+      "note": "tests/test_send_file.py: test_object_detects_name_size_mtime, test_object_seeks_to_start, test_object_size_from_seek, test_object_not_seekable, test_object_without_mimetype, test_etag, test_conditional_304, test_conditional_412_closes_file, test_range, test_range_not_satisfiable_closes_file (not run)"
+    },
+    {
+      "criterion": "ACC9",
+      "note": "tests/middleware/test_shared_data.py: test_conditional_request, test_range_request, test_precondition_failed_and_range_not_satisfiable, test_cache_timeout, test_cache_deprecated, test_fallback_mimetype_deprecated (not run)"
+    },
+    {
+      "criterion": "ACC10",
+      "note": "docs/quickstart.rst documents apply_conditions and apply_range; CHANGES.rst has entries for the new methods, deprecations, send_file and SharedDataMiddleware"
+    },
+    {
+      "criterion": "ACC11",
+      "note": "Old deprecated-function tests replaced or marked filterwarnings; full suite not run because aih check is unavailable (missing aih.toml)"
+    }
+  ],
+  "replan_request": null,
+  "summary": "Implemented apply_conditions/apply_range/IfRange.check, rebuilt send_file and SharedDataMiddleware on them, deprecated make_conditional/is_resource_modified/is_byte_range_valid, added docs, changelog and tests. UNVERIFIED: `aih check` failed with \"missing aih.toml\" in the worktree, so no tests were run."
+}

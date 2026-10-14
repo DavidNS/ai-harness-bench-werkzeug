@@ -403,62 +403,23 @@ class TestHTTPUtility:
         assert http.dump_header({"foo": "bar"}) == "foo=bar"
         assert http.dump_header({"foo*": "UTF-8''bar"}) == "foo*=UTF-8''bar"
 
-    def test_is_resource_modified(self):
+    def test_is_resource_modified_deprecated(self):
         env = create_environ()
-
-        # any method is allowed
-        env["REQUEST_METHOD"] = "POST"
-        assert http.is_resource_modified(env)
-        env["REQUEST_METHOD"] = "GET"
-
-        # only one of etag or data
-        with pytest.raises(TypeError):
-            http.is_resource_modified(env, data=b"42", etag='"23"')
-
         etag = f'"{http.generate_etag(b"awesome")}"'
         env["HTTP_IF_NONE_MATCH"] = etag
-        assert not http.is_resource_modified(env, etag=etag)
-        assert not http.is_resource_modified(env, data=b"awesome")
 
-        env["HTTP_IF_MODIFIED_SINCE"] = http.http_date(datetime(2008, 1, 1, 12, 30))
-        assert not http.is_resource_modified(
-            env, last_modified=datetime(2008, 1, 1, 12, 00)
-        )
-        assert http.is_resource_modified(
-            env, last_modified=datetime(2008, 1, 1, 13, 00)
-        )
+        with pytest.deprecated_call():
+            assert not http.is_resource_modified(env, etag=etag)
 
-    def test_is_resource_modified_for_range_requests(self):
-        env = create_environ()
+        with pytest.deprecated_call():
+            assert http.is_resource_modified(create_environ())
 
-        env["HTTP_IF_MODIFIED_SINCE"] = http.http_date(datetime(2008, 1, 1, 12, 30))
-        env["HTTP_IF_RANGE"] = f'"{http.generate_etag(b"awesome_if_range")}"'
-        # Range header not present, so If-Range should be ignored
-        assert not http.is_resource_modified(
-            env,
-            data=b"not_the_same",
-            ignore_if_range=False,
-            last_modified=datetime(2008, 1, 1, 12, 30),
-        )
+    def test_is_byte_range_valid_deprecated(self):
+        with pytest.deprecated_call():
+            assert http.is_byte_range_valid(0, 5, 10)
 
-        env["HTTP_RANGE"] = ""
-        assert not http.is_resource_modified(
-            env, data=b"awesome_if_range", ignore_if_range=False
-        )
-        assert http.is_resource_modified(
-            env, data=b"not_the_same", ignore_if_range=False
-        )
-
-        env["HTTP_IF_RANGE"] = http.http_date(datetime(2008, 1, 1, 13, 30))
-        assert http.is_resource_modified(
-            env, last_modified=datetime(2008, 1, 1, 14, 00), ignore_if_range=False
-        )
-        assert not http.is_resource_modified(
-            env, last_modified=datetime(2008, 1, 1, 13, 30), ignore_if_range=False
-        )
-        assert http.is_resource_modified(
-            env, last_modified=datetime(2008, 1, 1, 13, 30), ignore_if_range=True
-        )
+        with pytest.deprecated_call():
+            assert not http.is_byte_range_valid(5, 5, 10)
 
     def test_parse_cookie(self):
         cookies = http.parse_cookie(

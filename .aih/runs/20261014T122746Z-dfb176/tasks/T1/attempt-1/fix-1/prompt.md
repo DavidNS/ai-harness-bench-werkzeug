@@ -1,0 +1,9 @@
+An independent reviewer, who has not seen your reasoning, blocked task T1 (fix-up 1). Fix the findings below ON TOP of your current change: do not start over, do not revert what works, and touch only the task's files. Where a finding says a case is untested, add the test; where it says the code is wrong, fix the code and test it.
+
+Findings:
+- the reviewer requests 3 change(s): `test_invalid_range_request` was changed from the malformed `bytes=-` (which used to raise RequestedRangeNotSatisfiable via `make_conditional`) to `bytes=20-30`; the old case now silently returns 200 because `apply_range` ignores an unparseable Range, so the deprecated method's behaviour changed and the test was altered to hide it.
+- [pass 3] tests/test_wrappers.py:690: `test_invalid_range_request` was changed from the malformed `bytes=-` (which used to raise RequestedRangeNotSatisfiable via `make_conditional`) to `bytes=20-30`; the old case now silently returns 200 because `apply_range` ignores an unparseable Range, so the deprecated method's behaviour changed and the test was altered to hide it.
+- [pass 2] tests/test_send_file.py:104: No test combines a Range or conditional request with a non-seekable file-like object that has an unknown size. `test_object_not_seekable` passes no Range header, so the 'range skipped without Content-Length' path through `send_file` is untested. Neither `send_file` with `use_x_sendfile` plus Range nor `send_file` with `conditional=False` is tested.
+- [pass 5 coverage] :0: ACC11 is not proven by a test: the reviewer did not map it to any test
+
+When done, finish again with the same JSON answer (summary, criteria_notes, replan_request). The harness will run the task's tests and review the change again.

@@ -1,0 +1,50 @@
+{
+  "criteria_notes": [
+    {
+      "criterion": "ACC1",
+      "note": "tests/test_wrappers.py::test_apply_conditions, test_apply_conditions_precondition_failed, test_apply_conditions_304_removes_entity_headers (not run)"
+    },
+    {
+      "criterion": "ACC2",
+      "note": "test_apply_conditions_star_etag_exists and If-Match * / exists=False cases (not run)"
+    },
+    {
+      "criterion": "ACC3",
+      "note": "test_apply_range_ignored, test_apply_range_not_200, test_apply_range_no_length, test_apply_range_malformed_ignored, tests/test_send_file.py::test_range_skipped_unknown_size (not run)"
+    },
+    {
+      "criterion": "ACC4",
+      "note": "test_apply_range_basic, test_apply_range_clamp_first, test_apply_range_unsatisfiable (not run)"
+    },
+    {
+      "criterion": "ACC5",
+      "note": "tests/test_datastructures.py::test_if_range_check_etag/date; test_apply_range_if_range_match; If-Range cases in test_apply_range_ignored (not run)"
+    },
+    {
+      "criterion": "ACC6",
+      "note": "test_make_conditional_deprecated, test_invalid_range_request (+If-Range match/mismatch variants), test_range_request_unsatisfiable_deprecated; tests/test_http.py deprecation tests (not run)"
+    },
+    {
+      "criterion": "ACC7",
+      "note": "tests/test_datastructures.py: test_make_content_range, test_content_range_from_header_valid/invalid, test_etag_set_discards_unquoted (not run)"
+    },
+    {
+      "criterion": "ACC8",
+      "note": "tests/test_send_file.py: object detection/seek/size/not-seekable tests, test_etag, test_conditional_304, test_conditional_412_closes_file, test_range, test_range_not_satisfiable_closes_file, test_range_skipped_unknown_size, test_conditional_unknown_size, test_x_sendfile_range, test_not_conditional (not run)"
+    },
+    {
+      "criterion": "ACC9",
+      "note": "tests/middleware/test_shared_data.py: conditional, range, 412/416, cache_timeout, cache and fallback_mimetype deprecation tests (not run)"
+    },
+    {
+      "criterion": "ACC10",
+      "note": "docs/quickstart.rst documents apply_conditions and apply_range; CHANGES.rst has entries for the new methods and deprecations"
+    },
+    {
+      "criterion": "ACC11",
+      "note": "Tests for all of the above are in the five listed test files; old deprecated-function tests in test_http.py replaced by deprecation tests, old make_conditional tests in test_wrappers.py kept under a filterwarnings mark. Full `pytest -m 'not dev_server'` could not be run (aih check unavailable)."
+    }
+  ],
+  "replan_request": null,
+  "summary": "Fixed review findings: make_conditional again raises RequestedRangeNotSatisfiable for a malformed Range (if If-Range matches), restored the original `bytes=-` test and added If-Range/unsatisfiable variants; added send_file tests for Range/conditional with unknown-size streams, x-sendfile+Range, and conditional=False. Tests could not be run: `aih check` reports missing aih.toml."
+}

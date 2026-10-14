@@ -1,0 +1,133 @@
+{
+  "attempts_total": 1,
+  "base_ref": "main",
+  "base_sha": "671537e0e5c7dcec4ac61ffc755dbd8936cefcfb",
+  "baseline_green": true,
+  "created_at": "2026-10-14T12:27:46+00:00",
+  "head": "465ff3533a73f3ae7dda7db7c77a6d7084549755",
+  "plan_session_id": "05cf2c6e-97d1-411c-9d95-d235553feceb",
+  "plan_version": 1,
+  "repo": "C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\targets\\20261014T122740Z-werkzeug-apply-conditions-range-gated-1",
+  "run_id": "20261014T122746Z-dfb176",
+  "status": "implemented",
+  "tasks": {
+    "T1": {
+      "advisories": [
+        {
+          "file": "tests/test_datastructures.py",
+          "line": 1080,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No test passes a timezone-naive `last_modified` to `IfRange.check` when the `If-Range` date is aware. The `==` comparison would raise TypeError for that input."
+        },
+        {
+          "file": "tests/test_wrappers.py",
+          "line": 900,
+          "pass": 2,
+          "severity": "advisory",
+          "text": "No `apply_range` test sends `If-Range` with a weak response ETag, or `If-Range` with a matching date plus a mismatched ETag."
+        },
+        {
+          "file": "tests/test_http.py",
+          "line": 406,
+          "pass": 3,
+          "severity": "advisory",
+          "text": "The detailed `is_resource_modified` tests, including the `If-Range` cases, were replaced by two smoke tests. This is allowed by the task, but the behaviour of the deprecated function is now barely checked."
+        },
+        {
+          "file": "src/werkzeug/wrappers/response.py",
+          "line": 840,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "The deprecated `make_conditional` carries a long special-case block that re-implements the malformed-Range check, plus nested `if complete_length` branches. This could be simplified."
+        },
+        {
+          "file": "src/werkzeug/middleware/shared_data.py",
+          "line": 315,
+          "pass": 4,
+          "severity": "advisory",
+          "text": "Mutating `rv.cache_control.no_cache`/`public` after `send_file` for the deprecated `cache=False` path is a hack. The `cache=False` path could instead be built from the `send_file` arguments."
+        }
+      ],
+      "attempts": 1,
+      "commit": "465ff3533a73f3ae7dda7db7c77a6d7084549755",
+      "coverage": [
+        {
+          "criterion": "ACC1",
+          "line": 0,
+          "note": "The parametrized cases check header precedence, methods, 304 and 412 (the 412 cases are in test_apply_conditions_precondition_failed). test_apply_conditions_304_removes_entity_headers checks that entity headers are removed.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_conditions"
+        },
+        {
+          "criterion": "ACC2",
+          "line": 0,
+          "note": "Checks `If-None-Match: *` with exists True and False. `If-Match: *` with exists=False is checked in the precondition_failed parametrization. Accept-Ranges is asserted in test_apply_conditions.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_conditions_star_etag_exists"
+        },
+        {
+          "criterion": "ACC3",
+          "line": 0,
+          "note": "Covers non-GET methods; test_apply_range_not_200 and test_apply_range_no_length cover non-200 and unknown or zero length. All assert the response is unchanged and Accept-Ranges is still set.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_range_ignored"
+        },
+        {
+          "criterion": "ACC4",
+          "line": 0,
+          "note": "Checks clamping, the first range only, and the Content-Range values. test_apply_range_unsatisfiable and test_apply_range_ignored cover unsatisfiable ranges and non-bytes units.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_range_clamp_first"
+        },
+        {
+          "criterion": "ACC5",
+          "line": 1080,
+          "note": "Checks strong ETag matching and rejects weak and None. test_if_range_check_date checks dates. test_apply_range_ignored and test_apply_range_if_range_match cover how apply_range uses If-Range.",
+          "status": "covered",
+          "test": "tests/test_datastructures.py::test_if_range_check_etag"
+        },
+        {
+          "criterion": "ACC6",
+          "line": 416,
+          "note": "Checks the deprecation warning for is_byte_range_valid; test_is_resource_modified_deprecated does the same for is_resource_modified. test_make_conditional_deprecated is truncated in the diff, so I could not read it. Older make_conditional tests run under a warning filter.",
+          "status": "covered",
+          "test": "tests/test_http.py::TestHTTPUtility::test_is_byte_range_valid_deprecated"
+        },
+        {
+          "criterion": "ACC7",
+          "line": 1050,
+          "note": "Checks clamping and first-range handling. test_content_range_from_header_invalid/valid cover ContentRange validation. test_etag_set_discards_unquoted covers ETagSet.",
+          "status": "covered",
+          "test": "tests/test_datastructures.py::test_make_content_range"
+        },
+        {
+          "criterion": "ACC8",
+          "line": 0,
+          "note": "Checks seek. test_object_detects_name_size_mtime, test_etag, test_object_without_mimetype, test_range and test_conditional_304 cover detection, the ETag, the default mimetype, ranges and conditional requests.",
+          "status": "covered",
+          "test": "tests/test_send_file.py::test_object_seeks_to_start"
+        },
+        {
+          "criterion": "ACC9",
+          "line": 0,
+          "note": "Checks that a conditional request gives 304 and there is no max-age by default. test_cache_deprecated and test_fallback_mimetype_deprecated check the DeprecationWarning.",
+          "status": "covered",
+          "test": "tests/middleware/test_shared_data.py::test_conditional_request"
+        },
+        {
+          "criterion": "ACC11",
+          "line": 0,
+          "note": "Tests were added for the new methods; the tests of the deprecated functions were reduced to smoke tests, and the harness reports the suite green.",
+          "status": "covered",
+          "test": "tests/test_wrappers.py::test_apply_conditions"
+        }
+      ],
+      "review_rounds": 1,
+      "session_id": "5d8b7341-6746-46d7-86d2-2239a75a2bdf",
+      "status": "committed"
+    }
+  },
+  "updated_at": "2026-10-14T12:38:45+00:00",
+  "worktree": "C:\\Users\\david\\git\\ai-harness-e2e-benchmak\\targets\\.aih\\20261014T122740Z\\worktrees\\20261014T122746Z-dfb176"
+}

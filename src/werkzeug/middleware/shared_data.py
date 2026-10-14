@@ -20,15 +20,12 @@ import typing as t
 from datetime import datetime
 from datetime import timezone
 from io import BytesIO
-from time import time
 from zlib import adler32
 
-from ..http import http_date
-from ..http import is_resource_modified
+from ..exceptions import HTTPException
 from ..security import safe_join
-from ..utils import get_content_type
+from ..utils import send_file
 from ..wsgi import get_path_info
-from ..wsgi import wrap_file
 
 _TOpener = t.Callable[[], tuple[t.IO[bytes], datetime, int]]
 _TLoader = t.Callable[[str | None], tuple[str | None, _TOpener | None]]
@@ -68,8 +65,7 @@ class SharedDataMiddleware:
     Python package.
 
     The optional `disallow` parameter can be a list of :func:`~fnmatch.fnmatch`
-    rules for files that are not accessible from the web.  If `cache` is set to
-    `False` no caching headers are sent.
+    rules for files that are not accessible from the web.
 
     Currently the middleware does not support non-ASCII filenames. If the
     encoding on the file system happens to match the encoding of the URI it may
@@ -78,15 +74,24 @@ class SharedDataMiddleware:
 
     The middleware will guess the mimetype using the Python `mimetype`
     module.  If it's unable to figure out the charset it will fall back
-    to `fallback_mimetype`.
+    to ``application/octet-stream``.
+
+    Files are served with :func:`~werkzeug.utils.send_file`, which supports
+    conditional and range requests.
 
     :param app: the application to wrap.  If you don't want to wrap an
                 application you can pass it :exc:`NotFound`.
     :param exports: a list or dict of exported files and folders.
     :param disallow: a list of :func:`~fnmatch.fnmatch` rules.
     :param cache: enable or disable caching headers.
-    :param cache_timeout: the cache timeout in seconds for the headers.
+    :param cache_timeout: the cache timeout in seconds for the headers. Not
+        set by default, so that clients use conditional requests.
     :param fallback_mimetype: The fallback mimetype for unknown files.
+
+    .. versionchanged:: 3.2
+        Files are served with ``send_file``. ``cache_timeout`` is not set by
+        default. The ``cache`` and ``fallback_mimetype`` parameters are
+        deprecated and will be removed in Werkzeug 4.0.
 
     .. versionchanged:: 1.0
         The default ``fallback_mimetype`` is
@@ -108,12 +113,39 @@ class SharedDataMiddleware:
             | t.Iterable[tuple[str, str | tuple[str, str]]]
         ),
         disallow: None = None,
-        cache: bool = True,
-        cache_timeout: int = 60 * 60 * 12,
-        fallback_mimetype: str = "application/octet-stream",
+        cache: bool | None = None,
+        cache_timeout: int | None = None,
+        fallback_mimetype: str | None = None,
     ) -> None:
         self.app = app
         self.exports: list[tuple[str, _TLoader]] = []
+
+        if cache is not None:
+            import warnings
+
+            warnings.warn(
+                "The 'cache' parameter is deprecated and will be removed in"
+                " Werkzeug 4.0. Caching headers and conditional requests are"
+                " always enabled.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        else:
+            cache = True
+
+        if fallback_mimetype is not None:
+            import warnings
+
+            warnings.warn(
+                "The 'fallback_mimetype' parameter is deprecated and will be"
+                " removed in Werkzeug 4.0. The fallback will always be"
+                " 'application/octet-stream'.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        else:
+            fallback_mimetype = "application/octet-stream"
+
         self.cache = cache
         self.cache_timeout = cache_timeout
 
@@ -256,37 +288,31 @@ class SharedDataMiddleware:
         if file_loader is None or not self.is_allowed(real_filename):
             return self.app(environ, start_response)
 
-        guessed_type = (
-            mimetypes.guess_type(real_filename) if real_filename else (None, None)
-        )
-        mime_type = get_content_type(guessed_type[0] or self.fallback_mimetype, "utf-8")
+        mime_type = (
+            mimetypes.guess_type(real_filename)[0] if real_filename else None
+        ) or self.fallback_mimetype
         f, mtime, file_size = file_loader()
 
-        headers = [("Date", http_date())]
-
-        if self.cache:
-            timeout = self.cache_timeout
-            etag = f'"{self.generate_etag(mtime, file_size, real_filename)}"'
-            headers += [
-                ("ETag", etag),
-                ("Cache-Control", f"max-age={timeout}, public"),
-            ]
-
-            if not is_resource_modified(environ, etag, last_modified=mtime):
-                f.close()
-                start_response("304 Not Modified", headers)
-                return []
-
-            headers.append(("Expires", http_date(time() + timeout)))
-        else:
-            headers.append(("Cache-Control", "public"))
-
-        headers.extend(
-            (
-                ("Content-Type", mime_type),
-                ("Content-Length", str(file_size)),
-                ("Last-Modified", http_date(mtime)),
+        try:
+            rv = send_file(
+                f,
+                environ,
+                mimetype=mime_type,
+                download_name=real_filename,
+                conditional=self.cache,
+                etag=(
+                    self.generate_etag(mtime, file_size, real_filename)
+                    if self.cache
+                    else False
+                ),
+                last_modified=mtime,
+                max_age=self.cache_timeout,
             )
-        )
-        start_response("200 OK", headers)
-        return wrap_file(environ, f)
+        except HTTPException as e:
+            return e(environ, start_response)
+
+        if not self.cache:
+            rv.cache_control.no_cache = None
+            rv.cache_control.public = True
+
+        return rv(environ, start_response)
