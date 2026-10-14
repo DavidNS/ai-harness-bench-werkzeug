@@ -1166,9 +1166,21 @@ def is_resource_modified(
                             account.
     :return: `True` if the resource was modified, otherwise `False`.
 
+    .. deprecated:: 3.2
+        Will be removed in Werkzeug 4.0. Use ``Response.apply_conditions`` and
+        ``Response.apply_range`` instead.
+
     .. versionchanged:: 1.0
         The check is run for methods other than ``GET`` and ``HEAD``.
     """
+    import warnings
+
+    warnings.warn(
+        "'is_resource_modified' is deprecated and will be removed in Werkzeug 4.0."
+        " Use 'Response.apply_conditions' and 'Response.apply_range' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return _sansio_http.is_resource_modified(
         http_range=environ.get("HTTP_RANGE"),
         http_if_range=environ.get("HTTP_IF_RANGE"),
@@ -1461,8 +1473,21 @@ def is_byte_range_valid(
 ) -> bool:
     """Checks if a given byte content range is valid for the given length.
 
+    .. deprecated:: 3.2
+        Will be removed in Werkzeug 4.0. ``Range.make_content_range`` validates
+        its own values.
+
     .. versionadded:: 0.7
     """
+    import warnings
+
+    warnings.warn(
+        "'is_byte_range_valid' is deprecated and will be removed in Werkzeug 4.0."
+        " 'Range.make_content_range' validates its own values.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     if (start is None) != (stop is None):
         return False
     elif start is None:

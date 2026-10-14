@@ -11,6 +11,23 @@ Version 3.2.0
 
 -   Minimum required version of MarkupSafe is 3.0.3.
 -   Minimum supported version of Watchdog is 6.0.
+-   Add ``Response.apply_conditions`` and ``apply_range``, which correctly
+    evaluate ``If-Match``, ``If-Unmodified-Since``, ``If-None-Match``,
+    ``If-Modified-Since``, ``Range``, and ``If-Range`` for all request methods
+    as described by RFC 9110. A failed precondition raises
+    ``PreconditionFailed``. ``Response.make_conditional``,
+    ``http.is_resource_modified``, and ``http.is_byte_range_valid`` are
+    deprecated. Add ``IfRange.check``. ``Range.make_content_range`` clamps
+    too-large values and validates its own values. :issue:`3291` :pr:`3308`
+
+    -   ``send_file`` uses the new methods. It detects the name, size, and
+        modification time from file-like objects, and seeks them to the start.
+        The ETag no longer includes a hash of the path. The mimetype defaults to
+        ``application/octet-stream`` instead of raising an error if
+        ``download_name`` is not given.
+    -   ``SharedDataMiddleware`` uses ``send_file``. ``cache_timeout`` is not
+        set by default, so conditional caching works. The ``cache`` and
+        ``fallback_mimetype`` parameters are deprecated.
 -   The CSP ``prefetch_src``, ``navigate_to``, and ``plugin_types`` properties
     are deprecated. Their corresponding directives have been deprecated or
     removed from the spec. :pr:`3114`
