@@ -9,6 +9,25 @@ Version 3.2.0
     -   ``OrderedMultiDict`` and ``ImmutableOrderedMultiDict are removed.
         The base ``MultiDict`` already retains order.
 
+-   Add ``Response.apply_conditions`` and ``Response.apply_range``, which
+    evaluate conditional and range request headers correctly, in the order and
+    with the comparisons specified by RFC 9110. ``apply_conditions`` raises
+    ``PreconditionFailed`` or sets ``304`` and handles ``*`` ETags based on
+    whether the resource exists. ``apply_range`` only applies to ``GET``
+    requests with a ``200`` response and a known, non-zero ``Content-Length``,
+    clamps too-large values, and uses only the first range. Add
+    ``IfRange.check``. :issue:`3291`
+-   ``Response.make_conditional``, ``is_resource_modified``, and
+    ``is_byte_range_valid`` are deprecated. Use ``apply_conditions`` and
+    ``apply_range`` instead. :pr:`3308`
+-   ``send_file`` uses ``apply_conditions`` and ``apply_range``. It detects the
+    name, size, and modification time of file-like objects, and seeks them to
+    0. The ETag no longer includes a hash of the path. The mimetype defaults to
+    ``application/octet-stream`` instead of raising an error when
+    ``download_name`` is not given.
+-   ``SharedDataMiddleware`` serves files using ``send_file``. ``cache_timeout``
+    is not set by default, so that conditional caching works. The ``cache`` and
+    ``fallback_mimetype`` parameters are deprecated.
 -   Minimum required version of MarkupSafe is 3.0.3.
 -   Minimum supported version of Watchdog is 6.0.
 -   The CSP ``prefetch_src``, ``navigate_to``, and ``plugin_types`` properties

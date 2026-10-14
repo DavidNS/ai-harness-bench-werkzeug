@@ -1,6 +1,8 @@
 import os
 from contextlib import closing
 
+import pytest
+
 from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.test import create_environ
 from werkzeug.test import run_wsgi_app
@@ -9,6 +11,78 @@ from werkzeug.test import run_wsgi_app
 def test_get_file_loader():
     app = SharedDataMiddleware(None, {})
     assert callable(app.get_file_loader("foo"))
+
+
+res_dir = os.path.join(os.path.dirname(__file__), "..", "res")
+
+
+def _run(app, path="/test.txt", **kwargs):
+    app_iter, status, headers = run_wsgi_app(app, create_environ(path, **kwargs))
+
+    with closing(app_iter):
+        data = b"".join(app_iter)
+
+    return status, dict(headers), data
+
+
+def test_conditional_request():
+    app = SharedDataMiddleware(None, {"/": res_dir})
+    status, headers, data = _run(app)
+    assert status == "200 OK"
+    assert data.strip() == b"FOUND"
+    assert "max-age" not in headers["Cache-Control"]
+    assert "ETag" in headers
+    assert "Last-Modified" in headers
+
+    status, headers, data = _run(
+        app, headers={"If-None-Match": headers["ETag"]}
+    )
+    assert status == "304 Not Modified"
+    assert data == b""
+
+
+def test_range_request():
+    app = SharedDataMiddleware(None, {"/": res_dir})
+    status, headers, data = _run(app, headers={"Range": "bytes=0-1"})
+    assert status == "206 Partial Content"
+    assert data == b"FO"
+    assert headers["Content-Range"].startswith("bytes 0-1/")
+
+
+def test_precondition_failed_and_range_not_satisfiable():
+    app = SharedDataMiddleware(None, {"/": res_dir})
+    status, _, _ = _run(app, headers={"If-Match": '"nope"'})
+    assert status == "412 Precondition Failed"
+    status, _, _ = _run(app, headers={"Range": "bytes=1000-2000"})
+    assert status == "416 Requested Range Not Satisfiable"
+
+
+def test_cache_timeout():
+    app = SharedDataMiddleware(None, {"/": res_dir}, cache_timeout=60)
+    _, headers, _ = _run(app)
+    assert "max-age=60" in headers["Cache-Control"]
+
+
+def test_cache_deprecated():
+    with pytest.deprecated_call():
+        app = SharedDataMiddleware(None, {"/": res_dir}, cache=False)
+
+    status, headers, data = _run(app, headers={"If-None-Match": '"x"'})
+    assert status == "200 OK"
+    assert headers["Cache-Control"] == "public"
+    assert "ETag" not in headers
+    assert data.strip() == b"FOUND"
+
+
+def test_fallback_mimetype_deprecated():
+    with pytest.deprecated_call():
+        app = SharedDataMiddleware(
+            None, {"/": res_dir}, fallback_mimetype="application/x-test"
+        )
+
+    assert app.fallback_mimetype == "application/x-test"
+    app2 = SharedDataMiddleware(None, {"/": res_dir})
+    assert app2.fallback_mimetype == "application/octet-stream"
 
 
 def test_shared_data_middleware(tmpdir):

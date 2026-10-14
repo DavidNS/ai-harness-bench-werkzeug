@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import io
 import pickle
 import tempfile
@@ -1044,6 +1045,79 @@ def test_range_to_header(ranges):
     header = ds.Range("byes", ranges).to_header()
     r = ds.Range.from_header(header)
     assert r.ranges == ranges
+
+
+@pytest.mark.parametrize(
+    ("header", "length", "expect"),
+    [
+        ("bytes=0-4", 11, ("bytes", 0, 5, 11)),
+        ("bytes=6-666", 11, ("bytes", 6, 11, 11)),
+        ("bytes=6-", 11, ("bytes", 6, 11, 11)),
+        ("bytes=-5", 11, ("bytes", 6, 11, 11)),
+        ("bytes=-666", 11, ("bytes", 0, 11, 11)),
+        ("bytes=0-1,4-5", 11, ("bytes", 0, 2, 11)),
+        ("items=0-1", 11, ("items", 0, 2, 11)),
+        ("bytes=11-", 11, None),
+        ("bytes=20-30", 11, None),
+        ("bytes=0-4", 0, None),
+        ("bytes=0-4", None, None),
+    ],
+)
+def test_make_content_range(header, length, expect):
+    cr = ds.Range.from_header(header).make_content_range(length)
+
+    if expect is None:
+        assert cr is None
+    else:
+        assert (cr.units, cr.start, cr.stop, cr.length) == expect
+
+
+def test_make_content_range_no_ranges():
+    assert ds.Range("bytes", []).make_content_range(10) is None
+
+
+def test_if_range_check_etag():
+    if_range = ds.IfRange.from_header('"abc"')
+    assert if_range.check("abc")
+    assert if_range.check(ETag("abc"))
+    assert not if_range.check("other")
+    assert not if_range.check(ETag("abc", weak=True))
+    assert not if_range.check(None)
+    assert not if_range.check(None, datetime.datetime(2024, 1, 1))
+    # weak values are discarded when parsing
+    assert not ds.IfRange.from_header('W/"abc"').check("abc")
+
+
+def test_if_range_check_date():
+    when = datetime.datetime(2024, 1, 1, 12, tzinfo=datetime.timezone.utc)
+    if_range = ds.IfRange(date=when)
+    assert if_range.check(None, when)
+    assert if_range.check("abc", when.replace(microsecond=500))
+    assert not if_range.check(None, when + datetime.timedelta(seconds=1))
+    assert not if_range.check("abc", None)
+    assert not ds.IfRange().check("abc", when)
+
+
+@pytest.mark.parametrize(
+    "value", ["bytes 0-4/11", "bytes */11", "bytes 0-4/*"]
+)
+def test_content_range_from_header_valid(value):
+    assert ds.ContentRange.from_header(value).to_header() == value
+
+
+@pytest.mark.parametrize(
+    "value", ["", "bytes 0-4", "bytes 5-4/11", "bytes 0-11/11", "bytes */*", "bytes a-b/c"]
+)
+def test_content_range_from_header_invalid(value):
+    assert not ds.ContentRange.from_header(value)
+
+
+def test_etag_set_discards_unquoted():
+    s = ETagSet.from_header('abc, "def", W/ghi, W/"jkl"')
+    assert s.contains_strong("def")
+    assert not s.contains_weak("abc")
+    assert not s.contains_weak("ghi")
+    assert s.contains_weak("jkl")
 
 
 @pytest.mark.parametrize(
