@@ -18,12 +18,14 @@ from werkzeug.datastructures import MIMEAccept
 from werkzeug.datastructures import MultiDict
 from werkzeug.datastructures import WWWAuthenticate
 from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import PreconditionFailed
 from werkzeug.exceptions import RequestedRangeNotSatisfiable
 from werkzeug.exceptions import SecurityError
 from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.http import COEP
 from werkzeug.http import COOP
 from werkzeug.http import generate_etag
+from werkzeug.http import http_date
 from werkzeug.test import Client
 from werkzeug.test import create_environ
 from werkzeug.test import run_wsgi_app
@@ -509,6 +511,10 @@ def test_get_data_method_parsing_caching_behavior():
     assert req.form["foo"] == "Hello World"
 
 
+def _request(method="GET", **headers):
+    return wrappers.Request(create_environ(method=method, headers=headers))
+
+
 def test_etag_response():
     response = wrappers.Response("Hello World")
     assert response.etag is None
@@ -523,13 +529,11 @@ def test_etag_response():
         "max-age=60, must-revalidate",
     )
 
+    env = create_environ(headers={"If-None-Match": response.headers["ETag"]})
+    response.apply_conditions(wrappers.Request(env))
+    # Date and Content-Length are not touched.
     assert "Date" not in response.headers
-    env = create_environ()
-    env.update(
-        {"REQUEST_METHOD": "GET", "HTTP_IF_NONE_MATCH": response.headers["ETag"]}
-    )
-    response.make_conditional(env)
-    assert "Date" in response.headers
+    assert response.content_length == 11
 
     # after the thing is invoked by the server as wsgi application
     # (we're emulating this here), there must not be any entity
@@ -537,77 +541,201 @@ def test_etag_response():
     resp = wrappers.Response.from_app(response, env)
     assert resp.status_code == 304
     assert "Content-Length" not in resp.headers
+    assert resp.data == b""
 
-    # make sure date is not overridden
+
+@pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE"])
+def test_if_match_all_methods(method):
     response = wrappers.Response("Hello World")
-    response.date = 1337
-    d = response.date
-    response.make_conditional(env)
-    assert response.date == d
+    response.etag = "abc"
 
-    # make sure content length is only set if missing
-    response = wrappers.Response("Hello World")
-    response.content_length = 999
-    response.make_conditional(env)
-    assert response.content_length == 999
+    with pytest.raises(PreconditionFailed):
+        response.apply_conditions(_request(method, **{"If-Match": '"xyz"'}))
+
+    response.apply_conditions(_request(method, **{"If-Match": '"xyz", "abc"'}))
+    assert response.status_code == 200
+    assert response.data == b"Hello World"
 
 
-def test_etag_response_412():
-    response = wrappers.Response("Hello World")
-    assert response.etag is None
-    response.add_etag()
-    assert response.etag.value == "4Wf2jWVj11uyXzqknCnvYS1BNS3ABgbefL1jC7JmX1E"
-    assert not response.cache_control
-    response.cache_control.must_revalidate = True
-    response.cache_control.max_age = 60
-    response.headers["Content-Length"] = len(response.get_data())
-    assert response.headers["Cache-Control"] in (
-        "must-revalidate, max-age=60",
-        "max-age=60, must-revalidate",
+def test_if_match_strong_comparison():
+    response = wrappers.Response()
+    response.etag = ("abc", True)
+
+    with pytest.raises(PreconditionFailed):
+        response.apply_conditions(_request(**{"If-Match": 'W/"abc"'}))
+
+    with pytest.raises(PreconditionFailed):
+        response.apply_conditions(_request(**{"If-Match": '"abc"'}))
+
+    response.etag = "abc"
+
+    with pytest.raises(PreconditionFailed):
+        response.apply_conditions(_request(**{"If-Match": 'W/"abc"'}))
+
+
+def test_if_match_without_etag():
+    with pytest.raises(PreconditionFailed):
+        wrappers.Response().apply_conditions(_request(**{"If-Match": '"abc"'}))
+
+
+@pytest.mark.parametrize(
+    ("exists", "fails"), [(True, False), (False, True)], ids=["exists", "missing"]
+)
+def test_if_match_star(exists, fails):
+    response = wrappers.Response()
+    request = _request(**{"If-Match": "*"})
+
+    if fails:
+        with pytest.raises(PreconditionFailed):
+            response.apply_conditions(request, exists=exists)
+    else:
+        response.apply_conditions(request, exists=exists)
+
+
+@pytest.mark.parametrize("exists", [True, False])
+def test_if_none_match_star(exists):
+    response = wrappers.Response("x")
+    request = _request(**{"If-None-Match": "*"})
+    response.apply_conditions(request, exists=exists)
+    assert response.status_code == (304 if exists else 200)
+
+    response = wrappers.Response("x")
+    request = _request("PUT", **{"If-None-Match": "*"})
+
+    if exists:
+        with pytest.raises(PreconditionFailed):
+            response.apply_conditions(request, exists=exists)
+    else:
+        response.apply_conditions(request, exists=exists)
+
+
+def test_if_none_match_weak_comparison():
+    response = wrappers.Response("x")
+    response.etag = ("abc", True)
+    response.apply_conditions(_request(**{"If-None-Match": '"abc"'}))
+    assert response.status_code == 304
+
+    response = wrappers.Response("x")
+    response.etag = "abc"
+    response.apply_conditions(_request("HEAD", **{"If-None-Match": 'W/"abc"'}))
+    assert response.status_code == 304
+
+    response = wrappers.Response("x")
+    response.etag = "abc"
+    response.apply_conditions(_request(**{"If-None-Match": '"other"'}))
+    assert response.status_code == 200
+
+
+def test_if_none_match_other_methods_fail():
+    response = wrappers.Response("x")
+    response.etag = "abc"
+
+    with pytest.raises(PreconditionFailed):
+        response.apply_conditions(_request("POST", **{"If-None-Match": '"abc"'}))
+
+
+def test_if_modified_since():
+    response = wrappers.Response("x")
+    response.last_modified = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    date = http_date(datetime(2020, 1, 1, tzinfo=timezone.utc))
+    response.apply_conditions(_request(**{"If-Modified-Since": date}))
+    assert response.status_code == 304
+
+    response = wrappers.Response("x")
+    response.last_modified = datetime(2020, 1, 2, tzinfo=timezone.utc)
+    response.apply_conditions(_request(**{"If-Modified-Since": date}))
+    assert response.status_code == 200
+
+    # not for other methods
+    response = wrappers.Response("x")
+    response.last_modified = datetime(2019, 1, 1, tzinfo=timezone.utc)
+    response.apply_conditions(_request("POST", **{"If-Modified-Since": date}))
+    assert response.status_code == 200
+
+
+def test_if_unmodified_since():
+    response = wrappers.Response("x")
+    response.last_modified = datetime(2020, 1, 2, tzinfo=timezone.utc)
+    date = http_date(datetime(2020, 1, 1, tzinfo=timezone.utc))
+
+    with pytest.raises(PreconditionFailed):
+        response.apply_conditions(_request("PUT", **{"If-Unmodified-Since": date}))
+
+    response.last_modified = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    response.apply_conditions(_request("PUT", **{"If-Unmodified-Since": date}))
+    assert response.status_code == 200
+
+    # invalid date is ignored
+    response.apply_conditions(_request("PUT", **{"If-Unmodified-Since": "nope"}))
+
+
+def test_precondition_precedence():
+    old = http_date(datetime(2000, 1, 1, tzinfo=timezone.utc))
+    new = http_date(datetime(2030, 1, 1, tzinfo=timezone.utc))
+
+    def make():
+        response = wrappers.Response("x")
+        response.etag = "abc"
+        response.last_modified = datetime(
+            2020, 1, 1, tzinfo=timezone.utc
+        )
+        return response
+
+    # If-Match true overrides a failing If-Unmodified-Since.
+    make().apply_conditions(
+        _request(**{"If-Match": '"abc"', "If-Unmodified-Since": old})
     )
 
-    assert "Date" not in response.headers
-    env = create_environ()
-    env.update({"REQUEST_METHOD": "GET", "HTTP_IF_MATCH": '"xyz"'})
-    response.make_conditional(env)
-    assert "Date" in response.headers
+    # If-Match false fails even if If-Unmodified-Since passes.
+    with pytest.raises(PreconditionFailed):
+        make().apply_conditions(
+            _request(**{"If-Match": '"no"', "If-Unmodified-Since": new})
+        )
 
-    # after the thing is invoked by the server as wsgi application
-    # (we're emulating this here), there must not be any entity
-    # headers left and the status code would have to be 412
-    resp = wrappers.Response.from_app(response, env)
-    assert resp.status_code == 412
-    # Make sure there is a body still
-    assert resp.data != b""
+    # If-None-Match false overrides a satisfied If-Modified-Since.
+    response = make()
+    response.apply_conditions(
+        _request(**{"If-None-Match": '"no"', "If-Modified-Since": new})
+    )
+    assert response.status_code == 200
 
-    # make sure date is not overridden
-    response = wrappers.Response("Hello World")
-    response.date = 1337
-    d = response.date
-    response.make_conditional(env)
-    assert response.date == d
+    # If-None-Match true gives 304 regardless of If-Modified-Since.
+    response = make()
+    response.apply_conditions(
+        _request(**{"If-None-Match": '"abc"', "If-Modified-Since": old})
+    )
+    assert response.status_code == 304
 
-    # make sure content length is only set if missing
-    response = wrappers.Response("Hello World")
-    response.content_length = 999
-    response.make_conditional(env)
-    assert response.content_length == 999
+    # If-Match passing then If-None-Match true gives 304.
+    response = make()
+    response.apply_conditions(
+        _request(**{"If-Match": '"abc"', "If-None-Match": '"abc"'})
+    )
+    assert response.status_code == 304
+
+
+def test_conditions_ignored_for_non_success():
+    response = wrappers.Response("x", status=404)
+    response.apply_conditions(_request(**{"If-Match": '"abc"'}))
+    assert response.status_code == 404
 
 
 def test_advertise_accept_ranges() -> None:
-    env = create_environ()
     response = wrappers.Response()
-    response.make_conditional(env, accept_ranges=True)
+    response.apply_range(_request())
     assert response.status_code == 200
     assert response.headers["Accept-Ranges"] == "bytes"
     assert "Content-Range" not in response.headers
 
+    response = wrappers.Response("x")
+    response.apply_range(_request("POST", Range="bytes=0-0"))
+    assert response.headers["Accept-Ranges"] == "bytes"
+    assert response.status_code == 200
+
 
 def test_range_request_basic():
-    env = create_environ()
     response = wrappers.Response("Hello World")
-    env["HTTP_RANGE"] = "bytes=0-4"
-    response.make_conditional(env, accept_ranges=True, complete_length=11)
+    response.apply_range(_request(Range="bytes=0-4"))
     assert response.status_code == 206
     assert response.headers["Accept-Ranges"] == "bytes"
     assert response.headers["Content-Range"] == "bytes 0-4/11"
@@ -616,38 +744,103 @@ def test_range_request_basic():
 
 
 def test_range_request_out_of_bound():
-    env = create_environ()
     response = wrappers.Response("Hello World")
-    env["HTTP_RANGE"] = "bytes=6-666"
-    response.make_conditional(env, accept_ranges=True, complete_length=11)
+    response.apply_range(_request(Range="bytes=6-666"))
     assert response.status_code == 206
-    assert response.headers["Accept-Ranges"] == "bytes"
     assert response.headers["Content-Range"] == "bytes 6-10/11"
     assert response.headers["Content-Length"] == "5"
     assert response.data == b"World"
 
 
+def test_range_request_suffix():
+    response = wrappers.Response("Hello World")
+    response.apply_range(_request(Range="bytes=-5"))
+    assert response.status_code == 206
+    assert response.headers["Content-Range"] == "bytes 6-10/11"
+    assert response.data == b"World"
+
+    # A suffix longer than the content is clamped.
+    response = wrappers.Response("Hello World")
+    response.apply_range(_request(Range="bytes=-500"))
+    assert response.status_code == 206
+    assert response.headers["Content-Range"] == "bytes 0-10/11"
+    assert response.data == b"Hello World"
+
+
+def test_range_request_open_ended():
+    response = wrappers.Response("Hello World")
+    response.apply_range(_request(Range="bytes=6-"))
+    assert response.headers["Content-Range"] == "bytes 6-10/11"
+    assert response.data == b"World"
+
+
+def test_range_request_first_of_multiple():
+    response = wrappers.Response("Hello World")
+    response.apply_range(_request(Range="bytes=0-4, 6-10"))
+    assert response.status_code == 206
+    assert response.headers["Content-Range"] == "bytes 0-4/11"
+    assert response.data == b"Hello"
+
+
+def test_range_request_unsatisfiable():
+    response = wrappers.Response("Hello World")
+
+    with pytest.raises(RequestedRangeNotSatisfiable) as ctx:
+        response.apply_range(_request(Range="bytes=11-"))
+
+    assert ctx.value.length == 11
+    assert response.status_code == 200
+
+    with pytest.raises(RequestedRangeNotSatisfiable):
+        wrappers.Response("Hello World").apply_range(_request(Range="bytes=20-30"))
+
+
+@pytest.mark.parametrize(
+    "value", ["bytes=-", "bytes=5-2", "bytes=a-b", "x", "bytes=-0"]
+)
+def test_invalid_range_request(value):
+    response = wrappers.Response("Hello World")
+    response.apply_range(_request(Range=value))
+    assert response.status_code == 200
+    assert response.data == b"Hello World"
+    assert "Content-Range" not in response.headers
+
+
+def test_range_request_unsupported_units():
+    response = wrappers.Response("Hello World")
+    response.apply_range(_request(Range="items=0-4"))
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize("method", ["HEAD", "POST"])
+def test_range_request_only_get(method):
+    response = wrappers.Response("Hello World")
+    response.apply_range(_request(method, Range="bytes=0-4"))
+    assert response.status_code == 200
+
+
+def test_range_request_only_ok():
+    response = wrappers.Response("Hello World", status=201)
+    response.apply_range(_request(Range="bytes=0-4"))
+    assert response.status_code == 201
+
+
 def test_range_request_with_file():
-    env = create_environ()
     resources = os.path.join(os.path.dirname(__file__), "res")
     fname = os.path.join(resources, "test.txt")
     with open(fname, "rb") as f:
         fcontent = f.read()
     with open(fname, "rb") as f:
         response = wrappers.Response(f)
-        env["HTTP_RANGE"] = "bytes=0-0"
-        response.make_conditional(
-            env, accept_ranges=True, complete_length=len(fcontent)
-        )
+        response.content_length = len(fcontent)
+        response.apply_range(_request(Range="bytes=0-0"))
         assert response.status_code == 206
-        assert response.headers["Accept-Ranges"] == "bytes"
         assert response.headers["Content-Range"] == f"bytes 0-0/{len(fcontent)}"
         assert response.headers["Content-Length"] == "1"
         assert response.data == fcontent[:1]
 
 
 def test_range_request_with_complete_file():
-    env = create_environ()
     resources = os.path.join(os.path.dirname(__file__), "res")
     fname = os.path.join(resources, "test.txt")
     with open(fname, "rb") as f:
@@ -655,30 +848,136 @@ def test_range_request_with_complete_file():
     with open(fname, "rb") as f:
         fsize = os.path.getsize(fname)
         response = wrappers.Response(f)
-        env["HTTP_RANGE"] = f"bytes=0-{fsize - 1}"
-        response.make_conditional(env, accept_ranges=True, complete_length=fsize)
+        response.content_length = fsize
+        response.apply_range(_request(Range=f"bytes=0-{fsize - 1}"))
         assert response.status_code == 206
-        assert response.headers["Accept-Ranges"] == "bytes"
         assert response.headers["Content-Range"] == f"bytes 0-{fsize - 1}/{fsize}"
         assert response.headers["Content-Length"] == str(fsize)
         assert response.data == fcontent
 
 
-@pytest.mark.parametrize("value", [None, 0])
-def test_range_request_without_complete_length(value):
-    env = create_environ(headers={"Range": "bytes=0-10"})
-    response = wrappers.Response("Hello World")
-    response.make_conditional(env, accept_ranges=True, complete_length=value)
+def test_range_request_without_complete_length():
+    response = wrappers.Response(["Hello World"])
+    assert response.content_length is None
+    response.apply_range(_request(Range="bytes=0-10"))
+    assert response.status_code == 200
+    assert response.headers["Accept-Ranges"] == "bytes"
+    assert response.data == b"Hello World"
+
+    response = wrappers.Response()
+    response.apply_range(_request(Range="bytes=0-10"))
+    assert response.status_code == 200
+
+
+def test_if_range_etag():
+    def make(etag):
+        response = wrappers.Response("Hello World")
+        response.etag = etag
+        return response
+
+    response = make("abc")
+    response.apply_range(_request(Range="bytes=0-4", **{"If-Range": '"abc"'}))
+    assert response.status_code == 206
+
+    response = make("abc")
+    response.apply_range(_request(Range="bytes=0-4", **{"If-Range": '"other"'}))
     assert response.status_code == 200
     assert response.data == b"Hello World"
 
+    # weak validators never match, in the request or the response
+    response = make("abc")
+    response.apply_range(_request(Range="bytes=0-4", **{"If-Range": 'W/"abc"'}))
+    assert response.status_code == 200
 
-def test_invalid_range_request():
-    env = create_environ()
+    response = make(("abc", True))
+    response.apply_range(_request(Range="bytes=0-4", **{"If-Range": '"abc"'}))
+    assert response.status_code == 200
+
     response = wrappers.Response("Hello World")
-    env["HTTP_RANGE"] = "bytes=-"
-    with pytest.raises(RequestedRangeNotSatisfiable):
-        response.make_conditional(env, accept_ranges=True, complete_length=11)
+    response.apply_range(_request(Range="bytes=0-4", **{"If-Range": '"abc"'}))
+    assert response.status_code == 200
+
+
+def test_if_range_date():
+    utc = timezone.utc
+    date = http_date(datetime(2020, 1, 1, tzinfo=utc))
+
+    def make(last_modified):
+        response = wrappers.Response("Hello World")
+        response.last_modified = last_modified
+        return response
+
+    response = make(datetime(2020, 1, 1, tzinfo=utc))
+    response.apply_range(_request(Range="bytes=0-4", **{"If-Range": date}))
+    assert response.status_code == 206
+
+    # equality is required, not just older
+    for other in (datetime(2019, 1, 1, tzinfo=utc), None):
+        response = make(other)
+        response.apply_range(_request(Range="bytes=0-4", **{"If-Range": date}))
+        assert response.status_code == 200
+
+    response = make(datetime(2021, 1, 1, tzinfo=utc))
+    response.apply_range(_request(Range="bytes=0-4", **{"If-Range": date}))
+    assert response.status_code == 200
+
+
+def test_if_range_without_range_ignored():
+    response = wrappers.Response("Hello World")
+    response.apply_range(_request(**{"If-Range": '"abc"'}))
+    assert response.status_code == 200
+
+
+def test_conditions_then_range():
+    response = wrappers.Response("Hello World")
+    response.etag = "abc"
+    request = _request(Range="bytes=0-4", **{"If-None-Match": '"abc"'})
+    response.apply_conditions(request)
+    response.apply_range(request)
+    assert response.status_code == 304
+    assert "Content-Range" not in response.headers
+
+
+def test_make_conditional_deprecated():
+    response = wrappers.Response("Hello World")
+    response.etag = "abc"
+
+    with pytest.deprecated_call():
+        rv = response.make_conditional(
+            create_environ(headers={"If-None-Match": '"abc"'})
+        )
+
+    assert rv is response
+    assert response.status_code == 304
+
+    response = wrappers.Response("Hello World")
+    response.etag = "abc"
+
+    with pytest.deprecated_call():
+        response.make_conditional(
+            _request(**{"If-Match": '"xyz"'}), accept_ranges=True, complete_length=11
+        )
+
+    assert response.status_code == 412
+
+    response = wrappers.Response("Hello World")
+
+    with pytest.deprecated_call():
+        response.make_conditional(
+            create_environ(headers={"Range": "bytes=0-4"}),
+            accept_ranges=True,
+            complete_length=11,
+        )
+
+    assert response.status_code == 206
+    assert response.data == b"Hello"
+
+    response = wrappers.Response("Hello World")
+
+    with pytest.deprecated_call():
+        response.make_conditional(_request("POST", **{"If-Match": '"xyz"'}))
+
+    assert response.status_code == 200
 
 
 def test_etag_response_freezing():
@@ -1076,7 +1375,7 @@ def test_stream_content_length():
     assert resp.get_wsgi_headers({})["Content-Length"] == "9"
 
     resp = wrappers.Response()
-    resp.make_conditional({"REQUEST_METHOD": "GET"})
+    resp.apply_conditions(_request())
     resp.stream.writelines(["foo", "bar", "baz"])
     assert resp.get_wsgi_headers({})["Content-Length"] == "9"
 
@@ -1097,7 +1396,7 @@ def test_disabled_auto_content_length():
     assert "Content-Length" not in resp.get_wsgi_headers({})
 
     resp = MyResponse()
-    resp.make_conditional({"REQUEST_METHOD": "GET"})
+    resp.apply_conditions(_request())
     assert resp.content_length is None
     assert "Content-Length" not in resp.get_wsgi_headers({})
 

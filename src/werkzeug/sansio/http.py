@@ -35,8 +35,44 @@ def is_resource_modified(
                             account.
     :return: `True` if the resource was modified, otherwise `False`.
 
+    .. deprecated:: 3.2
+        Will be removed in Werkzeug 4.0. Use :meth:`.Response.apply_conditions`
+        and :meth:`.Response.apply_range` instead.
+
     .. versionadded:: 2.2
     """
+    import warnings
+
+    warnings.warn(
+        "'is_resource_modified' is deprecated and will be removed in Werkzeug 4.0."
+        " Use 'Response.apply_conditions' and 'Response.apply_range' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return _is_resource_modified(
+        http_range,
+        http_if_range,
+        http_if_modified_since,
+        http_if_none_match,
+        http_if_match,
+        etag,
+        data,
+        last_modified,
+        ignore_if_range,
+    )
+
+
+def _is_resource_modified(
+    http_range: str | None = None,
+    http_if_range: str | None = None,
+    http_if_modified_since: str | None = None,
+    http_if_none_match: str | None = None,
+    http_if_match: str | None = None,
+    etag: str | None = None,
+    data: bytes | None = None,
+    last_modified: datetime | str | None = None,
+    ignore_if_range: bool = True,
+) -> bool:
     if etag is None and data is not None:
         etag = f'"{generate_etag(data)}"'
     elif data is not None:

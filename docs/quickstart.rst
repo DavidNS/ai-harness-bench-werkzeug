@@ -292,11 +292,25 @@ Finally if you have set all the conditional values, you can make the
 response conditional against a request.  Which means that if the request
 can assure that it has the information already, no data besides the headers
 is sent over the network which saves traffic.  For that you should set at
-least an ETag (which is used for comparison) and the date header and then
-call :class:`~Request.make_conditional` with the request object.
+least an ETag (which is used for comparison) and a ``Last-Modified`` date, then
+call :meth:`~Response.apply_conditions` with the request object.  If the
+request's ``If-None-Match`` or ``If-Modified-Since`` header shows the client
+already has the data, the response becomes ``304 Not Modified`` and the body is
+removed.  If an ``If-Match`` or ``If-Unmodified-Since`` precondition fails,
+:exc:`~exceptions.PreconditionFailed` is raised, which is a ``412`` response.
 
-The response is modified accordingly (status code changed, response body
-removed, entity headers removed etc.)
+If the response has a known ``Content-Length``, :meth:`~Response.apply_range`
+handles ``Range`` requests, responding with ``206 Partial Content`` and the
+requested part of the body, or raising
+:exc:`~exceptions.RequestedRangeNotSatisfiable` (``416``).  It always sets
+``Accept-Ranges: bytes``.  Call it after ``apply_conditions``.
+
+.. code-block:: python
+
+    response = Response(data)
+    response.add_etag()
+    response.apply_conditions(request)
+    response.apply_range(request)
 
 
 Trusting Data
