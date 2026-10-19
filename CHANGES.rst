@@ -38,6 +38,36 @@ Version 3.2.0
     considered false. ``units`` is always a string. Constructor arguments
     have defaults. The ``set`` and ``unset`` methods are deprecated in favor of
     setting or deleting ``response.content_range``.
+-   Add ``Response.apply_conditions`` and ``Response.apply_range``, which
+    replace ``Response.make_conditional`` and correctly follow RFC 9110.
+    :issue:`3291`
+
+    -   ``apply_conditions`` evaluates preconditions for every request method,
+        in the order ``If-Match``, ``If-Unmodified-Since``, ``If-None-Match``,
+        ``If-Modified-Since``. ``If-Match`` uses the strong ETag comparison and
+        ``If-None-Match`` the weak comparison. ``*`` follows the ``exists``
+        parameter. A failed precondition raises ``PreconditionFailed``. A
+        satisfied ``If-None-Match`` or ``If-Modified-Since`` on ``GET`` or
+        ``HEAD`` makes the response ``304 Not Modified``. It does not set
+        ``Date`` or ``Content-Length``.
+    -   ``apply_range`` applies ``Range`` to a ``200`` ``GET`` response with a
+        known ``Content-Length``. Only ``bytes`` is supported. Invalid ranges
+        are ignored, only the first of multiple ranges is used, ranges are
+        clamped to the content, and an unsatisfiable range raises
+        ``RequestedRangeNotSatisfiable``. ``If-Range`` uses the strong ETag
+        comparison, or an exact match with ``Last-Modified``. ``Accept-Ranges:
+        bytes`` is always set.
+    -   ``Response.make_conditional``, ``http.is_resource_modified``,
+        ``sansio.http.is_resource_modified``, and ``http.is_byte_range_valid``
+        are deprecated.
+
+-   ``send_file`` uses ``apply_conditions`` and ``apply_range``. A failed
+    precondition raises ``PreconditionFailed`` instead of returning ``412``. The
+    name, size, and modification time are detected from file objects when
+    possible, and seekable file objects are seeked to the start.
+-   ``SharedDataMiddleware`` serves files using ``send_file``, so it supports
+    ``If-Match``, ``If-Unmodified-Since``, and ``Range``. The ``cache`` and
+    ``fallback_mimetype`` parameters are deprecated.
 -   ``Range.range_for_length`` and ``to_content_range_header`` are deprecated.
     Use ``make_content_range`` instead.
 -   All ``Response`` header properties behave consistently and document their

@@ -5,6 +5,8 @@ import pathlib
 import pytest
 
 from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import PreconditionFailed
+from werkzeug.exceptions import RequestedRangeNotSatisfiable
 from werkzeug.http import http_date
 from werkzeug.test import create_environ
 from werkzeug.utils import send_file
@@ -199,3 +201,134 @@ def test_max_age_callable():
     # This is a private API, it should only be used by Flask.
     with send_file(txt_path, environ, max_age=lambda p: 10) as rv:
         assert rv.cache_control.max_age == 10
+
+
+def _env(method="GET", **headers):
+    return create_environ(method=method, headers=headers)
+
+
+def test_object_detects_name_size_mtime(tmp_path):
+    path = tmp_path / "data.txt"
+    path.write_bytes(b"Hello World")
+
+    with path.open("rb") as f:
+        f.read()  # already read, will be seeked back
+
+        with send_file(f, environ) as rv:
+            assert rv.mimetype == "text/plain"
+            assert rv.content_length == 11
+            assert rv.last_modified is not None
+            assert rv.headers["Content-Disposition"] == "inline; filename=data.txt"
+            assert rv.etag is not None
+            rv.direct_passthrough = False
+            assert rv.data == b"Hello World"
+
+
+def test_bytesio_seeked_to_start():
+    f = io.BytesIO(b"Hello World")
+    f.read()
+
+    with send_file(f, environ, mimetype="text/plain") as rv:
+        assert rv.content_length == 11
+        assert rv.last_modified is None
+        assert "ETag" not in rv.headers
+        rv.direct_passthrough = False
+        assert rv.data == b"Hello World"
+
+
+def test_unseekable_object_no_size():
+    class Unseekable(io.RawIOBase):
+        def readable(self):
+            return True
+
+    with send_file(
+        Unseekable(), _env(Range="bytes=0-1"), mimetype="text/plain"
+    ) as rv:
+        assert rv.content_length is None
+        assert rv.status_code == 200
+
+
+def test_range_bytesio():
+    f = io.BytesIO(b"Hello World")
+    f.read()
+
+    with send_file(f, _env(Range="bytes=6-"), mimetype="text/plain") as rv:
+        assert rv.status_code == 206
+        assert rv.headers["Accept-Ranges"] == "bytes"
+        assert rv.headers["Content-Range"] == "bytes 6-10/11"
+        assert rv.content_length == 5
+        assert b"".join(rv.response) == b"World"
+
+
+def test_range_path():
+    with send_file(txt_path, _env(Range="bytes=0-1")) as rv:
+        assert rv.status_code == 206
+        assert rv.content_length == 2
+        assert b"".join(rv.response) == txt_path.read_bytes()[:2]
+
+
+def test_if_range_etag_path():
+    with send_file(txt_path, environ) as rv:
+        etag = rv.headers["ETag"]
+
+    with send_file(txt_path, _env(Range="bytes=0-1", **{"If-Range": etag})) as rv:
+        assert rv.status_code == 206
+
+    with send_file(txt_path, _env(Range="bytes=0-1", **{"If-Range": '"x"'})) as rv:
+        assert rv.status_code == 200
+
+
+def test_invalid_range_ignored():
+    with send_file(txt_path, _env(Range="bytes=-")) as rv:
+        assert rv.status_code == 200
+
+
+def test_unsatisfiable_range_closes_file():
+    f = io.BytesIO(b"Hello World")
+
+    with pytest.raises(RequestedRangeNotSatisfiable):
+        send_file(f, _env(Range="bytes=50-"), mimetype="text/plain")
+
+    assert f.closed
+
+
+def test_precondition_failed_closes_file():
+    f = io.BytesIO(b"Hello World")
+
+    with pytest.raises(PreconditionFailed):
+        send_file(f, _env(**{"If-Match": '"x"'}), mimetype="text/plain", etag="a")
+
+    assert f.closed
+
+
+def test_if_none_match_304():
+    with send_file(txt_path, environ) as rv:
+        etag = rv.headers["ETag"]
+
+    with send_file(txt_path, _env(**{"If-None-Match": etag})) as rv:
+        assert rv.status_code == 304
+
+    with send_file(
+        txt_path, _env(**{"If-None-Match": etag}), use_x_sendfile=True
+    ) as rv:
+        assert rv.status_code == 304
+        assert "X-Sendfile" not in rv.headers
+
+
+def test_if_unmodified_since_412():
+    last_modified = datetime.datetime(2020, 1, 2, tzinfo=datetime.timezone.utc)
+    since = http_date(datetime.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc))
+
+    with pytest.raises(PreconditionFailed):
+        send_file(
+            txt_path,
+            _env(**{"If-Unmodified-Since": since}),
+            last_modified=last_modified,
+        )
+
+
+def test_not_conditional():
+    with send_file(
+        txt_path, _env(Range="bytes=0-1", **{"If-Match": '"x"'}), conditional=False
+    ) as rv:
+        assert rv.status_code == 200

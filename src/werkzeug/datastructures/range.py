@@ -6,7 +6,7 @@ from datetime import datetime
 
 from .._internal import _plain_int
 from ..http import http_date
-from ..http import is_byte_range_valid
+from ..http import _is_byte_range_valid
 from ..http import parse_date
 from .etag import ETag
 
@@ -108,7 +108,7 @@ class Range:
         if a valid range cannot be constructed.
 
         This will generate a range regardless of the value of :attr:`units`.
-        However, :meth:`.Response.make_conditional` can only handle ``bytes``.
+        However, :meth:`.Response.apply_range` can only handle ``bytes``.
 
         If there are multiple ranges in the header, this will only return the
         first range.
@@ -147,7 +147,7 @@ class Range:
             if start < 0:
                 start += length
 
-        if not is_byte_range_valid(start, stop, length):
+        if not _is_byte_range_valid(start, stop, length):
             return None
 
         return start, min(stop, length)
@@ -157,7 +157,7 @@ class Range:
         ``None`` if a valid range cannot be constructed.
 
         This will generate a range regardless of the value of :attr:`units`.
-        However, :meth:`.Response.make_conditional` can only handle ``bytes``.
+        However, :meth:`.Response.apply_range` can only handle ``bytes``.
 
         If there are multiple ranges in the header, this will only return the
         first range.

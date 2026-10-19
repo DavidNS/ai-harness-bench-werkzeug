@@ -22,6 +22,7 @@ from werkzeug.datastructures import Range
 from werkzeug.datastructures import RequestCacheControl
 from werkzeug.datastructures import ResponseCacheControl
 from werkzeug.datastructures import WWWAuthenticate
+from werkzeug.sansio import http as sansio_http
 from werkzeug.test import create_environ
 
 
@@ -403,6 +404,7 @@ class TestHTTPUtility:
         assert http.dump_header({"foo": "bar"}) == "foo=bar"
         assert http.dump_header({"foo*": "UTF-8''bar"}) == "foo*=UTF-8''bar"
 
+    @pytest.mark.filterwarnings("ignore:'is_resource_modified':DeprecationWarning")
     def test_is_resource_modified(self):
         env = create_environ()
 
@@ -428,6 +430,7 @@ class TestHTTPUtility:
             env, last_modified=datetime(2008, 1, 1, 13, 00)
         )
 
+    @pytest.mark.filterwarnings("ignore:'is_resource_modified':DeprecationWarning")
     def test_is_resource_modified_for_range_requests(self):
         env = create_environ()
 
@@ -459,6 +462,16 @@ class TestHTTPUtility:
         assert http.is_resource_modified(
             env, last_modified=datetime(2008, 1, 1, 13, 30), ignore_if_range=True
         )
+
+    def test_deprecated_resource_functions(self):
+        with pytest.deprecated_call():
+            http.is_resource_modified(create_environ())
+
+        with pytest.deprecated_call():
+            assert http.is_byte_range_valid(0, 5, 10)
+
+        with pytest.deprecated_call():
+            sansio_http.is_resource_modified()
 
     def test_parse_cookie(self):
         cookies = http.parse_cookie(
