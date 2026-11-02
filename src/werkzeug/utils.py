@@ -10,15 +10,16 @@ import typing as t
 import unicodedata
 from datetime import datetime
 from functools import update_wrapper
+from stat import S_ISREG
 from time import time
 from urllib.parse import quote
-from zlib import adler32
 
 from markupsafe import escape
 
 from ._internal import _missing
 from .datastructures.headers import Headers
 from .exceptions import NotFound
+from .exceptions import PreconditionFailed
 from .exceptions import RequestedRangeNotSatisfiable
 from .security import _windows_device_files
 from .security import safe_join
@@ -320,7 +321,9 @@ def send_file(
     are preferred in most cases because Werkzeug can manage the file and
     get extra information from the path. Passing a file-like object
     requires that the file is opened in binary mode, and is mostly
-    useful when building a file in memory with :class:`io.BytesIO`.
+    useful when building a file in memory with :class:`io.BytesIO`. The
+    name, size, and modification time are detected from the file-like
+    object when possible.
 
     Never pass file paths provided by a user. The path is assumed to be
     trusted, so a user could craft a path to access a file you didn't
@@ -334,19 +337,21 @@ def send_file(
 
     :param path_or_file: The path to the file to send, relative to the
         current working directory if a relative path is given.
-        Alternatively, a file-like object opened in binary mode. Make
-        sure the file pointer is seeked to the start of the data.
+        Alternatively, a file-like object opened in binary mode. If it
+        is seekable, it is seeked to the start of the data.
     :param environ: The WSGI environ for the current request.
     :param mimetype: The MIME type to send for the file. If not
-        provided, it will try to detect it from the file name.
+        provided, it will try to detect it from the file name, falling
+        back to ``application/octet-stream``.
     :param as_attachment: Indicate to a browser that it should offer to
         save the file instead of displaying it.
     :param download_name: The default name browsers will use when saving
         the file. Defaults to the passed file name.
     :param conditional: Enable conditional and range responses based on
         request headers. Requires passing a file path and ``environ``.
-    :param etag: Calculate an ETag for the file, which requires passing
-        a file path. Can also be a string to use instead.
+    :param etag: Calculate an ETag for the file, which requires the size
+        and modification time to be known. Can also be a string to use
+        instead.
     :param last_modified: The last modified time to send for the file,
         in seconds. If not provided, it will try to detect it from the
         file path.
@@ -360,6 +365,14 @@ def send_file(
         to :class:`~werkzeug.wrappers.Response`.
     :param _root_path: Do not use. For internal use only. Use
         :func:`send_from_directory` to safely send files under a path.
+
+    .. versionchanged:: 3.2
+        Uses :meth:`.Response.apply_conditions` and
+        :meth:`.Response.apply_range`. The name, size, and modification time
+        are detected from file-like objects. File-like objects are seeked to
+        the start. The ETag does not include a hash of the path. The mimetype
+        defaults to ``application/octet-stream`` instead of raising an error
+        if ``download_name`` is not given.
 
     .. versionchanged:: 2.0.2
         ``send_file`` only sets a detected ``Content-Encoding`` if
@@ -415,26 +428,55 @@ def send_file(
     else:
         file = path_or_file
 
+        if isinstance(file, io.TextIOBase):
+            raise ValueError("Files must be opened in binary mode or use BytesIO.")
+
+        name = getattr(file, "name", None)
+
+        if isinstance(name, (str, os.PathLike)):
+            download_name = download_name or os.path.basename(os.fspath(name)) or None
+
+        try:
+            seekable = file.seekable()
+        except (AttributeError, ValueError):
+            seekable = False
+
+        # Always send from the start, even if the file was already read.
+        if seekable:
+            file.seek(0)
+
+        try:
+            stat = os.fstat(file.fileno())
+        except (AttributeError, OSError, ValueError):
+            pass
+        else:
+            if S_ISREG(stat.st_mode):
+                size = stat.st_size
+                mtime = stat.st_mtime
+
+        if size is None:
+            if isinstance(file, io.BytesIO):
+                size = file.getbuffer().nbytes
+            elif seekable:
+                size = file.seek(0, io.SEEK_END)
+                file.seek(0)
+
     if download_name is None and path is not None:
         download_name = os.path.basename(path)
 
     if mimetype is None:
-        if download_name is None:
-            raise TypeError(
-                "Unable to detect the MIME type because a file name is"
-                " not available. Either set 'download_name', pass a"
-                " path instead of a file, or set 'mimetype'."
-            )
+        mimetype = "application/octet-stream"
 
-        mimetype, encoding = mimetypes.guess_type(download_name)
+        if download_name is not None:
+            guessed, encoding = mimetypes.guess_type(download_name)
 
-        if mimetype is None:
-            mimetype = "application/octet-stream"
+            if guessed is not None:
+                mimetype = guessed
 
-        # Don't send encoding for attachments, it causes browsers to
-        # save decompress tar.gz files.
-        if encoding is not None and not as_attachment:
-            headers.set("Content-Encoding", encoding)
+            # Don't send encoding for attachments, it causes browsers to
+            # save decompress tar.gz files.
+            if encoding is not None and not as_attachment:
+                headers.set("Content-Encoding", encoding)
 
     if download_name is not None:
         try:
@@ -462,10 +504,6 @@ def send_file(
     else:
         if file is None:
             file = open(path, "rb")  # type: ignore[arg-type]
-        elif isinstance(file, io.BytesIO):
-            size = file.getbuffer().nbytes
-        elif isinstance(file, io.TextIOBase):
-            raise ValueError("Files must be opened in binary mode or use BytesIO.")
 
         data = wrap_file(environ, file)
 
@@ -498,14 +536,25 @@ def send_file(
 
     if isinstance(etag, str):
         rv.etag = etag
-    elif etag and path is not None:
-        check = adler32(path.encode()) & 0xFFFFFFFF
-        rv.etag = f"{mtime}-{size}-{check}"
+    elif etag:
+        if mtime is None and rv.last_modified is not None:
+            mtime = rv.last_modified.timestamp()
+
+        if mtime is not None and size is not None:
+            rv.etag = f"{mtime}-{size}"
 
     if conditional:
+        from .wrappers import Request
+
+        request = Request(environ)
+
         try:
-            rv = rv.make_conditional(environ, accept_ranges=True, complete_length=size)
-        except RequestedRangeNotSatisfiable:
+            rv.apply_conditions(request)
+
+            # The X-Sendfile server handles ranges itself, if it supports them.
+            if data is not None:
+                rv.apply_range(request)
+        except (PreconditionFailed, RequestedRangeNotSatisfiable):
             if file is not None:
                 file.close()
 

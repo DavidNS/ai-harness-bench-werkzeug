@@ -1,0 +1,1800 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index 995b7bf1..b065b7e2 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -38,6 +38,20 @@ Version 3.2.0
+     considered false. ``units`` is always a string. Constructor arguments
+     have defaults. The ``set`` and ``unset`` methods are deprecated in favor of
+     setting or deleting ``response.content_range``.
++-   Add ``Response.apply_conditions`` and ``Response.apply_range``, which
++    correctly evaluate ``If-Match``, ``If-Unmodified-Since``, ``If-None-Match``,
++    ``If-Modified-Since``, ``Range``, and ``If-Range`` as specified by RFC 9110
++    for all request methods. ``Response.make_conditional``,
++    ``http.is_resource_modified``, and ``http.is_byte_range_valid`` are
++    deprecated. ``Range.make_content_range`` clamps too-large values and uses
++    the first range. ``IfRange.check`` is added. :issue:`3291` :pr:`3308`
++-   ``send_file`` uses the new methods. It detects the name, size, and
++    modification time from file-like objects, seeks them to the start, no longer
++    includes a hash of the path in the ETag, and defaults to the
++    ``application/octet-stream`` mimetype if ``download_name`` is not given.
++-   ``SharedDataMiddleware`` serves files using ``send_file``. ``cache_timeout``
++    is not set by default so that conditional caching works. The ``cache`` and
++    ``fallback_mimetype`` parameters, and ``generate_etag``, are deprecated.
+ -   ``Range.range_for_length`` and ``to_content_range_header`` are deprecated.
+     Use ``make_content_range`` instead.
+ -   All ``Response`` header properties behave consistently and document their
+diff --git a/docs/quickstart.rst b/docs/quickstart.rst
+index c7f5dc44..adb689bc 100644
+--- a/docs/quickstart.rst
++++ b/docs/quickstart.rst
+@@ -292,11 +292,19 @@ Finally if you have set all the conditional values, you can make the
+ response conditional against a request.  Which means that if the request
+ can assure that it has the information already, no data besides the headers
+ is sent over the network which saves traffic.  For that you should set at
+-least an ETag (which is used for comparison) and the date header and then
+-call :class:`~Request.make_conditional` with the request object.
+-
+-The response is modified accordingly (status code changed, response body
+-removed, entity headers removed etc.)
++least an ETag (which is used for comparison) and the last modified time, then
++call :meth:`.Response.apply_conditions` with the request object. If a
++precondition such as ``If-Match`` fails, a
++:exc:`~werkzeug.exceptions.PreconditionFailed` error is raised. If
++``If-None-Match`` or ``If-Modified-Since`` shows the client already has the
++data, the status code is changed to ``304`` and the response body and entity
++headers are removed when the response is sent.
++
++To support partial downloads, set the ``Content-Length`` and call
++:meth:`.Response.apply_range` with the request object after applying
++conditions. If the ``Range`` header is satisfiable, the response becomes
++``206 Partial Content`` with the requested slice, otherwise
++:exc:`~werkzeug.exceptions.RequestedRangeNotSatisfiable` is raised.
+ 
+ 
+ Trusting Data
+diff --git a/src/werkzeug/datastructures/range.py b/src/werkzeug/datastructures/range.py
+index 4a680f40..8cf2ca07 100644
+--- a/src/werkzeug/datastructures/range.py
++++ b/src/werkzeug/datastructures/range.py
+@@ -4,9 +4,9 @@ import collections.abc as cabc
+ import typing as t
+ from datetime import datetime
+ 
++from .._internal import _dt_as_utc
+ from .._internal import _plain_int
+ from ..http import http_date
+-from ..http import is_byte_range_valid
+ from ..http import parse_date
+ from .etag import ETag
+ 
+@@ -53,6 +53,38 @@ class IfRange:
+ 
+         return cls(etag=etag.value)
+ 
++    def check(
++        self, etag: ETag | str | None = None, last_modified: datetime | None = None
++    ) -> bool:
++        """Check whether the condition is met by the given response values.
++        This is true if the header is a strong ETag equal to ``etag``, or a date
++        equal to ``last_modified``. Otherwise the ``Range`` header must be
++        ignored.
++
++        :param etag: The response's ETag. A ``str`` is assumed to be an unquoted
++            strong value. A weak ``ETag`` never matches.
++        :param last_modified: The response's last modified time. Microseconds
++            are ignored, and a naive value is assumed to be UTC.
++
++        .. versionadded:: 3.2
++        """
++        if self.etag is not None:
++            if not etag:
++                return False
++
++            if isinstance(etag, ETag):
++                return not etag.weak and etag.value == self.etag
++
++            return etag == self.etag
++
++        if self.date is not None:
++            if last_modified is None:
++                return False
++
++            return self.date == _dt_as_utc(last_modified.replace(microsecond=0))
++
++        return False
++
+     def to_header(self) -> str:
+         """Convert to an ``If-Range`` header value."""
+         if self.date is not None:
+@@ -108,7 +140,7 @@ class Range:
+         if a valid range cannot be constructed.
+ 
+         This will generate a range regardless of the value of :attr:`units`.
+-        However, :meth:`.Response.make_conditional` can only handle ``bytes``.
++        However, :meth:`.Response.apply_range` can only handle ``bytes``.
+ 
+         If there are multiple ranges in the header, this will only return the
+         first range.
+@@ -136,41 +168,46 @@ class Range:
+         return self._private_range_for_length(length)
+ 
+     def _private_range_for_length(self, length: int | None) -> tuple[int, int] | None:
+-        if length is None or not self.ranges:
+-            return None
+-
+-        start, stop = self.ranges[0]
+-
+-        if stop is None:
+-            stop = length
+-
+-            if start < 0:
+-                start += length
+-
+-        if not is_byte_range_valid(start, stop, length):
++        if (cr := self.make_content_range(length)) is None:
+             return None
+ 
+-        return start, min(stop, length)
++        return cr.start, cr.stop  # type: ignore[return-value]
+ 
+     def make_content_range(self, length: int | None) -> ContentRange | None:
+         """Create a :class:`.ContentRange` with the given complete length. Or
+         ``None`` if a valid range cannot be constructed.
+ 
+         This will generate a range regardless of the value of :attr:`units`.
+-        However, :meth:`.Response.make_conditional` can only handle ``bytes``.
++        However, :meth:`.Response.apply_range` can only handle ``bytes``.
+ 
+         If there are multiple ranges in the header, this will only return the
+-        first range.
++        first range. A ``stop`` or suffix length that is larger than the
++        complete length is clamped to it.
++
++        :param length: The complete length of the content. ``None`` means the
++            value is unknown, and will return ``None``.
+ 
+         .. versionchanged:: 3.2
+             Allows units other than ``bytes``. Will return the first range if
+-            there are multiple.
++            there are multiple. Validates the range itself.
+         """
+-        # TODO inline after deprecation
+-        if (bounds := self._private_range_for_length(length)) is None:
++        if length is None or not self.ranges:
++            return None
++
++        start, stop = self.ranges[0]
++
++        if stop is None:
++            stop = length
++
++            if start < 0:
++                start = max(start + length, 0)
++        else:
++            stop = min(stop, length)
++
++        if not (0 <= start < stop):
+             return None
+ 
+-        return ContentRange(self.units, bounds[0], bounds[1], length)
++        return ContentRange(self.units, start, stop, length)
+ 
+     @classmethod
+     def from_header(cls, value: str | None) -> te.Self | None:
+diff --git a/src/werkzeug/http.py b/src/werkzeug/http.py
+index da7fba49..62946f97 100644
+--- a/src/werkzeug/http.py
++++ b/src/werkzeug/http.py
+@@ -1166,9 +1166,21 @@ def is_resource_modified(
+                             account.
+     :return: `True` if the resource was modified, otherwise `False`.
+ 
++    .. deprecated:: 3.2
++        Will be removed in Werkzeug 4.0. Use :meth:`.Response.apply_conditions`
++        and :meth:`.Response.apply_range` instead.
++
+     .. versionchanged:: 1.0
+         The check is run for methods other than ``GET`` and ``HEAD``.
+     """
++    import warnings
++
++    warnings.warn(
++        "'is_resource_modified' is deprecated and will be removed in Werkzeug 4.0."
++        " Use 'Response.apply_conditions' and 'Response.apply_range' instead.",
++        DeprecationWarning,
++        stacklevel=2,
++    )
+     return _sansio_http.is_resource_modified(
+         http_range=environ.get("HTTP_RANGE"),
+         http_if_range=environ.get("HTTP_IF_RANGE"),
+@@ -1461,8 +1473,20 @@ def is_byte_range_valid(
+ ) -> bool:
+     """Checks if a given byte content range is valid for the given length.
+ 
++    .. deprecated:: 3.2
++        Will be removed in Werkzeug 4.0. ``Range.make_content_range`` validates
++        the range.
++
+     .. versionadded:: 0.7
+     """
++    import warnings
++
++    warnings.warn(
++        "'is_byte_range_valid' is deprecated and will be removed in Werkzeug 4.0."
++        " 'Range.make_content_range' validates the range.",
++        DeprecationWarning,
++        stacklevel=2,
++    )
+     if (start is None) != (stop is None):
+         return False
+     elif start is None:
+diff --git a/src/werkzeug/middleware/shared_data.py b/src/werkzeug/middleware/shared_data.py
+index c2810a01..f879d771 100644
+--- a/src/werkzeug/middleware/shared_data.py
++++ b/src/werkzeug/middleware/shared_data.py
+@@ -20,15 +20,12 @@ import typing as t
+ from datetime import datetime
+ from datetime import timezone
+ from io import BytesIO
+-from time import time
+ from zlib import adler32
+ 
+-from ..http import http_date
+-from ..http import is_resource_modified
++from ..exceptions import HTTPException
+ from ..security import safe_join
+-from ..utils import get_content_type
++from ..utils import send_file
+ from ..wsgi import get_path_info
+-from ..wsgi import wrap_file
+ 
+ _TOpener = t.Callable[[], tuple[t.IO[bytes], datetime, int]]
+ _TLoader = t.Callable[[str | None], tuple[str | None, _TOpener | None]]
+@@ -68,26 +65,32 @@ class SharedDataMiddleware:
+     Python package.
+ 
+     The optional `disallow` parameter can be a list of :func:`~fnmatch.fnmatch`
+-    rules for files that are not accessible from the web.  If `cache` is set to
+-    `False` no caching headers are sent.
++    rules for files that are not accessible from the web.
+ 
+     Currently the middleware does not support non-ASCII filenames. If the
+     encoding on the file system happens to match the encoding of the URI it may
+     work but this could also be by accident. We strongly suggest using ASCII
+     only file names for static files.
+ 
+-    The middleware will guess the mimetype using the Python `mimetype`
+-    module.  If it's unable to figure out the charset it will fall back
+-    to `fallback_mimetype`.
++    Files are served with :func:`~werkzeug.utils.send_file`, which guesses the
++    mimetype using the Python `mimetypes` module, falling back to
++    ``application/octet-stream``, and handles conditional and range requests.
+ 
+     :param app: the application to wrap.  If you don't want to wrap an
+                 application you can pass it :exc:`NotFound`.
+     :param exports: a list or dict of exported files and folders.
+     :param disallow: a list of :func:`~fnmatch.fnmatch` rules.
+-    :param cache: enable or disable caching headers.
+-    :param cache_timeout: the cache timeout in seconds for the headers.
++    :param cache: enable or disable conditional caching.
++    :param cache_timeout: the ``max-age`` in seconds for the ``Cache-Control``
++        header. Not set by default, so clients revalidate using the ETag.
+     :param fallback_mimetype: The fallback mimetype for unknown files.
+ 
++    .. versionchanged:: 3.2
++        Files are served using :func:`~werkzeug.utils.send_file`, which supports
++        range requests. ``cache_timeout`` is not set by default so that
++        conditional caching works. ``generate_etag``, ``cache``, and
++        ``fallback_mimetype`` are deprecated.
++
+     .. versionchanged:: 1.0
+         The default ``fallback_mimetype`` is
+         ``application/octet-stream``. If a filename looks like a text
+@@ -108,13 +111,33 @@ class SharedDataMiddleware:
+             | t.Iterable[tuple[str, str | tuple[str, str]]]
+         ),
+         disallow: None = None,
+-        cache: bool = True,
+-        cache_timeout: int = 60 * 60 * 12,
+-        fallback_mimetype: str = "application/octet-stream",
++        cache: bool | None = None,
++        cache_timeout: int | None = None,
++        fallback_mimetype: str | None = None,
+     ) -> None:
++        import warnings
++
++        if cache is not None:
++            warnings.warn(
++                "The 'cache' parameter is deprecated and will be removed in"
++                " Werkzeug 4.0. Caching is always enabled, use 'cache_timeout'"
++                " to set 'max-age'.",
++                DeprecationWarning,
++                stacklevel=2,
++            )
++
++        if fallback_mimetype is not None:
++            warnings.warn(
++                "The 'fallback_mimetype' parameter is deprecated and will be"
++                " removed in Werkzeug 4.0. The default is"
++                " 'application/octet-stream'.",
++                DeprecationWarning,
++                stacklevel=2,
++            )
++
+         self.app = app
+         self.exports: list[tuple[str, _TLoader]] = []
+-        self.cache = cache
++        self.cache = True if cache is None else cache
+         self.cache_timeout = cache_timeout
+ 
+         if isinstance(exports, cabc.Mapping):
+@@ -221,6 +244,21 @@ class SharedDataMiddleware:
+     def generate_etag(
+         self, mtime: datetime, file_size: int, real_filename: str | None
+     ) -> str:
++        """Generate an ETag value for a file.
++
++        .. deprecated:: 3.2
++            Will be removed in Werkzeug 4.0. :func:`~werkzeug.utils.send_file`
++            generates the ETag.
++        """
++        import warnings
++
++        warnings.warn(
++            "'generate_etag' is deprecated and will be removed in Werkzeug 4.0."
++            " 'send_file' generates the ETag.",
++            DeprecationWarning,
++            stacklevel=2,
++        )
++
+         if real_filename is None:
+             fn_str = b""
+         else:
+@@ -256,37 +294,28 @@ class SharedDataMiddleware:
+         if file_loader is None or not self.is_allowed(real_filename):
+             return self.app(environ, start_response)
+ 
+-        guessed_type = (
+-            mimetypes.guess_type(real_filename) if real_filename else (None, None)
+-        )
+-        mime_type = get_content_type(guessed_type[0] or self.fallback_mimetype, "utf-8")
+-        f, mtime, file_size = file_loader()
+-
+-        headers = [("Date", http_date())]
+-
+-        if self.cache:
+-            timeout = self.cache_timeout
+-            etag = f'"{self.generate_etag(mtime, file_size, real_filename)}"'
+-            headers += [
+-                ("ETag", etag),
+-                ("Cache-Control", f"max-age={timeout}, public"),
+-            ]
+-
+-            if not is_resource_modified(environ, etag, last_modified=mtime):
+-                f.close()
+-                start_response("304 Not Modified", headers)
+-                return []
+-
+-            headers.append(("Expires", http_date(time() + timeout)))
+-        else:
+-            headers.append(("Cache-Control", "public"))
+-
+-        headers.extend(
+-            (
+-                ("Content-Type", mime_type),
+-                ("Content-Length", str(file_size)),
+-                ("Last-Modified", http_date(mtime)),
++        f, mtime, _ = file_loader()
++        mimetype = None
++
++        if (
++            self.fallback_mimetype is not None
++            and real_filename
++            and mimetypes.guess_type(real_filename)[0] is None
++        ):
++            mimetype = self.fallback_mimetype
++
++        try:
++            rv: t.Any = send_file(
++                f,
++                environ,
++                mimetype=mimetype,
++                download_name=real_filename,
++                conditional=self.cache,
++                etag=self.cache,
++                last_modified=mtime,
++                max_age=self.cache_timeout,
+             )
+-        )
+-        start_response("200 OK", headers)
+-        return wrap_file(environ, f)
++        except HTTPException as e:
++            rv = e
++
++        return rv(environ, start_response)  # type: ignore[no-any-return]
+diff --git a/src/werkzeug/utils.py b/src/werkzeug/utils.py
+index df4f7232..8ab422bf 100644
+--- a/src/werkzeug/utils.py
++++ b/src/werkzeug/utils.py
+@@ -10,15 +10,16 @@ import typing as t
+ import unicodedata
+ from datetime import datetime
+ from functools import update_wrapper
++from stat import S_ISREG
+ from time import time
+ from urllib.parse import quote
+-from zlib import adler32
+ 
+ from markupsafe import escape
+ 
+ from ._internal import _missing
+ from .datastructures.headers import Headers
+ from .exceptions import NotFound
++from .exceptions import PreconditionFailed
+ from .exceptions import RequestedRangeNotSatisfiable
+ from .security import _windows_device_files
+ from .security import safe_join
+@@ -320,7 +321,9 @@ def send_file(
+     are preferred in most cases because Werkzeug can manage the file and
+     get extra information from the path. Passing a file-like object
+     requires that the file is opened in binary mode, and is mostly
+-    useful when building a file in memory with :class:`io.BytesIO`.
++    useful when building a file in memory with :class:`io.BytesIO`. The
++    name, size, and modification time are detected from the file-like
++    object when possible.
+ 
+     Never pass file paths provided by a user. The path is assumed to be
+     trusted, so a user could craft a path to access a file you didn't
+@@ -334,19 +337,21 @@ def send_file(
+ 
+     :param path_or_file: The path to the file to send, relative to the
+         current working directory if a relative path is given.
+-        Alternatively, a file-like object opened in binary mode. Make
+-        sure the file pointer is seeked to the start of the data.
++        Alternatively, a file-like object opened in binary mode. If it
++        is seekable, it is seeked to the start of the data.
+     :param environ: The WSGI environ for the current request.
+     :param mimetype: The MIME type to send for the file. If not
+-        provided, it will try to detect it from the file name.
++        provided, it will try to detect it from the file name, falling
++        back to ``application/octet-stream``.
+     :param as_attachment: Indicate to a browser that it should offer to
+         save the file instead of displaying it.
+     :param download_name: The default name browsers will use when saving
+         the file. Defaults to the passed file name.
+     :param conditional: Enable conditional and range responses based on
+         request headers. Requires passing a file path and ``environ``.
+-    :param etag: Calculate an ETag for the file, which requires passing
+-        a file path. Can also be a string to use instead.
++    :param etag: Calculate an ETag for the file, which requires the size
++        and modification time to be known. Can also be a string to use
++        instead.
+     :param last_modified: The last modified time to send for the file,
+         in seconds. If not provided, it will try to detect it from the
+         file path.
+@@ -361,6 +366,14 @@ def send_file(
+     :param _root_path: Do not use. For internal use only. Use
+         :func:`send_from_directory` to safely send files under a path.
+ 
++    .. versionchanged:: 3.2
++        Uses :meth:`.Response.apply_conditions` and
++        :meth:`.Response.apply_range`. The name, size, and modification time
++        are detected from file-like objects. File-like objects are seeked to
++        the start. The ETag does not include a hash of the path. The mimetype
++        defaults to ``application/octet-stream`` instead of raising an error
++        if ``download_name`` is not given.
++
+     .. versionchanged:: 2.0.2
+         ``send_file`` only sets a detected ``Content-Encoding`` if
+         ``as_attachment`` is disabled.
+@@ -415,26 +428,55 @@ def send_file(
+     else:
+         file = path_or_file
+ 
++        if isinstance(file, io.TextIOBase):
++            raise ValueError("Files must be opened in binary mode or use BytesIO.")
++
++        name = getattr(file, "name", None)
++
++        if isinstance(name, (str, os.PathLike)):
++            download_name = download_name or os.path.basename(os.fspath(name)) or None
++
++        try:
++            seekable = file.seekable()
++        except (AttributeError, ValueError):
++            seekable = False
++
++        # Always send from the start, even if the file was already read.
++        if seekable:
++            file.seek(0)
++
++        try:
++            stat = os.fstat(file.fileno())
++        except (AttributeError, OSError, ValueError):
++            pass
++        else:
++            if S_ISREG(stat.st_mode):
++                size = stat.st_size
++                mtime = stat.st_mtime
++
++        if size is None:
++            if isinstance(file, io.BytesIO):
++                size = file.getbuffer().nbytes
++            elif seekable:
++                size = file.seek(0, io.SEEK_END)
++                file.seek(0)
++
+     if download_name is None and path is not None:
+         download_name = os.path.basename(path)
+ 
+     if mimetype is None:
+-        if download_name is None:
+-            raise TypeError(
+-                "Unable to detect the MIME type because a file name is"
+-                " not available. Either set 'download_name', pass a"
+-                " path instead of a file, or set 'mimetype'."
+-            )
++        mimetype = "application/octet-stream"
+ 
+-        mimetype, encoding = mimetypes.guess_type(download_name)
++        if download_name is not None:
++            guessed, encoding = mimetypes.guess_type(download_name)
+ 
+-        if mimetype is None:
+-            mimetype = "application/octet-stream"
++            if guessed is not None:
++                mimetype = guessed
+ 
+-        # Don't send encoding for attachments, it causes browsers to
+-        # save decompress tar.gz files.
+-        if encoding is not None and not as_attachment:
+-            headers.set("Content-Encoding", encoding)
++            # Don't send encoding for attachments, it causes browsers to
++            # save decompress tar.gz files.
++            if encoding is not None and not as_attachment:
++                headers.set("Content-Encoding", encoding)
+ 
+     if download_name is not None:
+         try:
+@@ -462,10 +504,6 @@ def send_file(
+     else:
+         if file is None:
+             file = open(path, "rb")  # type: ignore[arg-type]
+-        elif isinstance(file, io.BytesIO):
+-            size = file.getbuffer().nbytes
+-        elif isinstance(file, io.TextIOBase):
+-            raise ValueError("Files must be opened in binary mode or use BytesIO.")
+ 
+         data = wrap_file(environ, file)
+ 
+@@ -498,14 +536,25 @@ def send_file(
+ 
+     if isinstance(etag, str):
+         rv.etag = etag
+-    elif etag and path is not None:
+-        check = adler32(path.encode()) & 0xFFFFFFFF
+-        rv.etag = f"{mtime}-{size}-{check}"
++    elif etag:
++        if mtime is None and rv.last_modified is not None:
++            mtime = rv.last_modified.timestamp()
++
++        if mtime is not None and size is not None:
++            rv.etag = f"{mtime}-{size}"
+ 
+     if conditional:
++        from .wrappers import Request
++
++        request = Request(environ)
++
+         try:
+-            rv = rv.make_conditional(environ, accept_ranges=True, complete_length=size)
+-        except RequestedRangeNotSatisfiable:
++            rv.apply_conditions(request)
++
++            # The X-Sendfile server handles ranges itself, if it supports them.
++            if data is not None:
++                rv.apply_range(request)
++        except (PreconditionFailed, RequestedRangeNotSatisfiable):
+             if file is not None:
+                 file.close()
+ 
+diff --git a/src/werkzeug/wrappers/response.py b/src/werkzeug/wrappers/response.py
+index ba2a15fb..3dcd3c62 100644
+--- a/src/werkzeug/wrappers/response.py
++++ b/src/werkzeug/wrappers/response.py
+@@ -6,13 +6,11 @@ from http import HTTPStatus
+ from types import TracebackType
+ from urllib.parse import urljoin
+ 
++from .._internal import _dt_as_utc
+ from .._internal import _get_environ
+-from ..datastructures.etag import ETagSet
+ from ..datastructures.headers import Headers
+-from ..datastructures.range import Range
+ from ..http import generate_etag
+ from ..http import http_date
+-from ..http import is_resource_modified
+ from ..http import remove_entity_headers
+ from ..sansio.response import Response as _SansIOResponse
+ from ..urls import iri_to_uri
+@@ -650,77 +648,130 @@ class Response(_SansIOResponse):
+         """The response iterable as write-only stream."""
+         return ResponseStream(self)
+ 
+-    def _wrap_range_response(self, start: int, length: int) -> None:
+-        """Wrap existing Response in case of Range Request context."""
+-        if self.status_code == 206:
+-            self.response = _RangeWrapper(self.response, start, length)  # type: ignore[arg-type]
++    def apply_conditions(self, request: Request, *, exists: bool = True) -> None:
++        """Evaluate the request's precondition headers against this response's
++        :attr:`etag` and :attr:`last_modified`, in the order defined by
++        :rfc:`9110#section-13.2.2`: ``If-Match``, ``If-Unmodified-Since``,
++        ``If-None-Match``, ``If-Modified-Since``. Preconditions are only
++        evaluated for ``2xx`` responses. Also sets ``Accept-Ranges: bytes``.
+ 
+-    def _is_range_request_processable(self, environ: WSGIEnvironment) -> bool:
+-        """Return ``True`` if `Range` header is present and if underlying
+-        resource is considered unchanged when compared with `If-Range` header.
++        If a precondition fails, raises
++        :exc:`~werkzeug.exceptions.PreconditionFailed`. If ``If-None-Match`` or
++        ``If-Modified-Since`` is satisfied for a ``GET`` or ``HEAD`` request,
++        the status is set to ``304 Not Modified``. The entity headers are
++        removed when the response is sent.
++
++        Call :meth:`apply_range` after this.
++
++        :param request: The request to evaluate.
++        :param exists: Whether the resource currently exists. This determines
++            how a ``*`` ETag in ``If-Match`` and ``If-None-Match`` is evaluated.
++
++        .. versionadded:: 3.2
+         """
+-        return "HTTP_RANGE" in environ and (
+-            "HTTP_IF_RANGE" not in environ
+-            or not is_resource_modified(
+-                environ,
+-                self.headers.get("ETag"),
+-                last_modified=self.headers.get("Last-Modified"),
+-                ignore_if_range=False,
+-            )
+-        )
++        from ..exceptions import PreconditionFailed
+ 
+-    def _process_range_request(
+-        self,
+-        environ: WSGIEnvironment,
+-        complete_length: int | None,
+-        accept_ranges: bool | str,
+-    ) -> bool:
+-        """Handle Range Request related headers (RFC7233).  If `Accept-Ranges`
+-        header is valid, and Range Request is processable, we set the headers
+-        as described by the RFC, and wrap the underlying response in a
+-        RangeWrapper.
++        self.accept_ranges = "bytes"
+ 
+-        Returns ``True`` if Range Request can be fulfilled, ``False`` otherwise.
++        if not 200 <= self.status_code < 300:
++            return
+ 
+-        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+-                 if `Range` header could not be parsed or satisfied.
++        etag = self.etag
++        last_modified = self.last_modified
++
++        if last_modified is not None:
++            # HTTP dates have no microseconds, avoid false comparisons.
++            last_modified = _dt_as_utc(last_modified.replace(microsecond=0))
++
++        if if_match := request.if_match:
++            # Strong comparison.
++            if if_match.star_tag:
++                if not exists:
++                    raise PreconditionFailed()
++            elif not if_match.contains_strong(etag):
++                raise PreconditionFailed()
++        elif (since := request.if_unmodified_since) is not None:
++            if last_modified is not None and last_modified > since:
++                raise PreconditionFailed()
++
++        safe = request.method in {"GET", "HEAD"}
++
++        if if_none_match := request.if_none_match:
++            # Weak comparison.
++            if if_none_match.star_tag:
++                matched = exists
++            else:
++                matched = if_none_match.contains_weak(etag)
+ 
+-        .. versionchanged:: 3.2
+-            Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+-            even if this is not a satisfiable range request.
++            if matched:
++                if not safe:
++                    raise PreconditionFailed()
+ 
+-        .. versionchanged:: 2.0
+-            Returns ``False`` if the length is 0.
++                self.status_code = 304
++        elif safe and (since := request.if_modified_since) is not None:
++            if last_modified is not None and last_modified <= since:
++                self.status_code = 304
++
++    def apply_range(self, request: Request) -> None:
++        """Apply the request's ``Range`` header. Call this after
++        :meth:`apply_conditions`. Always sets ``Accept-Ranges: bytes``.
++
++        The range is only applied to ``GET`` requests with a ``200`` response
++        that has a known, non-zero ``Content-Length``, which is the complete
++        length. Otherwise the response is not changed. Only the ``bytes`` unit
++        is supported. If there are multiple ranges, only the first is used. If
++        the request has an ``If-Range`` header, the range is only applied if
++        the condition matches the ETag or last modified time.
++
++        If the range is satisfiable, the response becomes ``206 Partial
++        Content`` with the sliced data and a ``Content-Range`` header.
++
++        For optimal performance, the response data should implement
++        ``seekable``, ``seek``, and ``tell`` methods as described by
++        :class:`io.IOBase`. Objects returned by :func:`~werkzeug.wsgi.wrap_file`
++        do.
++
++        :param request: The request to evaluate.
++        :raises: :exc:`~werkzeug.exceptions.RequestedRangeNotSatisfiable` if the
++            ``Range`` header is invalid or cannot be satisfied.
++
++        .. versionadded:: 3.2
+         """
+         from ..exceptions import RequestedRangeNotSatisfiable
+ 
+-        if not accept_ranges:
+-            return False
+-
+-        if accept_ranges is True:
+-            accept_ranges = "bytes"
++        self.accept_ranges = "bytes"
++        length = self.content_length
+ 
+-        self.accept_ranges = accept_ranges
++        if (
++            request.method != "GET"
++            or self.status_code != 200
++            or not length
++            or "Range" not in request.headers
++        ):
++            return
+ 
+-        if not (complete_length and self._is_range_request_processable(environ)):
+-            return False
++        if request.headers.get("If-Range") and not request.if_range.check(
++            self.etag, self.last_modified
++        ):
++            return
+ 
+-        parsed_range = Range.from_header(environ.get("HTTP_RANGE"))
++        if (parsed_range := request.range) is None:
++            raise RequestedRangeNotSatisfiable(length)
+ 
+-        if parsed_range is None:
+-            raise RequestedRangeNotSatisfiable(complete_length)
++        if parsed_range.units != "bytes":
++            return
+ 
+-        content_range = parsed_range.make_content_range(complete_length)
++        content_range = parsed_range.make_content_range(length)
+ 
+         if content_range is None:
+-            raise RequestedRangeNotSatisfiable(complete_length)
++            raise RequestedRangeNotSatisfiable(length)
+ 
+-        content_length = content_range.stop - content_range.start  # type: ignore[operator]
+-        self.content_length = content_length
+-        self.content_range = content_range
++        start: int = content_range.start  # type: ignore[assignment]
++        range_length = content_range.stop - start  # type: ignore[operator]
+         self.status_code = 206
+-        self._wrap_range_response(content_range.start, content_length)  # type: ignore[arg-type]
+-        return True
++        self.content_range = content_range
++        self.content_length = range_length
++        self.response = _RangeWrapper(self.response, start, range_length)  # type: ignore[arg-type]
+ 
+     def make_conditional(
+         self,
+@@ -728,42 +779,22 @@ class Response(_SansIOResponse):
+         accept_ranges: bool | str = False,
+         complete_length: int | None = None,
+     ) -> Response:
+-        """Make the response conditional to the request.  This method works
+-        best if an etag was defined for the response already.  The `add_etag`
+-        method can be used to do that.  If called without etag just the date
+-        header is set.
+-
+-        This does nothing if the request method in the request or environ is
+-        anything but GET or HEAD.
+-
+-        For optimal performance when handling range requests, it's recommended
+-        that your response data object implements `seekable`, `seek` and `tell`
+-        methods as described by :py:class:`io.IOBase`.  Objects returned by
+-        :meth:`~werkzeug.wsgi.wrap_file` automatically implement those methods.
+-
+-        It does not remove the body of the response because that's something
+-        the :meth:`__call__` function does for us automatically.
+-
+-        Returns self so that you can do ``return resp.make_conditional(req)``
+-        but modifies the object in-place.
+-
+-        :param request_or_environ: a request object or WSGI environment to be
+-                                   used to make the response conditional
+-                                   against.
+-        :param accept_ranges: This parameter dictates the value of
+-                              `Accept-Ranges` header. If ``False`` (default),
+-                              the header is not set. If ``True``, it will be set
+-                              to ``"bytes"``. If it's a string, it will use this
+-                              value.
+-        :param complete_length: Will be used only in valid Range Requests.
+-                                It will set `Content-Range` complete length
+-                                value and compute `Content-Length` real value.
+-                                This parameter is mandatory for successful
+-                                Range Requests completion.
+-        :raises: :class:`~werkzeug.exceptions.RequestedRangeNotSatisfiable`
+-                 if `Range` header could not be parsed or satisfied.
+-
+-        .. versionchangedd: 3.2
++        """Make the response conditional to the request. Does nothing if the
++        request method is not ``GET`` or ``HEAD``.
++
++        :param request_or_environ: A request object or WSGI environment.
++        :param accept_ranges: Set the ``Accept-Ranges`` header and apply the
++            ``Range`` header. ``True`` means ``"bytes"``.
++        :param complete_length: The complete length of the content, used for
++            range requests.
++        :raises: :exc:`~werkzeug.exceptions.RequestedRangeNotSatisfiable` if the
++            ``Range`` header could not be parsed or satisfied.
++
++        .. deprecated:: 3.2
++            Will be removed in Werkzeug 4.0. Use :meth:`apply_conditions` and
++            :meth:`apply_range` instead.
++
++        .. versionchanged:: 3.2
+             Adds the ``Accept-Ranges`` header if ``accept_ranges`` is passed,
+             even if this is not a satisfiable range request.
+ 
+@@ -771,31 +802,67 @@ class Response(_SansIOResponse):
+             Range processing is skipped if length is 0 instead of
+             raising a 416 Range Not Satisfiable error.
+         """
+-        environ = _get_environ(request_or_environ)
+-        if environ["REQUEST_METHOD"] in ("GET", "HEAD"):
+-            # if the date is not in the headers, add it now.  We however
+-            # will not override an already existing header.  Unfortunately
+-            # this header will be overridden by many WSGI servers including
+-            # wsgiref.
+-            if "Date" not in self.headers:
+-                self.headers["Date"] = http_date()
+-            is206 = self._process_range_request(environ, complete_length, accept_ranges)
+-            if not is206 and not is_resource_modified(
+-                environ,
+-                self.headers.get("ETag"),
+-                last_modified=self.headers.get("Last-Modified"),
+-            ):
+-                if ETagSet.from_header(environ.get("HTTP_IF_MATCH")):
+-                    self.status_code = 412
++        import warnings
++
++        from ..exceptions import PreconditionFailed
++        from .request import Request
++
++        warnings.warn(
++            "'make_conditional' is deprecated and will be removed in Werkzeug 4.0."
++            " Use 'apply_conditions' and 'apply_range' instead.",
++            DeprecationWarning,
++            stacklevel=2,
++        )
++
++        if isinstance(request_or_environ, Request):
++            request = request_or_environ
++        else:
++            request = Request(_get_environ(request_or_environ))
++
++        if request.method not in {"GET", "HEAD"}:
++            return self
++
++        # if the date is not in the headers, add it now.  We however
++        # will not override an already existing header.  Unfortunately
++        # this header will be overridden by many WSGI servers including
++        # wsgiref.
++        if "Date" not in self.headers:
++            self.headers["Date"] = http_date()
++
++        had_accept_ranges = "Accept-Ranges" in self.headers
++        old_length = self.headers.get("Content-Length")
++
++        try:
++            self.apply_conditions(request)
++        except PreconditionFailed:
++            self.status_code = 412
++
++        if accept_ranges:
++            if complete_length is not None:
++                self.content_length = complete_length
++
++            self.apply_range(request)
++
++            if isinstance(accept_ranges, str):
++                self.accept_ranges = accept_ranges
++
++            if self.status_code != 206:
++                if old_length is None:
++                    self.headers.pop("Content-Length", None)
+                 else:
+-                    self.status_code = 304
+-            if (
+-                self.automatically_set_content_length
+-                and "Content-Length" not in self.headers
+-            ):
+-                length = self.calculate_content_length()
+-                if length is not None:
+-                    self.headers["Content-Length"] = str(length)
++                    self.headers["Content-Length"] = old_length
++        elif not had_accept_ranges:
++            self.headers.pop("Accept-Ranges", None)
++
++        if (
++            self.automatically_set_content_length
++            and "Content-Length" not in self.headers
++        ):
++            length = self.calculate_content_length()
++
++            if length is not None:
++                self.headers["Content-Length"] = str(length)
++
+         return self
+ 
+     def add_etag(self, overwrite: bool = False, weak: bool = False) -> None:
+diff --git a/tests/middleware/test_shared_data.py b/tests/middleware/test_shared_data.py
+index 26e64645..d2eca918 100644
+--- a/tests/middleware/test_shared_data.py
++++ b/tests/middleware/test_shared_data.py
+@@ -1,6 +1,8 @@
+ import os
+ from contextlib import closing
+ 
++import pytest
++
+ from werkzeug.middleware.shared_data import SharedDataMiddleware
+ from werkzeug.test import create_environ
+ from werkzeug.test import run_wsgi_app
+@@ -60,3 +62,63 @@ def test_shared_data_middleware(tmpdir):
+             app_iter, status, headers = run_wsgi_app(app, create_environ(path))
+             assert status == "404 NOT FOUND"
+             assert b"".join(app_iter).strip() == b"NOT FOUND"
++
++
++res_dir = os.path.join(os.path.dirname(__file__), "..", "res")
++
++
++def _serve(app, path="/test.txt", **headers):
++    app_iter, status, response_headers = run_wsgi_app(
++        app, create_environ(path, headers=headers)
++    )
++
++    with closing(app_iter) as app_iter:
++        data = b"".join(app_iter)
++
++    return status, dict(response_headers), data
++
++
++def test_conditional_and_range():
++    app = SharedDataMiddleware(None, {"/": res_dir})
++    status, headers, data = _serve(app)
++    assert status == "200 OK"
++    assert data.strip() == b"FOUND"
++    assert headers["Accept-Ranges"] == "bytes"
++    assert "max-age" not in headers["Cache-Control"]
++
++    status, _, data = _serve(app, **{"If-None-Match": headers["ETag"]})
++    assert status == "304 Not Modified"
++    assert data == b""
++
++    status, headers, data = _serve(app, Range="bytes=0-1")
++    assert status == "206 Partial Content"
++    assert data == b"FO"
++
++    status, _, _ = _serve(app, Range="bytes=999-")
++    assert status == "416 Requested Range Not Satisfiable"
++
++    status, _, _ = _serve(app, **{"If-Match": '"nope"'})
++    assert status == "412 Precondition Failed"
++
++
++def test_cache_timeout():
++    app = SharedDataMiddleware(None, {"/": res_dir}, cache_timeout=60)
++    _, headers, _ = _serve(app)
++    assert "max-age=60" in headers["Cache-Control"]
++
++
++def test_deprecated_params():
++    with pytest.deprecated_call():
++        app = SharedDataMiddleware(None, {"/": res_dir}, cache=False)
++
++    status, headers, _ = _serve(app)
++    assert status == "200 OK"
++    assert "ETag" not in headers
++
++    with pytest.deprecated_call():
++        app = SharedDataMiddleware(
++            None, {"/": res_dir}, fallback_mimetype="application/x-custom"
++        )
++
++    _, headers, _ = _serve(app, "/index.html")
++    assert headers["Content-Type"] == "text/html; charset=utf-8"
+diff --git a/tests/test_http.py b/tests/test_http.py
+index d0bf0e85..1c2303c3 100644
+--- a/tests/test_http.py
++++ b/tests/test_http.py
+@@ -14,6 +14,7 @@ from werkzeug.datastructures import Accept
+ from werkzeug.datastructures import Authorization
+ from werkzeug.datastructures import ContentRange
+ from werkzeug.datastructures import ContentSecurityPolicy
++from werkzeug.datastructures import ETag
+ from werkzeug.datastructures import HeaderSet
+ from werkzeug.datastructures import IfRange
+ from werkzeug.datastructures import LanguageAccept
+@@ -403,62 +404,14 @@ class TestHTTPUtility:
+         assert http.dump_header({"foo": "bar"}) == "foo=bar"
+         assert http.dump_header({"foo*": "UTF-8''bar"}) == "foo*=UTF-8''bar"
+ 
+-    def test_is_resource_modified(self):
+-        env = create_environ()
++    def test_is_resource_modified_deprecated(self):
++        with pytest.deprecated_call():
++            assert http.is_resource_modified(create_environ())
+ 
+-        # any method is allowed
+-        env["REQUEST_METHOD"] = "POST"
+-        assert http.is_resource_modified(env)
+-        env["REQUEST_METHOD"] = "GET"
+-
+-        # only one of etag or data
+-        with pytest.raises(TypeError):
+-            http.is_resource_modified(env, data=b"42", etag='"23"')
+-
+-        etag = f'"{http.generate_etag(b"awesome")}"'
+-        env["HTTP_IF_NONE_MATCH"] = etag
+-        assert not http.is_resource_modified(env, etag=etag)
+-        assert not http.is_resource_modified(env, data=b"awesome")
+-
+-        env["HTTP_IF_MODIFIED_SINCE"] = http.http_date(datetime(2008, 1, 1, 12, 30))
+-        assert not http.is_resource_modified(
+-            env, last_modified=datetime(2008, 1, 1, 12, 00)
+-        )
+-        assert http.is_resource_modified(
+-            env, last_modified=datetime(2008, 1, 1, 13, 00)
+-        )
+-
+-    def test_is_resource_modified_for_range_requests(self):
+-        env = create_environ()
+-
+-        env["HTTP_IF_MODIFIED_SINCE"] = http.http_date(datetime(2008, 1, 1, 12, 30))
+-        env["HTTP_IF_RANGE"] = f'"{http.generate_etag(b"awesome_if_range")}"'
+-        # Range header not present, so If-Range should be ignored
+-        assert not http.is_resource_modified(
+-            env,
+-            data=b"not_the_same",
+-            ignore_if_range=False,
+-            last_modified=datetime(2008, 1, 1, 12, 30),
+-        )
+-
+-        env["HTTP_RANGE"] = ""
+-        assert not http.is_resource_modified(
+-            env, data=b"awesome_if_range", ignore_if_range=False
+-        )
+-        assert http.is_resource_modified(
+-            env, data=b"not_the_same", ignore_if_range=False
+-        )
+-
+-        env["HTTP_IF_RANGE"] = http.http_date(datetime(2008, 1, 1, 13, 30))
+-        assert http.is_resource_modified(
+-            env, last_modified=datetime(2008, 1, 1, 14, 00), ignore_if_range=False
+-        )
+-        assert not http.is_resource_modified(
+-            env, last_modified=datetime(2008, 1, 1, 13, 30), ignore_if_range=False
+-        )
+-        assert http.is_resource_modified(
+-            env, last_modified=datetime(2008, 1, 1, 13, 30), ignore_if_range=True
+-        )
++    def test_is_byte_range_valid_deprecated(self):
++        with pytest.deprecated_call():
++            assert http.is_byte_range_valid(0, 5, 10)
++            assert not http.is_byte_range_valid(5, 5, 10)
+ 
+     def test_parse_cookie(self):
+         cookies = http.parse_cookie(
+@@ -664,6 +617,56 @@ class TestRange:
+         rv = Range.from_header("bytes=-0")
+         assert rv is None
+ 
++    def test_if_range_check(self):
++        date = datetime(2020, 1, 1, tzinfo=timezone.utc)
++        rv = IfRange(etag="abc")
++        assert rv.check("abc", None)
++        assert rv.check(ETag("abc"), date)
++        assert not rv.check("other", None)
++        assert not rv.check(ETag("abc", weak=True))
++        assert not rv.check(None, date)
++
++        rv = IfRange(date=date)
++        assert rv.check(None, date)
++        assert rv.check("abc", date.replace(microsecond=500))
++        assert rv.check(None, date.replace(tzinfo=None))
++        assert not rv.check("abc", date + timedelta(seconds=1))
++        assert not rv.check("abc", None)
++
++        assert not IfRange().check("abc", date)
++
++    def test_make_content_range(self):
++        rv = Range.from_header("bytes=0-4")
++        assert rv.make_content_range(11).to_header() == "bytes 0-4/11"
++        assert rv.make_content_range(None) is None
++        assert rv.make_content_range(0) is None
++
++        # stop is clamped
++        rv = Range.from_header("bytes=6-666")
++        assert rv.make_content_range(11).to_header() == "bytes 6-10/11"
++
++        # suffix length is clamped
++        rv = Range.from_header("bytes=-500")
++        assert rv.make_content_range(11).to_header() == "bytes 0-10/11"
++        rv = Range.from_header("bytes=-5")
++        assert rv.make_content_range(11).to_header() == "bytes 6-10/11"
++
++        # open end
++        rv = Range.from_header("bytes=6-")
++        assert rv.make_content_range(11).to_header() == "bytes 6-10/11"
++
++        # unsatisfiable
++        assert Range.from_header("bytes=11-").make_content_range(11) is None
++        assert Range.from_header("bytes=20-30").make_content_range(11) is None
++
++        # first range only
++        rv = Range.from_header("bytes=0-1,5-6")
++        assert rv.make_content_range(11).to_header() == "bytes 0-1/11"
++
++        # units are kept
++        rv = Range.from_header("items=0-1")
++        assert rv.make_content_range(11).to_header() == "items 0-1/11"
++
+     def test_content_range_parsing(self):
+         rv = ContentRange.from_header("bytes 0-98/*")
+         assert rv.units == "bytes"
+diff --git a/tests/test_send_file.py b/tests/test_send_file.py
+index 6143e0ed..3f4e4314 100644
+--- a/tests/test_send_file.py
++++ b/tests/test_send_file.py
+@@ -5,6 +5,8 @@ import pathlib
+ import pytest
+ 
+ from werkzeug.exceptions import NotFound
++from werkzeug.exceptions import PreconditionFailed
++from werkzeug.exceptions import RequestedRangeNotSatisfiable
+ from werkzeug.http import http_date
+ from werkzeug.test import create_environ
+ from werkzeug.utils import send_file
+@@ -52,8 +54,50 @@ def test_object(file_factory):
+ 
+ 
+ def test_object_without_mimetype():
+-    with pytest.raises(TypeError, match="detect the MIME type"):
+-        send_file(io.BytesIO(b"test"), environ)
++    with send_file(io.BytesIO(b"test"), environ) as rv:
++        assert rv.mimetype == "application/octet-stream"
++        assert "Content-Disposition" not in rv.headers
++
++
++def test_object_without_name_attachment():
++    with pytest.raises(TypeError, match="No name provided"):
++        send_file(io.BytesIO(b"test"), environ, as_attachment=True)
++
++
++def test_file_object_detects_info():
++    with txt_path.open("rb") as f:
++        with send_file(f, environ) as rv:
++            assert rv.mimetype == "text/plain"
++            assert rv.headers["Content-Disposition"] == "inline; filename=test.txt"
++            assert rv.content_length == txt_path.stat().st_size
++            assert rv.last_modified is not None
++            assert rv.etag is not None
++
++
++def test_file_object_seeks_to_start():
++    expect = txt_path.read_bytes()
++
++    with txt_path.open("rb") as f:
++        f.read()
++
++        with send_file(f, environ) as rv:
++            assert b"".join(rv.response) == expect
++
++
++def test_bytes_io_seeks_to_start():
++    f = io.BytesIO(b"Hello World")
++    f.read()
++
++    with send_file(f, create_environ(headers={"Range": "bytes=6-"})) as rv:
++        assert rv.status_code == 206
++        assert rv.headers["Content-Range"] == "bytes 6-10/11"
++        assert rv.content_length == 5
++        assert b"".join(rv.response) == b"World"
++
++
++def test_bytes_io_no_etag():
++    with send_file(io.BytesIO(b"test"), environ) as rv:
++        assert "ETag" not in rv.headers
+ 
+ 
+ def test_object_mimetype_from_name():
+@@ -146,7 +190,8 @@ def test_max_age(value, public):
+ 
+ def test_etag():
+     with send_file(txt_path, environ) as rv:
+-        assert rv.headers["ETag"].count("-") == 2
++        stat = txt_path.stat()
++        assert rv.etag.value == f"{stat.st_mtime}-{stat.st_size}"
+ 
+     with send_file(txt_path, environ, etag=False) as rv:
+         assert "ETag" not in rv.headers
+@@ -199,3 +244,57 @@ def test_max_age_callable():
+     # This is a private API, it should only be used by Flask.
+     with send_file(txt_path, environ, max_age=lambda p: 10) as rv:
+         assert rv.cache_control.max_age == 10
++
++
++def test_conditional_304():
++    with send_file(txt_path, environ) as rv:
++        etag = rv.headers["ETag"]
++
++    env = create_environ(headers={"If-None-Match": etag})
++
++    with send_file(txt_path, env) as rv:
++        assert rv.status_code == 304
++
++
++def test_conditional_412():
++    env = create_environ(headers={"If-Match": '"nope"'})
++
++    with pytest.raises(PreconditionFailed):
++        send_file(txt_path, env)
++
++
++def test_conditional_disabled():
++    with send_file(txt_path, environ) as rv:
++        etag = rv.headers["ETag"]
++
++    env = create_environ(headers={"If-None-Match": etag})
++
++    with send_file(txt_path, env, conditional=False) as rv:
++        assert rv.status_code == 200
++        assert "Accept-Ranges" not in rv.headers
++
++
++def test_range():
++    expect = txt_path.read_bytes()
++    env = create_environ(headers={"Range": "bytes=0-3"})
++
++    with send_file(txt_path, env) as rv:
++        assert rv.status_code == 206
++        assert rv.headers["Accept-Ranges"] == "bytes"
++        assert rv.headers["Content-Range"] == f"bytes 0-3/{len(expect)}"
++        assert rv.content_length == 4
++        assert b"".join(rv.response) == expect[:4]
++
++
++def test_range_not_satisfiable():
++    env = create_environ(headers={"Range": "bytes=999999-"})
++
++    with pytest.raises(RequestedRangeNotSatisfiable):
++        send_file(txt_path, env)
++
++    f = io.BytesIO(b"test")
++
++    with pytest.raises(RequestedRangeNotSatisfiable):
++        send_file(f, env)
++
++    assert f.closed
+diff --git a/tests/test_wrappers.py b/tests/test_wrappers.py
+index 0960e588..066ce5cd 100644
+--- a/tests/test_wrappers.py
++++ b/tests/test_wrappers.py
+@@ -18,6 +18,7 @@ from werkzeug.datastructures import MIMEAccept
+ from werkzeug.datastructures import MultiDict
+ from werkzeug.datastructures import WWWAuthenticate
+ from werkzeug.exceptions import BadRequest
++from werkzeug.exceptions import PreconditionFailed
+ from werkzeug.exceptions import RequestedRangeNotSatisfiable
+ from werkzeug.exceptions import SecurityError
+ from werkzeug.exceptions import UnsupportedMediaType
+@@ -509,105 +510,176 @@ def test_get_data_method_parsing_caching_behavior():
+     assert req.form["foo"] == "Hello World"
+ 
+ 
++def _req(method="GET", **headers):
++    return wrappers.Request(create_environ(method=method, headers=headers))
++
++
++def _resp(etag='"abc"', last_modified=datetime(2020, 1, 1, tzinfo=timezone.utc)):
++    response = wrappers.Response("Hello World")
++
++    if etag is not None:
++        response.headers["ETag"] = etag
++
++    if last_modified is not None:
++        response.last_modified = last_modified
++
++    return response
++
++
+ def test_etag_response():
+     response = wrappers.Response("Hello World")
+     assert response.etag is None
+     response.add_etag()
+     assert response.etag.value == "4Wf2jWVj11uyXzqknCnvYS1BNS3ABgbefL1jC7JmX1E"
+-    assert not response.cache_control
+     response.cache_control.must_revalidate = True
+     response.cache_control.max_age = 60
+-    response.headers["Content-Length"] = len(response.get_data())
+-    assert response.headers["Cache-Control"] in (
+-        "must-revalidate, max-age=60",
+-        "max-age=60, must-revalidate",
+-    )
+-
+-    assert "Date" not in response.headers
+-    env = create_environ()
+-    env.update(
+-        {"REQUEST_METHOD": "GET", "HTTP_IF_NONE_MATCH": response.headers["ETag"]}
+-    )
+-    response.make_conditional(env)
+-    assert "Date" in response.headers
++    request = _req(**{"If-None-Match": response.headers["ETag"]})
++    response.apply_conditions(request)
++    assert response.status_code == 304
+ 
+     # after the thing is invoked by the server as wsgi application
+     # (we're emulating this here), there must not be any entity
+     # headers left and the status code would have to be 304
+-    resp = wrappers.Response.from_app(response, env)
++    resp = wrappers.Response.from_app(response, request.environ)
+     assert resp.status_code == 304
+     assert "Content-Length" not in resp.headers
+ 
+-    # make sure date is not overridden
+-    response = wrappers.Response("Hello World")
+-    response.date = 1337
+-    d = response.date
+-    response.make_conditional(env)
+-    assert response.date == d
+-
+-    # make sure content length is only set if missing
+-    response = wrappers.Response("Hello World")
+-    response.content_length = 999
+-    response.make_conditional(env)
+-    assert response.content_length == 999
+-
+ 
+ def test_etag_response_412():
+     response = wrappers.Response("Hello World")
+-    assert response.etag is None
+     response.add_etag()
+-    assert response.etag.value == "4Wf2jWVj11uyXzqknCnvYS1BNS3ABgbefL1jC7JmX1E"
+-    assert not response.cache_control
+-    response.cache_control.must_revalidate = True
+-    response.cache_control.max_age = 60
+-    response.headers["Content-Length"] = len(response.get_data())
+-    assert response.headers["Cache-Control"] in (
+-        "must-revalidate, max-age=60",
+-        "max-age=60, must-revalidate",
++
++    with pytest.raises(PreconditionFailed):
++        response.apply_conditions(_req(**{"If-Match": '"xyz"'}))
++
++    # The response is not modified, the error is what is sent.
++    assert response.status_code == 200
++
++
++_OLD = "Mon, 01 Jan 2018 00:00:00 GMT"
++_SAME = "Wed, 01 Jan 2020 00:00:00 GMT"
++_NEW = "Fri, 01 Jan 2021 00:00:00 GMT"
++
++
++@pytest.mark.parametrize(
++    ("method", "headers", "etag", "expect"),
++    [
++        # If-Match, strong comparison
++        ("GET", {"If-Match": '"abc"'}, '"abc"', 200),
++        ("GET", {"If-Match": '"x", "abc"'}, '"abc"', 200),
++        ("GET", {"If-Match": '"x"'}, '"abc"', 412),
++        ("GET", {"If-Match": '"abc"'}, 'W/"abc"', 412),
++        ("GET", {"If-Match": 'W/"abc"'}, '"abc"', 412),
++        ("GET", {"If-Match": '"abc"'}, None, 412),
++        ("POST", {"If-Match": '"abc"'}, '"abc"', 200),
++        ("POST", {"If-Match": '"x"'}, '"abc"', 412),
++        ("PUT", {"If-Match": '"x"'}, '"abc"', 412),
++        ("DELETE", {"If-Match": '"x"'}, '"abc"', 412),
++        # If-Match takes precedence over If-Unmodified-Since
++        ("GET", {"If-Match": '"abc"', "If-Unmodified-Since": _OLD}, '"abc"', 200),
++        # If-Unmodified-Since
++        ("GET", {"If-Unmodified-Since": _SAME}, '"abc"', 200),
++        ("GET", {"If-Unmodified-Since": _OLD}, '"abc"', 412),
++        ("POST", {"If-Unmodified-Since": _OLD}, '"abc"', 412),
++        ("POST", {"If-Unmodified-Since": _NEW}, '"abc"', 200),
++        # If-None-Match, weak comparison
++        ("GET", {"If-None-Match": '"abc"'}, '"abc"', 304),
++        ("HEAD", {"If-None-Match": '"abc"'}, '"abc"', 304),
++        ("GET", {"If-None-Match": 'W/"abc"'}, '"abc"', 304),
++        ("GET", {"If-None-Match": '"abc"'}, 'W/"abc"', 304),
++        ("GET", {"If-None-Match": '"x"'}, '"abc"', 200),
++        ("POST", {"If-None-Match": '"abc"'}, '"abc"', 412),
++        ("PUT", {"If-None-Match": '"abc"'}, '"abc"', 412),
++        ("POST", {"If-None-Match": '"x"'}, '"abc"', 200),
++        # If-None-Match takes precedence over If-Modified-Since
++        ("GET", {"If-None-Match": '"x"', "If-Modified-Since": _NEW}, '"abc"', 200),
++        # If-Modified-Since, only GET and HEAD
++        ("GET", {"If-Modified-Since": _NEW}, '"abc"', 304),
++        ("HEAD", {"If-Modified-Since": _SAME}, '"abc"', 304),
++        ("GET", {"If-Modified-Since": _OLD}, '"abc"', 200),
++        ("POST", {"If-Modified-Since": _NEW}, '"abc"', 200),
++        # invalid values are ignored
++        ("GET", {"If-Modified-Since": "garbage"}, '"abc"', 200),
++        ("GET", {"If-None-Match": "garbage"}, '"abc"', 200),
++        ("GET", {}, '"abc"', 200),
++    ],
++)
++def test_apply_conditions(method, headers, etag, expect):
++    response = _resp(etag=etag)
++    request = _req(method, **headers)
++
++    if expect == 412:
++        with pytest.raises(PreconditionFailed):
++            response.apply_conditions(request)
++    else:
++        response.apply_conditions(request)
++        assert response.status_code == expect
++
++    assert response.headers["Accept-Ranges"] == "bytes"
++
++
++def test_apply_conditions_ignores_microseconds():
++    response = _resp(
++        last_modified=datetime(2020, 1, 1, 0, 0, 0, 500, tzinfo=timezone.utc)
+     )
++    response.apply_conditions(_req(**{"If-Modified-Since": _SAME}))
++    assert response.status_code == 304
+ 
+-    assert "Date" not in response.headers
+-    env = create_environ()
+-    env.update({"REQUEST_METHOD": "GET", "HTTP_IF_MATCH": '"xyz"'})
+-    response.make_conditional(env)
+-    assert "Date" in response.headers
+ 
+-    # after the thing is invoked by the server as wsgi application
+-    # (we're emulating this here), there must not be any entity
+-    # headers left and the status code would have to be 412
+-    resp = wrappers.Response.from_app(response, env)
+-    assert resp.status_code == 412
+-    # Make sure there is a body still
+-    assert resp.data != b""
++def test_apply_conditions_no_last_modified():
++    response = _resp(last_modified=None)
++    response.apply_conditions(_req(**{"If-Modified-Since": _NEW}))
++    assert response.status_code == 200
++    response.apply_conditions(_req(**{"If-Unmodified-Since": _OLD}))
++    assert response.status_code == 200
+ 
+-    # make sure date is not overridden
+-    response = wrappers.Response("Hello World")
+-    response.date = 1337
+-    d = response.date
+-    response.make_conditional(env)
+-    assert response.date == d
+ 
+-    # make sure content length is only set if missing
+-    response = wrappers.Response("Hello World")
+-    response.content_length = 999
+-    response.make_conditional(env)
+-    assert response.content_length == 999
++@pytest.mark.parametrize(
++    ("method", "header", "exists", "expect"),
++    [
++        ("GET", "If-Match", True, 200),
++        ("GET", "If-Match", False, 412),
++        ("PUT", "If-Match", True, 200),
++        ("PUT", "If-Match", False, 412),
++        ("GET", "If-None-Match", True, 304),
++        ("GET", "If-None-Match", False, 200),
++        ("HEAD", "If-None-Match", True, 304),
++        ("PUT", "If-None-Match", True, 412),
++        ("PUT", "If-None-Match", False, 200),
++    ],
++)
++def test_apply_conditions_star(method, header, exists, expect):
++    response = _resp(etag=None)
++    request = _req(method, **{header: "*"})
+ 
++    if expect == 412:
++        with pytest.raises(PreconditionFailed):
++            response.apply_conditions(request, exists=exists)
++    else:
++        response.apply_conditions(request, exists=exists)
++        assert response.status_code == expect
+ 
+-def test_advertise_accept_ranges() -> None:
+-    env = create_environ()
++
++def test_apply_conditions_ignores_non_success():
++    response = _resp()
++    response.status_code = 404
++    response.apply_conditions(_req(**{"If-Match": '"x"'}))
++    assert response.status_code == 404
++    response.apply_conditions(_req(**{"If-None-Match": '"abc"'}))
++    assert response.status_code == 404
++
++
++def test_apply_range_advertises_without_range():
+     response = wrappers.Response()
+-    response.make_conditional(env, accept_ranges=True)
++    response.apply_range(_req())
+     assert response.status_code == 200
+     assert response.headers["Accept-Ranges"] == "bytes"
+     assert "Content-Range" not in response.headers
+ 
+ 
+-def test_range_request_basic():
+-    env = create_environ()
++def test_apply_range_basic():
+     response = wrappers.Response("Hello World")
+-    env["HTTP_RANGE"] = "bytes=0-4"
+-    response.make_conditional(env, accept_ranges=True, complete_length=11)
++    response.apply_range(_req(Range="bytes=0-4"))
+     assert response.status_code == 206
+     assert response.headers["Accept-Ranges"] == "bytes"
+     assert response.headers["Content-Range"] == "bytes 0-4/11"
+@@ -615,39 +687,93 @@ def test_range_request_basic():
+     assert response.data == b"Hello"
+ 
+ 
+-def test_range_request_out_of_bound():
+-    env = create_environ()
++def test_apply_range_clamps_stop():
+     response = wrappers.Response("Hello World")
+-    env["HTTP_RANGE"] = "bytes=6-666"
+-    response.make_conditional(env, accept_ranges=True, complete_length=11)
++    response.apply_range(_req(Range="bytes=6-666"))
+     assert response.status_code == 206
+-    assert response.headers["Accept-Ranges"] == "bytes"
+     assert response.headers["Content-Range"] == "bytes 6-10/11"
+     assert response.headers["Content-Length"] == "5"
+     assert response.data == b"World"
+ 
+ 
+-def test_range_request_with_file():
+-    env = create_environ()
++@pytest.mark.parametrize(
++    ("value", "expect", "content_range"),
++    [
++        ("bytes=-5", b"World", "bytes 6-10/11"),
++        ("bytes=-500", b"Hello World", "bytes 0-10/11"),
++        ("bytes=6-", b"World", "bytes 6-10/11"),
++        ("bytes=0-10", b"Hello World", "bytes 0-10/11"),
++        ("bytes=10-10", b"d", "bytes 10-10/11"),
++    ],
++)
++def test_apply_range_forms(value, expect, content_range):
++    response = wrappers.Response("Hello World")
++    response.apply_range(_req(Range=value))
++    assert response.status_code == 206
++    assert response.headers["Content-Range"] == content_range
++    assert response.data == expect
++
++
++def test_apply_range_first_only():
++    response = wrappers.Response("Hello World")
++    response.apply_range(_req(Range="bytes=0-1,6-7"))
++    assert response.status_code == 206
++    assert response.headers["Content-Range"] == "bytes 0-1/11"
++    assert response.data == b"He"
++
++
++@pytest.mark.parametrize("value", ["bytes=11-", "bytes=20-30", "bytes=-", "bytes=a-b"])
++def test_apply_range_not_satisfiable(value):
++    response = wrappers.Response("Hello World")
++
++    with pytest.raises(RequestedRangeNotSatisfiable) as ctx:
++        response.apply_range(_req(Range=value))
++
++    assert ctx.value.length == 11
++    assert response.status_code == 200
++
++
++def test_apply_range_unknown_units():
++    response = wrappers.Response("Hello World")
++    response.apply_range(_req(Range="items=0-4"))
++    assert response.status_code == 200
++    assert response.data == b"Hello World"
++
++
++@pytest.mark.parametrize("method", ["HEAD", "POST", "PUT"])
++def test_apply_range_only_get(method):
++    response = wrappers.Response("Hello World")
++    response.apply_range(_req(method, Range="bytes=0-4"))
++    assert response.status_code == 200
++    assert response.headers["Accept-Ranges"] == "bytes"
++    assert "Content-Range" not in response.headers
++    assert response.data == b"Hello World"
++
++
++@pytest.mark.parametrize("status", [204, 304, 404, 206])
++def test_apply_range_only_200(status):
++    response = wrappers.Response("Hello World", status=status)
++    response.apply_range(_req(Range="bytes=0-4"))
++    assert response.status_code == status
++    assert "Content-Range" not in response.headers
++
++
++def test_apply_range_with_file():
+     resources = os.path.join(os.path.dirname(__file__), "res")
+     fname = os.path.join(resources, "test.txt")
+     with open(fname, "rb") as f:
+         fcontent = f.read()
+     with open(fname, "rb") as f:
+         response = wrappers.Response(f)
+-        env["HTTP_RANGE"] = "bytes=0-0"
+-        response.make_conditional(
+-            env, accept_ranges=True, complete_length=len(fcontent)
+-        )
++        response.content_length = len(fcontent)
++        response.apply_range(_req(Range="bytes=0-0"))
+         assert response.status_code == 206
+-        assert response.headers["Accept-Ranges"] == "bytes"
+         assert response.headers["Content-Range"] == f"bytes 0-0/{len(fcontent)}"
+         assert response.headers["Content-Length"] == "1"
+         assert response.data == fcontent[:1]
+ 
+ 
+-def test_range_request_with_complete_file():
+-    env = create_environ()
++def test_apply_range_complete_file():
+     resources = os.path.join(os.path.dirname(__file__), "res")
+     fname = os.path.join(resources, "test.txt")
+     with open(fname, "rb") as f:
+@@ -655,31 +781,102 @@ def test_range_request_with_complete_file():
+     with open(fname, "rb") as f:
+         fsize = os.path.getsize(fname)
+         response = wrappers.Response(f)
+-        env["HTTP_RANGE"] = f"bytes=0-{fsize - 1}"
+-        response.make_conditional(env, accept_ranges=True, complete_length=fsize)
++        response.content_length = fsize
++        response.apply_range(_req(Range=f"bytes=0-{fsize - 1}"))
+         assert response.status_code == 206
+-        assert response.headers["Accept-Ranges"] == "bytes"
+         assert response.headers["Content-Range"] == f"bytes 0-{fsize - 1}/{fsize}"
+         assert response.headers["Content-Length"] == str(fsize)
+         assert response.data == fcontent
+ 
+ 
+-@pytest.mark.parametrize("value", [None, 0])
+-def test_range_request_without_complete_length(value):
+-    env = create_environ(headers={"Range": "bytes=0-10"})
+-    response = wrappers.Response("Hello World")
+-    response.make_conditional(env, accept_ranges=True, complete_length=value)
++def test_apply_range_unknown_length():
++    response = wrappers.Response(["Hello World"])
++    response.apply_range(_req(Range="bytes=0-4"))
+     assert response.status_code == 200
++    assert response.headers["Accept-Ranges"] == "bytes"
+     assert response.data == b"Hello World"
+ 
+ 
+-def test_invalid_range_request():
+-    env = create_environ()
++def test_apply_range_zero_length():
++    response = wrappers.Response("")
++    response.content_length = 0
++    response.apply_range(_req(Range="bytes=0-4"))
++    assert response.status_code == 200
++    assert response.headers["Accept-Ranges"] == "bytes"
++
++
++def test_apply_range_if_range_etag():
++    response = _resp(etag='"abc"')
++    response.apply_range(_req(Range="bytes=0-4", **{"If-Range": '"abc"'}))
++    assert response.status_code == 206
++
++    response = _resp(etag='"abc"')
++    response.apply_range(_req(Range="bytes=0-4", **{"If-Range": '"other"'}))
++    assert response.status_code == 200
++    assert response.data == b"Hello World"
++
++    # weak never matches
++    response = _resp(etag='W/"abc"')
++    response.apply_range(_req(Range="bytes=0-4", **{"If-Range": 'W/"abc"'}))
++    assert response.status_code == 200
++
++    response = _resp(etag=None)
++    response.apply_range(_req(Range="bytes=0-4", **{"If-Range": '"abc"'}))
++    assert response.status_code == 200
++
++
++def test_apply_range_if_range_date():
++    response = _resp()
++    response.apply_range(_req(Range="bytes=0-4", **{"If-Range": _SAME}))
++    assert response.status_code == 206
++
++    response = _resp()
++    response.apply_range(
++        _req(Range="bytes=0-4", **{"If-Range": "Thu, 02 Jan 2020 00:00:00 GMT"})
++    )
++    assert response.status_code == 200
++
++    # If-Range without Range is ignored
++    response = _resp()
++    response.apply_range(_req(**{"If-Range": '"abc"'}))
++    assert response.status_code == 200
++
++
++def test_make_conditional_deprecated():
++    env = create_environ(headers={"If-None-Match": '"abc"'})
++    response = _resp()
++
++    with pytest.deprecated_call():
++        response.make_conditional(env)
++
++    assert response.status_code == 304
++    assert "Date" in response.headers
++
++    env = create_environ(headers={"If-Match": '"x"'})
++    response = _resp()
++
++    with pytest.deprecated_call():
++        response.make_conditional(env)
++
++    assert response.status_code == 412
++
++    env = create_environ(headers={"Range": "bytes=0-4"})
+     response = wrappers.Response("Hello World")
+-    env["HTTP_RANGE"] = "bytes=-"
+-    with pytest.raises(RequestedRangeNotSatisfiable):
++
++    with pytest.deprecated_call():
+         response.make_conditional(env, accept_ranges=True, complete_length=11)
+ 
++    assert response.status_code == 206
++    assert response.data == b"Hello"
++
++    env = create_environ(method="POST", headers={"If-Match": '"x"'})
++    response = _resp()
++
++    with pytest.deprecated_call():
++        response.make_conditional(env)
++
++    assert response.status_code == 200
++
+ 
+ def test_etag_response_freezing():
+     response = wrappers.Response("Hello World")
+@@ -1076,7 +1273,7 @@ def test_stream_content_length():
+     assert resp.get_wsgi_headers({})["Content-Length"] == "9"
+ 
+     resp = wrappers.Response()
+-    resp.make_conditional({"REQUEST_METHOD": "GET"})
++    resp.apply_range(wrappers.Request({"REQUEST_METHOD": "GET"}))
+     resp.stream.writelines(["foo", "bar", "baz"])
+     assert resp.get_wsgi_headers({})["Content-Length"] == "9"
+ 
+@@ -1097,7 +1294,7 @@ def test_disabled_auto_content_length():
+     assert "Content-Length" not in resp.get_wsgi_headers({})
+ 
+     resp = MyResponse()
+-    resp.make_conditional({"REQUEST_METHOD": "GET"})
++    resp.apply_range(wrappers.Request({"REQUEST_METHOD": "GET"}))
+     assert resp.content_length is None
+     assert "Content-Length" not in resp.get_wsgi_headers({})
+ 

@@ -5,6 +5,8 @@ import pathlib
 import pytest
 
 from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import PreconditionFailed
+from werkzeug.exceptions import RequestedRangeNotSatisfiable
 from werkzeug.http import http_date
 from werkzeug.test import create_environ
 from werkzeug.utils import send_file
@@ -52,8 +54,50 @@ def test_object(file_factory):
 
 
 def test_object_without_mimetype():
-    with pytest.raises(TypeError, match="detect the MIME type"):
-        send_file(io.BytesIO(b"test"), environ)
+    with send_file(io.BytesIO(b"test"), environ) as rv:
+        assert rv.mimetype == "application/octet-stream"
+        assert "Content-Disposition" not in rv.headers
+
+
+def test_object_without_name_attachment():
+    with pytest.raises(TypeError, match="No name provided"):
+        send_file(io.BytesIO(b"test"), environ, as_attachment=True)
+
+
+def test_file_object_detects_info():
+    with txt_path.open("rb") as f:
+        with send_file(f, environ) as rv:
+            assert rv.mimetype == "text/plain"
+            assert rv.headers["Content-Disposition"] == "inline; filename=test.txt"
+            assert rv.content_length == txt_path.stat().st_size
+            assert rv.last_modified is not None
+            assert rv.etag is not None
+
+
+def test_file_object_seeks_to_start():
+    expect = txt_path.read_bytes()
+
+    with txt_path.open("rb") as f:
+        f.read()
+
+        with send_file(f, environ) as rv:
+            assert b"".join(rv.response) == expect
+
+
+def test_bytes_io_seeks_to_start():
+    f = io.BytesIO(b"Hello World")
+    f.read()
+
+    with send_file(f, create_environ(headers={"Range": "bytes=6-"})) as rv:
+        assert rv.status_code == 206
+        assert rv.headers["Content-Range"] == "bytes 6-10/11"
+        assert rv.content_length == 5
+        assert b"".join(rv.response) == b"World"
+
+
+def test_bytes_io_no_etag():
+    with send_file(io.BytesIO(b"test"), environ) as rv:
+        assert "ETag" not in rv.headers
 
 
 def test_object_mimetype_from_name():
@@ -146,7 +190,8 @@ def test_max_age(value, public):
 
 def test_etag():
     with send_file(txt_path, environ) as rv:
-        assert rv.headers["ETag"].count("-") == 2
+        stat = txt_path.stat()
+        assert rv.etag.value == f"{stat.st_mtime}-{stat.st_size}"
 
     with send_file(txt_path, environ, etag=False) as rv:
         assert "ETag" not in rv.headers
@@ -199,3 +244,57 @@ def test_max_age_callable():
     # This is a private API, it should only be used by Flask.
     with send_file(txt_path, environ, max_age=lambda p: 10) as rv:
         assert rv.cache_control.max_age == 10
+
+
+def test_conditional_304():
+    with send_file(txt_path, environ) as rv:
+        etag = rv.headers["ETag"]
+
+    env = create_environ(headers={"If-None-Match": etag})
+
+    with send_file(txt_path, env) as rv:
+        assert rv.status_code == 304
+
+
+def test_conditional_412():
+    env = create_environ(headers={"If-Match": '"nope"'})
+
+    with pytest.raises(PreconditionFailed):
+        send_file(txt_path, env)
+
+
+def test_conditional_disabled():
+    with send_file(txt_path, environ) as rv:
+        etag = rv.headers["ETag"]
+
+    env = create_environ(headers={"If-None-Match": etag})
+
+    with send_file(txt_path, env, conditional=False) as rv:
+        assert rv.status_code == 200
+        assert "Accept-Ranges" not in rv.headers
+
+
+def test_range():
+    expect = txt_path.read_bytes()
+    env = create_environ(headers={"Range": "bytes=0-3"})
+
+    with send_file(txt_path, env) as rv:
+        assert rv.status_code == 206
+        assert rv.headers["Accept-Ranges"] == "bytes"
+        assert rv.headers["Content-Range"] == f"bytes 0-3/{len(expect)}"
+        assert rv.content_length == 4
+        assert b"".join(rv.response) == expect[:4]
+
+
+def test_range_not_satisfiable():
+    env = create_environ(headers={"Range": "bytes=999999-"})
+
+    with pytest.raises(RequestedRangeNotSatisfiable):
+        send_file(txt_path, env)
+
+    f = io.BytesIO(b"test")
+
+    with pytest.raises(RequestedRangeNotSatisfiable):
+        send_file(f, env)
+
+    assert f.closed

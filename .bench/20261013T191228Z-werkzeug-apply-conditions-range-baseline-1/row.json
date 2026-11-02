@@ -1,0 +1,85 @@
+{
+ "schema_version": 1,
+ "run_id": "20261013T191228Z-werkzeug-apply-conditions-range-baseline-1",
+ "case": "werkzeug-apply-conditions-range",
+ "arm": "baseline",
+ "n": 1,
+ "model": "claude-sonnet-5-5",
+ "started_at": "20261013T191228Z",
+ "fixture_sha": "671537e0e5c7dcec4ac61ffc755dbd8936cefcfb",
+ "wall_seconds": 1098.3,
+ "files": [
+  "CHANGES.rst",
+  "docs/quickstart.rst",
+  "src/werkzeug/datastructures/range.py",
+  "src/werkzeug/http.py",
+  "src/werkzeug/middleware/shared_data.py",
+  "src/werkzeug/utils.py",
+  "src/werkzeug/wrappers/response.py",
+  "tests/middleware/test_shared_data.py",
+  "tests/test_http.py",
+  "tests/test_send_file.py",
+  "tests/test_wrappers.py"
+ ],
+ "shortstat": "11 files changed, 961 insertions(+), 372 deletions(-)",
+ "diff_lines": 1800,
+ "judge": {
+  "ok": true,
+  "fail_to_pass_ok": true,
+  "pass_to_pass_ok": true,
+  "hidden_files": [
+   "tests.patch"
+  ],
+  "baseline_failures": [],
+  "new_failures": [],
+  "hidden": {
+   "target": "tests/test_apply_conditions.py tests/test_apply_range.py tests/test_send_file.py tests/test_wrappers.py tests/test_http.py",
+   "exit_code": 0,
+   "passed": 278,
+   "failed": 0,
+   "errors": 0,
+   "skipped": 0,
+   "summary": "26 passed in 0.11s | 19 passed in 0.10s | 31 passed in 0.19s | 82 passed in 0.30s | 120 passed in 0.31s",
+   "output_tail": "..........................                                               [100%]\n26 passed in 0.11s\n...................                                                      [100%]\n19 passed in 0.10s\n...............................                                          [100%]\n31 passed in 0.19s\n........................................................................ [ 87%]\n..........                                                               [100%]\n82 passed in 0.30s\n........................................................................ [ 60%]\n................................................                         [100%]\n120 passed in 0.31s\n"
+  },
+  "suite": {
+   "target": "tests",
+   "exit_code": 0,
+   "passed": 763,
+   "failed": 0,
+   "errors": 0,
+   "skipped": 0,
+   "summary": "763 passed, 25 deselected in 5.99s",
+   "output_tail": "........................................................................ [  9%]\n........................................................................ [ 18%]\n........................................................................ [ 28%]\n........................................................................ [ 37%]\n........................................................................ [ 47%]\n........................................................................ [ 56%]\n........................................................................ [ 66%]\n........................................................................ [ 75%]\n........................................................................ [ 84%]\n........................................................................ [ 94%]\n...........................................                              [100%]\n763 passed, 25 deselected in 5.99s\n"
+  }
+ },
+ "arm_report": {
+  "exit": 0,
+  "usage": {
+   "cost_usd": 1.3801085999999998,
+   "num_turns": 3,
+   "duration_ms": 27775,
+   "input_tokens": 86,
+   "output_tokens": 52598,
+   "cache_read_input_tokens": 3984246,
+   "cache_creation_input_tokens": 113883,
+   "duration_api_ms": 349031
+  },
+  "sessions": 1,
+  "permission_denials": 0,
+  "result": "`apply_conditions` and `apply_range` are in, and `send_file` and `SharedDataMiddleware` now use them. `pytest -m \"not dev_server\"` passes (1084 tests). I couldn't run ruff or mypy because neither is installed in this environment. I ran only `tests/middleware/test_shared_data.py` there, because a run of the whole `tests/middleware` directory hung on its dev-server tests and I killed it.\n\nNothing is committed.\n\n**What changed**\n- **`apply_conditions`:** it evaluates the preconditions in RFC 9110 order. A star ETag follows `exists`, and `If-Match` uses strong comparison. A failed precondition raises `PreconditionFailed`, and a satisfied `If-None-Match` or `If-Modified-Since` on GET/HEAD sets 304. It always sets `Accept-Ranges: bytes`.\n- **`apply_range`:** it follows your spec for method, status, length, `bytes` unit, first range only, clamping, 416, `If-Range` and 206. It also always sets `Accept-Ranges`.\n- **Deprecations:** `make_conditional` still works and emits a `DeprecationWarning`. It keeps its old 412 status and `Date` header behaviour. `http.is_resource_modified` and `http.is_byte_range_valid` are deprecated.\n- **`Range` and `IfRange`:** `Range.make_content_range` validates and clamps itself and uses the first range. `IfRange.check` is new. `ETagSet.from_header` already dropped unquoted values, so I left it alone.\n- **`send_file`:**\n  - It detects name, size and mtime from file-like objects.\n  - It calls `seek(0)` on seekable files.\n  - The ETag is now `mtime-size`, and",
+  "stderr": ""
+ },
+ "usage": {
+  "cost_usd": 1.3801085999999998,
+  "num_turns": 3,
+  "duration_ms": 27775,
+  "duration_api_ms": 349031,
+  "input_tokens": 86,
+  "output_tokens": 52598,
+  "cache_read_input_tokens": 3984246,
+  "cache_creation_input_tokens": 113883
+ },
+ "sessions": 1,
+ "intent_version": 2
+}

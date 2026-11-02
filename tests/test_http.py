@@ -14,6 +14,7 @@ from werkzeug.datastructures import Accept
 from werkzeug.datastructures import Authorization
 from werkzeug.datastructures import ContentRange
 from werkzeug.datastructures import ContentSecurityPolicy
+from werkzeug.datastructures import ETag
 from werkzeug.datastructures import HeaderSet
 from werkzeug.datastructures import IfRange
 from werkzeug.datastructures import LanguageAccept
@@ -403,62 +404,14 @@ class TestHTTPUtility:
         assert http.dump_header({"foo": "bar"}) == "foo=bar"
         assert http.dump_header({"foo*": "UTF-8''bar"}) == "foo*=UTF-8''bar"
 
-    def test_is_resource_modified(self):
-        env = create_environ()
+    def test_is_resource_modified_deprecated(self):
+        with pytest.deprecated_call():
+            assert http.is_resource_modified(create_environ())
 
-        # any method is allowed
-        env["REQUEST_METHOD"] = "POST"
-        assert http.is_resource_modified(env)
-        env["REQUEST_METHOD"] = "GET"
-
-        # only one of etag or data
-        with pytest.raises(TypeError):
-            http.is_resource_modified(env, data=b"42", etag='"23"')
-
-        etag = f'"{http.generate_etag(b"awesome")}"'
-        env["HTTP_IF_NONE_MATCH"] = etag
-        assert not http.is_resource_modified(env, etag=etag)
-        assert not http.is_resource_modified(env, data=b"awesome")
-
-        env["HTTP_IF_MODIFIED_SINCE"] = http.http_date(datetime(2008, 1, 1, 12, 30))
-        assert not http.is_resource_modified(
-            env, last_modified=datetime(2008, 1, 1, 12, 00)
-        )
-        assert http.is_resource_modified(
-            env, last_modified=datetime(2008, 1, 1, 13, 00)
-        )
-
-    def test_is_resource_modified_for_range_requests(self):
-        env = create_environ()
-
-        env["HTTP_IF_MODIFIED_SINCE"] = http.http_date(datetime(2008, 1, 1, 12, 30))
-        env["HTTP_IF_RANGE"] = f'"{http.generate_etag(b"awesome_if_range")}"'
-        # Range header not present, so If-Range should be ignored
-        assert not http.is_resource_modified(
-            env,
-            data=b"not_the_same",
-            ignore_if_range=False,
-            last_modified=datetime(2008, 1, 1, 12, 30),
-        )
-
-        env["HTTP_RANGE"] = ""
-        assert not http.is_resource_modified(
-            env, data=b"awesome_if_range", ignore_if_range=False
-        )
-        assert http.is_resource_modified(
-            env, data=b"not_the_same", ignore_if_range=False
-        )
-
-        env["HTTP_IF_RANGE"] = http.http_date(datetime(2008, 1, 1, 13, 30))
-        assert http.is_resource_modified(
-            env, last_modified=datetime(2008, 1, 1, 14, 00), ignore_if_range=False
-        )
-        assert not http.is_resource_modified(
-            env, last_modified=datetime(2008, 1, 1, 13, 30), ignore_if_range=False
-        )
-        assert http.is_resource_modified(
-            env, last_modified=datetime(2008, 1, 1, 13, 30), ignore_if_range=True
-        )
+    def test_is_byte_range_valid_deprecated(self):
+        with pytest.deprecated_call():
+            assert http.is_byte_range_valid(0, 5, 10)
+            assert not http.is_byte_range_valid(5, 5, 10)
 
     def test_parse_cookie(self):
         cookies = http.parse_cookie(
@@ -663,6 +616,56 @@ class TestRange:
 
         rv = Range.from_header("bytes=-0")
         assert rv is None
+
+    def test_if_range_check(self):
+        date = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        rv = IfRange(etag="abc")
+        assert rv.check("abc", None)
+        assert rv.check(ETag("abc"), date)
+        assert not rv.check("other", None)
+        assert not rv.check(ETag("abc", weak=True))
+        assert not rv.check(None, date)
+
+        rv = IfRange(date=date)
+        assert rv.check(None, date)
+        assert rv.check("abc", date.replace(microsecond=500))
+        assert rv.check(None, date.replace(tzinfo=None))
+        assert not rv.check("abc", date + timedelta(seconds=1))
+        assert not rv.check("abc", None)
+
+        assert not IfRange().check("abc", date)
+
+    def test_make_content_range(self):
+        rv = Range.from_header("bytes=0-4")
+        assert rv.make_content_range(11).to_header() == "bytes 0-4/11"
+        assert rv.make_content_range(None) is None
+        assert rv.make_content_range(0) is None
+
+        # stop is clamped
+        rv = Range.from_header("bytes=6-666")
+        assert rv.make_content_range(11).to_header() == "bytes 6-10/11"
+
+        # suffix length is clamped
+        rv = Range.from_header("bytes=-500")
+        assert rv.make_content_range(11).to_header() == "bytes 0-10/11"
+        rv = Range.from_header("bytes=-5")
+        assert rv.make_content_range(11).to_header() == "bytes 6-10/11"
+
+        # open end
+        rv = Range.from_header("bytes=6-")
+        assert rv.make_content_range(11).to_header() == "bytes 6-10/11"
+
+        # unsatisfiable
+        assert Range.from_header("bytes=11-").make_content_range(11) is None
+        assert Range.from_header("bytes=20-30").make_content_range(11) is None
+
+        # first range only
+        rv = Range.from_header("bytes=0-1,5-6")
+        assert rv.make_content_range(11).to_header() == "bytes 0-1/11"
+
+        # units are kept
+        rv = Range.from_header("items=0-1")
+        assert rv.make_content_range(11).to_header() == "items 0-1/11"
 
     def test_content_range_parsing(self):
         rv = ContentRange.from_header("bytes 0-98/*")
